@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="#151817" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
     <path d="M82 80v350M82 105h70M112 105v300"/>
-    <circle cx="265" cy="92" r="34" fill="#fff" stroke="none"/>
+    <circle cx="265" cy="92" r="34" fill="#151817" stroke="none"/>
     <path d="M265 135v145M265 280l-54 145M265 280l62 145"/>
     <path d="M258 168l-92 52"/>
     <path d="M166 220l6-92"/>
@@ -11,6 +11,6 @@
     <path d="M117 132h-23"/>
     <path d="M94 132l-12 38"/>
   </g>
-  <path d="M166 220a92 92 0 0 1 6-92" fill="none" stroke="#fff" stroke-width="8" stroke-dasharray="12 10" opacity=".7"/>
-  <path d="M188 155l-16-27-24 17" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M166 220a92 92 0 0 1 6-92" fill="none" stroke="#151817" stroke-width="8" stroke-dasharray="12 10" opacity=".7"/>
+  <path d="M188 155l-16-27-24 17" fill="none" stroke="#151817" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
