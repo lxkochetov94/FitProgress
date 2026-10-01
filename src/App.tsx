@@ -53,7 +53,7 @@ const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
-  const image = exercise.image || exerciseImageForDefinition(def)
+  const image = exerciseImageForDefinition(def) || exercise.image
   if (image) {
     const lower = image.toLowerCase()
     const generated = lower.includes('/exercises-generated/')
