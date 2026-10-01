@@ -96,8 +96,14 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
   const [reason, setReason] = useState<WorkoutExercise['replacementReason']>('Занято')
   const [query, setQuery] = useState('')
   const top = replacementCandidates(exercise)
-  const all = EXERCISE_LIBRARY.filter((x) => x.id !== exercise.exerciseId && x.name.toLowerCase().includes(query.toLowerCase()))
-  const options = query ? all : top.slice(0, 9)
+  const needle = query.trim().toLowerCase()
+  const all = EXERCISE_LIBRARY.filter((x) => x.id !== exercise.exerciseId && (
+    x.name.toLowerCase().includes(needle) ||
+    x.muscleGroup.toLowerCase().includes(needle) ||
+    x.equipment.toLowerCase().includes(needle) ||
+    (x.aliases ?? []).some((alias) => alias.toLowerCase().includes(needle))
+  ))
+  const options = query ? all : top.slice(0, 10)
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
@@ -107,7 +113,7 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
         <div className="reason-row">{(['Занято', 'Дискомфорт', 'Другое'] as const).map((x) => <button key={x} className={reason === x ? 'reason active' : 'reason'} onClick={() => setReason(x)}>{x}</button>)}</div>
         <input className="search" placeholder="Найти по всей библиотеке…" value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="replacement-list">
-          {options.map((def) => <button type="button" className="replacement-item" key={def.id} onClick={() => onReplace(def, reason)}><span className="replacement-icon">{def.icon ?? '↔'}</span><span><b>{def.name}</b><small>{def.muscleGroup} · {def.movementPattern} · {def.equipment}</small></span><span className="chevron">›</span></button>)}
+          {options.map((def) => <button type="button" className={`replacement-item ${def.suitability === 'avoid' ? 'avoid' : def.suitability === 'caution' ? 'caution' : ''}`} key={def.id} onClick={() => onReplace(def, reason)}><span className="replacement-icon">{def.icon ?? '↔'}</span><span><b>{def.name}</b><small>{def.muscleGroup} · {def.movementPattern} · {def.equipment}{def.gym ? ` · ${def.gym}` : ''}</small>{def.lastKnown && <small className="history-mini">Последняя база: {def.lastKnown}</small>}{def.suitability === 'avoid' && <small className="avoid-mini">История: не использовать как обычную замену</small>}{def.suitability === 'caution' && <small className="caution-mini">Есть ограничение / rehab-контекст</small>}</span><span className="chevron">›</span></button>)}
           {!options.length && <div className="empty-mini">Ничего не найдено.</div>}
         </div>
         <button type="button" className="ghost big" onClick={() => onCustom(reason)}>+ Другое упражнение вручную</button>
@@ -211,7 +217,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         finishedAt: undefined,
         replacementReason: reason,
         replacedAt: new Date().toISOString(),
-        sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
+        sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, targetWeight: '', targetReps: def.defaultReps || cleanReps(s.targetReps), actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
       }
     })
     setReplacementFor(null)
@@ -290,9 +296,11 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       <section className="exercise-list" aria-label="Упражнения тренировки">
         {session.plan.exercises.map((exercise, exerciseIndex) => {
           const isOpen = openExercise === exercise.instanceId
+          const definition = getDefinition(exercise.exerciseId)
           const doneSets = exercise.sets.filter((set) => set.completed).length
           const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
-          const isNew = !history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
+          const hasLocalHistory = history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
+          const isNew = !(definition?.known || hasLocalHistory)
           if (!isOpen) {
             return (
               <button type="button" className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
@@ -304,6 +312,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                   <div className="preview-tags">
                     {exercise.equipment && <span>{exercise.equipment}</span>}
                     {exercise.rehab && <span>Rehab</span>}
+                    {definition?.known && <span className="known">Есть история</span>}
                     {isNew && <span className="new">Новое</span>}
                     {exercise.finishedAt && <span className="done">Готово ✓</span>}
                     {!exercise.finishedAt && doneSets > 0 && <span>{doneSets}/{exercise.sets.length}</span>}
@@ -327,10 +336,24 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                   <span className="context-tag">{exercise.weightUnit === 'lb' ? 'lbs' : 'кг'}</span>
                   {exercise.rehab && <span className="context-tag status">Rehab</span>}
                   {isWarmupExercise(exercise) && <span className="context-tag status">Разминка</span>}
+                  {definition?.known && <span className="context-tag known">Есть ретро</span>}
+                  {definition?.suitability === 'caution' && <span className="context-tag caution">Ограничение</span>}
+                  {definition?.suitability === 'avoid' && <span className="context-tag avoid">Не использовать</span>}
                   {isNew && <span className="context-tag new">Новое</span>}
                   {exercise.exerciseId !== exercise.originalExerciseId && <span className="context-tag replacement">Замена</span>}
                 </div>
                 {exercise.instruction && <p className="instruction">{exercise.instruction}</p>}
+                {definition?.known && (definition.lastKnown || definition.bestKnown || definition.historyNote || definition.lastPain) && <div className={`history-card ${definition.suitability === 'avoid' ? 'avoid' : definition.suitability === 'caution' ? 'caution' : ''}`}>
+                  <div className="history-card-head"><b>Накопленная база</b>{definition.gym && <span>{definition.gym}</span>}</div>
+                  <div className="history-values">
+                    {definition.lastKnown && <div><span>Последняя база</span><b>{definition.lastKnown}</b></div>}
+                    {definition.bestKnown && <div><span>Лучший результат</span><b>{definition.bestKnown}</b></div>}
+                    {definition.lastPain && <div><span>Плечо / боль</span><b>{definition.lastPain}</b></div>}
+                  </div>
+                  {definition.historyNote && <p>{definition.historyNote}</p>}
+                  {definition.suitability === 'avoid' && <strong className="history-warning">Не использовать как обычную замену без отдельного решения.</strong>}
+                  {definition.suitability === 'caution' && <strong className="history-caution">Есть ограничение: ориентируйся на указанную механику и фактические ощущения.</strong>}
+                </div>}
               </div>
 
               {exercise.exerciseId !== exercise.originalExerciseId && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
