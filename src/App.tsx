@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
@@ -133,7 +133,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   return (
     <section
       className={`inline-rest ${kind} ${ready ? 'is-ready' : ''}`}
-      style={{ '--rest-hue': hue, '--rest-progress': progress } as React.CSSProperties}
+      style={{ '--rest-hue': hue, '--rest-progress': `${Math.round(progress * 100)}%` } as CSSProperties & { '--rest-hue': number; '--rest-progress': string }}
       aria-live="polite"
     >
       <div className="rest-kicker">{kind === 'between_sets' ? 'Отдых между подходами' : 'Отдых между упражнениями'}</div>
@@ -528,7 +528,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
           const hasLocalHistory = history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
           const isNew = !(definition?.known || hasLocalHistory)
-          let exerciseNode: React.ReactNode
+          let exerciseNode: ReactNode
           if (!isOpen) {
             exerciseNode = (
               <button type="button" id={`exercise-${exercise.instanceId}`} className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
