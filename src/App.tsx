@@ -125,33 +125,42 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   const progress = durationSec > 0 ? Math.min(1, elapsed / durationSec) : 1
   const ready = restLeft <= 0
   const hue = Math.round(progress * 120)
-  const phase = ready ? 'GO!' : progress < .58 ? 'ВОССТАНОВЛЕНИЕ' : progress < .88 ? 'ГОТОВЬСЯ' : 'ПОЧТИ ГОТОВ'
-  const nextLabel = kind === 'between_sets'
-    ? `Далее: подход ${nextSetNo ?? '—'} · ${exerciseName}`
-    : nextExerciseName ? `Далее: ${nextExerciseName}` : 'Далее: завершение тренировки'
+  const visualProgress = ready ? 100 : Math.max(4, Math.round(progress * 100))
+  const nextEyebrow = kind === 'between_sets' ? 'Следующий подход' : 'Следующее упражнение'
+  const nextTitle = kind === 'between_sets'
+    ? `Подход ${nextSetNo ?? '—'} · ${exerciseName}`
+    : nextExerciseName || 'Завершение тренировки'
 
   return (
     <section
       className={`inline-rest ${kind} ${ready ? 'is-ready' : ''}`}
-      style={{ '--rest-hue': hue, '--rest-progress': `${Math.round(progress * 100)}%` } as CSSProperties & { '--rest-hue': number; '--rest-progress': string }}
+      style={{ '--rest-hue': hue, '--rest-progress': `${visualProgress}%` } as CSSProperties & { '--rest-hue': number; '--rest-progress': string }}
       aria-live="polite"
     >
       <div className="rest-kicker">{kind === 'between_sets' ? 'Отдых между подходами' : 'Отдых между упражнениями'}</div>
       <div className="rest-stage">
-        <div className="rest-ring" aria-label={ready ? 'Отдых завершён' : `Осталось ${fmtDuration(restLeft)}`}>
+        <button
+          type="button"
+          className="rest-ring"
+          aria-label={ready ? 'GO — перейти дальше' : `Осталось ${fmtDuration(restLeft)}`}
+          disabled={!ready}
+          onClick={ready ? onAdvance : undefined}
+        >
           <div className="rest-ring-inner">
-            <span>{phase}</span>
             <strong>{ready ? 'GO!' : fmtDuration(restLeft)}</strong>
-            {!ready && <small>{Math.round(progress * 100)}%</small>}
           </div>
-        </div>
+        </button>
+
         <div className="rest-meta">
-          <p>{nextLabel}</p>
+          <div className="rest-next-copy">
+            <span>{nextEyebrow}</span>
+            <strong>{nextTitle}</strong>
+          </div>
+
           {!ready && <div className="rest-actions">
             <button type="button" className="rest-secondary" onClick={onAdd}>+30 сек</button>
             <button type="button" className="rest-secondary" onClick={onAdvance}>Пропустить</button>
           </div>}
-          {ready && <button type="button" className="rest-go" onClick={onAdvance}>GO!</button>}
         </div>
       </div>
     </section>
