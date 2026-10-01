@@ -2,4 +2,44 @@
 
 Мобильный офлайн-дневник силовых тренировок под сценарий **Excel → тренировка → Excel**.
 
-MVP собирается прямо сейчас: импорт программы, карточки упражнений, вес/повторы/RIR/боль/комментарии, замены упражнений, автосохранение, summary, экспорт Excel и PWA/offline.
+## Уже есть в MVP
+
+- импорт программы из `.xlsx` (`Workout`, `Exercises`, `Sets`);
+- одностраничный мобильный интерфейс;
+- редактирование веса и повторений по каждому подходу;
+- быстрый RIR и шкала боли для rehab-упражнений;
+- комментарий к каждому подходу;
+- завершение подхода + таймер отдыха;
+- замена упражнения на аналог с сохранением исходного плана и причины замены;
+- автосохранение текущей тренировки в браузере;
+- summary;
+- экспорт результата обратно в `.xlsx`;
+- PWA/offline через service worker;
+- встроенный демо-план FULL BODY K;
+- скачиваемый Excel-шаблон.
+
+## Формат Excel
+
+### Workout
+`workout_id | title | priority | notes`
+
+### Exercises
+`exercise_id | order | category | name | muscle_group | movement_pattern | equipment | rehab | badge | instruction | image`
+
+### Sets
+`exercise_id | set_no | set_type | target_weight | target_reps | target_rir | rest_sec | notes`
+
+## Локальный запуск
+
+```bash
+npm install
+npm run dev
+```
+
+## GitHub Pages
+
+Workflow `.github/workflows/deploy.yml` собирает Vite-приложение и публикует `dist` в GitHub Pages. Один раз в настройках репозитория нужно выбрать **Settings → Pages → Source: GitHub Actions**, если Pages ещё не включён.
+
+## Приватность
+
+Текущая тренировка и история сохраняются в `localStorage` конкретного браузера. Серверная база и аккаунт не используются.
