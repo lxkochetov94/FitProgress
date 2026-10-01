@@ -127,6 +127,10 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
         badge: str(rowValue(row, 'badge', 'плашка')) || def?.badge,
         perSide,
         weightUnit,
+        restAfterExerciseSec: num(
+          rowValue(row, 'rest_after_exercise_sec', 'rest_between_exercises_sec', 'exercise_rest_sec', 'отдых_между_упражнениями_сек'),
+          Math.max(90, setsForExercise[setsForExercise.length - 1]?.restSec ?? 90)
+        ),
         sets: setsForExercise.length ? setsForExercise : [newSet(exerciseId, {}, 0)]
       }
     })
@@ -154,6 +158,8 @@ export function exportSession(session: WorkoutSession) {
     started_at: session.startedAt,
     finished_at: session.finishedAt ?? '',
     duration_min: session.finishedAt ? Math.round((new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) / 60000) : '',
+    finish_mode: session.finishMode ?? '',
+    finish_reason: session.finishReason ?? '',
     exported_at: new Date().toISOString()
   }]
 
@@ -172,6 +178,11 @@ export function exportSession(session: WorkoutSession) {
     weight_unit: exercise.weightUnit ?? 'kg',
     replaced: exercise.exerciseId !== exercise.originalExerciseId ? 'yes' : 'no',
     replacement_reason: exercise.replacementReason ?? '',
+    rest_after_exercise_sec: exercise.restAfterExerciseSec ?? '',
+    exercise_status: exercise.finishMode ?? (exercise.finishedAt ? 'completed' : 'open'),
+    finish_reason: exercise.finishReason ?? '',
+    started_at: exercise.startedAt ?? '',
+    finished_at: exercise.finishedAt ?? '',
     instruction: exercise.instruction
   }))
 
@@ -193,6 +204,9 @@ export function exportSession(session: WorkoutSession) {
     pain_0_10: set.pain,
     completed: set.completed ? 'yes' : 'no',
     completed_at: set.completedAt ?? '',
+    rest_sec: set.restSec,
+    is_extra: set.isExtra ? 'yes' : 'no',
+    copied_from_set_no: set.copiedFromSetNo ?? '',
     comment: set.comment
   })))
 
@@ -229,6 +243,7 @@ export function downloadTemplate() {
     rehab: exercise.rehab ? 'yes' : 'no',
     per_side: exercise.perSide ?? '',
     weight_unit: exercise.weightUnit ?? 'kg',
+    rest_after_exercise_sec: exercise.restAfterExerciseSec ?? Math.max(90, exercise.sets[exercise.sets.length - 1]?.restSec ?? 90),
     badge: exercise.badge ?? '',
     instruction: exercise.instruction,
     image: exercise.image ?? ''
