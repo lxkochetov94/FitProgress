@@ -1176,3 +1176,40 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
     animation: none !important;
   }
 }
+
+
+/* v0.6 — deterministic recovery timer + stable inline layout */
+.rest-ring,
+.between_exercises .rest-ring {
+  background-color: #ff3b30 !important;
+  transition:
+    --rest-hue 1s linear,
+    --rest-progress 1s linear,
+    background-color .55s ease,
+    box-shadow .55s ease,
+    transform .2s ease !important;
+}
+
+.rest-ring::after {
+  opacity: 1;
+  transition:
+    --rest-progress 1s linear,
+    opacity .55s ease !important;
+}
+
+.inline-rest.is-ready .rest-ring {
+  background-color: #20bf55 !important;
+  box-shadow:
+    0 0 0 1px rgba(31, 186, 95, .16),
+    0 0 28px rgba(31, 186, 95, .24) !important;
+}
+
+.inline-rest.is-ready .rest-ring::after {
+  opacity: 0;
+}
+
+/* iOS Safari can otherwise animate scroll anchoring while the old inline
+   timer is removed and the next one is inserted. */
+html {
+  overflow-anchor: none;
+}
