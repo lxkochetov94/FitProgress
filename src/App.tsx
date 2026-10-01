@@ -226,11 +226,18 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
   useEffect(() => {
     if (!session.activeRest) return
+    const startedAt = new Date(session.activeRest.startedAt).getTime()
+    setClock(Number.isFinite(startedAt) ? startedAt : Date.now())
     const t = window.setInterval(() => setClock(Date.now()), 1000)
     return () => window.clearInterval(t)
-  }, [session.activeRest?.endsAt])
+  }, [session.activeRest?.startedAt, session.activeRest?.endsAt])
 
-  const restLeft = session.activeRest ? Math.max(0, Math.ceil((new Date(session.activeRest.endsAt).getTime() - clock) / 1000)) : 0
+  const restLeft = session.activeRest
+    ? Math.min(
+        session.activeRest.durationSec,
+        Math.max(0, Math.ceil((new Date(session.activeRest.endsAt).getTime() - clock) / 1000))
+      )
+    : 0
 
   const totals = useMemo(() => {
     const sets = session.plan.exercises.flatMap((e) => e.sets)
@@ -251,6 +258,21 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setSession(next)
   }
 
+  const elementTop = (id: string) => document.getElementById(id)?.getBoundingClientRect().top
+
+  const restoreAnchor = (id: string, beforeTop?: number, fallbackTop?: number) => {
+    const targetTop = beforeTop ?? fallbackTop
+    if (targetTop === undefined) return
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const element = document.getElementById(id)
+        if (!element) return
+        const delta = element.getBoundingClientRect().top - targetTop
+        if (Math.abs(delta) > 1) window.scrollBy({ top: delta, left: 0, behavior: 'auto' })
+      })
+    })
+  }
+
   const updateSet = (exerciseIndex: number, setIndex: number, patch: Partial<WorkoutSet>) => mutateExercise(exerciseIndex, (exercise) => {
     exercise.sets[setIndex] = { ...exercise.sets[setIndex], ...patch, actualReps: patch.actualReps !== undefined ? cleanReps(patch.actualReps) : exercise.sets[setIndex].actualReps }
     return exercise
@@ -262,20 +284,29 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const putRest = (draft: WorkoutSession, kind: 'between_sets' | 'between_exercises', durationSec: number, exerciseIndex: number, nextSetNo?: number) => {
     const exercise = draft.plan.exercises[exerciseIndex]
     const nextExercise = draft.plan.exercises.slice(exerciseIndex + 1).find((item) => !item.finishedAt)
+    const normalizedDuration = Math.max(1, Math.round(Number(durationSec) || 90))
     const now = Date.now()
+
+    // A new recovery period is always a brand-new timer.
+    // Never carry remaining time or a previous +30 sec extension into the next rest.
+    delete draft.activeRest
     draft.activeRest = {
       kind,
-      durationSec,
+      durationSec: normalizedDuration,
       startedAt: new Date(now).toISOString(),
-      endsAt: new Date(now + durationSec * 1000).toISOString(),
+      endsAt: new Date(now + normalizedDuration * 1000).toISOString(),
       exerciseIndex,
       exerciseName: exercise.name,
       nextSetNo,
       nextExerciseName: nextExercise?.name
     }
+    return now
   }
 
   const creditSet = (exerciseIndex: number, setIndex: number) => {
+    const anchorId = `set-${session.plan.exercises[exerciseIndex].sets[setIndex].id}`
+    const anchorTop = elementTop(anchorId)
+
     const next = clone(session)
     const exercise = next.plan.exercises[exerciseIndex]
     const set = exercise.sets[setIndex]
@@ -283,12 +314,13 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     set.completed = completed
     set.completedAt = completed ? new Date().toISOString() : undefined
 
+    let restStartedAt: number | undefined
     if (completed) {
       const nextPending = exercise.sets.find((candidate, index) => index !== setIndex && !candidate.completed)
       if (nextPending) {
-        putRest(next, 'between_sets', set.restSec || 90, exerciseIndex, nextPending.setNo)
+        restStartedAt = putRest(next, 'between_sets', set.restSec || 90, exerciseIndex, nextPending.setNo)
       } else {
-        putRest(next, 'between_exercises', exerciseRestSeconds(exercise), exerciseIndex)
+        restStartedAt = putRest(next, 'between_exercises', exerciseRestSeconds(exercise), exerciseIndex)
       }
     } else if (next.activeRest?.exerciseIndex === exerciseIndex) {
       delete next.activeRest
@@ -296,9 +328,19 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
     next.updatedAt = new Date().toISOString()
     setSession(next)
+    if (restStartedAt !== undefined) setClock(restStartedAt)
+
+    // If the old timer was above this set and the new one appears below it,
+    // keep the set under the user's finger instead of letting the page jump.
+    restoreAnchor(anchorId, anchorTop)
   }
 
   const addExtraSet = (exerciseIndex: number) => {
+    const current = session.plan.exercises[exerciseIndex]
+    const currentSource = current.sets[current.sets.length - 1]
+    const anchorId = currentSource ? `set-${currentSource.id}` : `exercise-${current.instanceId}`
+    const anchorTop = elementTop(anchorId)
+
     const next = clone(session)
     const exercise = next.plan.exercises[exerciseIndex]
     const source = exercise.sets[exercise.sets.length - 1]
@@ -317,11 +359,12 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     exercise.finishedAt = undefined
     exercise.finishMode = undefined
     exercise.finishReason = undefined
-    putRest(next, 'between_sets', source.restSec || 90, exerciseIndex, setNo)
+    const restStartedAt = putRest(next, 'between_sets', source.restSec || 90, exerciseIndex, setNo)
     next.updatedAt = new Date().toISOString()
     setSession(next)
+    setClock(restStartedAt)
     setOpenExercise(exercise.instanceId)
-    window.setTimeout(() => document.getElementById(`set-${extra.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
+    restoreAnchor(anchorId, anchorTop)
   }
 
   const openExerciseAt = (index: number) => {
@@ -333,6 +376,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
+    const finishControlId = `finish-exercise-${index}`
+    const actionTop = elementTop(finishControlId) ?? Math.min(window.innerHeight * 0.58, 520)
+
     const next = clone(session)
     const exercise = next.plan.exercises[index]
     const now = new Date().toISOString()
@@ -342,16 +388,20 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     exercise.skippedAt = mode === 'skipped' ? now : undefined
 
     const timerAlreadyRunning = next.activeRest?.kind === 'between_exercises' && next.activeRest.exerciseIndex === index
+    let restStartedAt: number | undefined
     if (!timerAlreadyRunning || mode !== 'completed') {
-      putRest(next, 'between_exercises', exerciseRestSeconds(exercise), index)
+      restStartedAt = putRest(next, 'between_exercises', exerciseRestSeconds(exercise), index)
     }
+
     next.updatedAt = now
     setSession(next)
+    if (restStartedAt !== undefined) setClock(restStartedAt)
     setOpenExercise(null)
     setExerciseEnd(null)
-    window.setTimeout(() => {
-      document.getElementById(`rest-exercise-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 100)
+
+    // The expanded card collapses by hundreds of pixels. Pin the new inline
+    // recovery block to the same visual area instead of throwing the page.
+    restoreAnchor(`rest-exercise-${index}`, actionTop, Math.min(window.innerHeight * 0.58, 520))
   }
 
   const requestFinishExercise = (index: number) => {
@@ -632,7 +682,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 const allDone = exercise.sets.every((set) => set.completed)
                 return <div className="exercise-close-actions">
                   {plannedDone && allDone && <button className="secondary big add-set" type="button" onClick={() => addExtraSet(exerciseIndex)}>＋ Добавить подход</button>}
-                  <button className={allDone ? 'primary big finish-exercise' : 'secondary big finish-exercise'} type="button" onClick={() => requestFinishExercise(exerciseIndex)}>
+                  <button id={`finish-exercise-${exerciseIndex}`} className={allDone ? 'primary big finish-exercise' : 'secondary big finish-exercise'} type="button" onClick={() => requestFinishExercise(exerciseIndex)}>
                     {allDone ? 'Завершить упражнение' : 'Завершить досрочно'}
                   </button>
                   <button className="ghost big skip-exercise" type="button" onClick={() => requestSkipExercise(exerciseIndex)}>Пропустить упражнение</button>
