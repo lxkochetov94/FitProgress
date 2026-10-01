@@ -4,7 +4,7 @@ import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
 import { archiveSession, loadActiveSession, loadHistory, saveActiveSession } from './storage'
-import { BUILTIN_EXERCISE_IMAGES } from './exerciseImages'
+import { BUILTIN_EXERCISE_IMAGES, EXERCISE_IMAGE_CREDIT } from './exerciseImages'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 
@@ -55,7 +55,11 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
   const def = getDefinition(exercise.exerciseId)
   const image = exercise.image || BUILTIN_EXERCISE_IMAGES[exercise.exerciseId]
   if (image) {
-    return <img className={compact ? 'exercise-thumb' : 'exercise-image'} src={image} alt={exerciseDisplayName(exercise)} />
+    const vector = image.toLowerCase().includes('/exercises-hq/') || image.toLowerCase().endsWith('.svg')
+    const className = compact
+      ? `exercise-thumb${vector ? ' exercise-vector' : ''}`
+      : `exercise-image${vector ? ' exercise-vector' : ''}`
+    return <img className={className} src={image} alt={exerciseDisplayName(exercise)} />
   }
   return (
     <div className={compact ? 'exercise-thumb exercise-thumb-placeholder' : 'exercise-visual'} aria-label="Изображение упражнения пока не добавлено">
@@ -713,7 +717,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { acti
       {error && <div className="error-box">{error}</div>}
       <section className="offline-card"><b>Без интернета</b><p>После первого полного открытия установленная PWA хранит интерфейс локально. Текущая тренировка — в памяти Safari на устройстве.</p></section>
       {history.length > 0 && <section className="history"><span className="eyebrow">ПОСЛЕДНИЕ ТРЕНИРОВКИ</span>{history.map((x) => <div className="history-row" key={x.sessionId}><div><b>{x.plan.title}</b><small>{fmtDate(x.startedAt)} · {x.finishedAt ? 'завершена' : 'не завершена'}</small></div><button onClick={() => exportSession(x)}>Excel</button></div>)}</section>}
-      <footer>FitProgress v0.1 · данные тренировки не отправляются на сервер</footer>
+      <footer>FitProgress v0.3 · данные тренировки не отправляются на сервер<br /><span className="asset-credit">{EXERCISE_IMAGE_CREDIT}</span></footer>
     </main>
   )
 }
