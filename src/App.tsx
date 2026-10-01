@@ -55,11 +55,14 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
   const def = getDefinition(exercise.exerciseId)
   const image = exercise.image || BUILTIN_EXERCISE_IMAGES[exercise.exerciseId]
   if (image) {
-    const vector = image.toLowerCase().includes('/exercises-hq/') || image.toLowerCase().endsWith('.svg')
+    const lower = image.toLowerCase()
+    const generated = lower.includes('/exercises-generated/')
+    const vector = lower.includes('/exercises-hq/') || lower.endsWith('.svg')
+    const mediaClass = generated ? ' exercise-generated' : vector ? ' exercise-vector' : ''
     const className = compact
-      ? `exercise-thumb${vector ? ' exercise-vector' : ''}`
-      : `exercise-image${vector ? ' exercise-vector' : ''}`
-    return <img className={className} src={image} alt={exerciseDisplayName(exercise)} />
+      ? `exercise-thumb${mediaClass}`
+      : `exercise-image${mediaClass}`
+    return <img className={className} src={image} alt={exerciseDisplayName(exercise)} loading={compact ? 'lazy' : 'eager'} />
   }
   return (
     <div className={compact ? 'exercise-thumb exercise-thumb-placeholder' : 'exercise-visual'} aria-label="Изображение упражнения пока не добавлено">

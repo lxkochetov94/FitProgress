@@ -565,3 +565,26 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
     padding: 6px;
   }
 }
+
+
+/* generated exercise artwork */
+.exercise-image.exercise-generated {
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #f2f5f3;
+  padding: 0 !important;
+  image-rendering: auto;
+}
+.exercise-thumb.exercise-generated {
+  object-fit: cover !important;
+  object-position: center 20% !important;
+  background: #f2f5f3;
+  padding: 0 !important;
+  image-rendering: auto;
+}
+@media (max-width: 520px) {
+  .exercise-expanded .exercise-image.exercise-generated {
+    height: min(86vw, 430px);
+    min-height: 300px;
+  }
+}
