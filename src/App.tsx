@@ -357,7 +357,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const advanceFromRest = () => {
     if (!session.activeRest) return
     const next = clone(session)
-    const rest = next.activeRest
+    const rest = next.activeRest!
     delete next.activeRest
     next.updatedAt = new Date().toISOString()
 
