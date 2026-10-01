@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
+import type { PerSide, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { getDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
 
@@ -10,6 +10,18 @@ const num = (value: unknown, fallback = 0) => {
   const parsed = Number(String(value ?? '').replace(',', '.'))
   return Number.isFinite(parsed) ? parsed : fallback
 }
+
+const detectPerSide = (value: unknown): PerSide | undefined => {
+  const text = str(value).toLowerCase()
+  if (!text) return undefined
+  if (['arm', 'рука', 'руку', 'руки', 'каждая рука', 'на каждую руку'].includes(text) || /\/\s*(рук|arm)/i.test(text)) return 'arm'
+  if (['leg', 'нога', 'ногу', 'ноги', 'каждая нога', 'на каждую ногу'].includes(text) || /\/\s*(ног|leg)/i.test(text)) return 'leg'
+  if (['side', 'сторона', 'сторону', 'на каждую сторону'].includes(text) || /\/\s*(сторон|side)/i.test(text)) return 'side'
+  return undefined
+}
+
+const stripPerSideSuffix = (value: string) =>
+  value.replace(/\s*\/\s*(?:руку|руки|рук|ногу|ноги|ног|сторону|стороны|сторон|arm|leg|side)\b.*$/i, '').trim()
 
 function normalizedRows(sheet?: XLSX.WorkSheet) {
   if (!sheet) return [] as Record<string, unknown>[]
@@ -65,10 +77,17 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
       const exerciseId = str(rowValue(row, 'exercise_id', 'id')) || `exercise_${index + 1}`
       const def = getDefinition(exerciseId)
       const name = str(rowValue(row, 'name', 'exercise_name', 'упражнение')) || def?.name || exerciseId
-      const setsForExercise = setRows
+      const rawSets = setRows
         .filter((setRow) => str(rowValue(setRow, 'exercise_id', 'id')) === exerciseId)
         .map((setRow, setIndex) => newSet(exerciseId, setRow, setIndex))
         .sort((a, b) => a.setNo - b.setNo)
+      const perSide =
+        detectPerSide(rowValue(row, 'per_side', 'per_side_label', 'на_сторону')) ||
+        rawSets.map((set) => detectPerSide(set.targetReps)).find(Boolean) ||
+        def?.perSide
+      const setsForExercise = perSide
+        ? rawSets.map((set) => ({ ...set, targetReps: stripPerSideSuffix(set.targetReps), actualReps: stripPerSideSuffix(set.actualReps) }))
+        : rawSets
 
       return {
         instanceId: `${exerciseId}-${index}-${Date.now()}`,
@@ -85,6 +104,7 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
         instruction: str(rowValue(row, 'instruction', 'description', 'описание')) || def?.instruction || '',
         image: str(rowValue(row, 'image', 'image_url', 'картинка')) || undefined,
         badge: str(rowValue(row, 'badge', 'плашка')) || def?.badge,
+        perSide,
         sets: setsForExercise.length ? setsForExercise : [newSet(exerciseId, {}, 0)]
       }
     })
@@ -126,6 +146,7 @@ export function exportSession(session: WorkoutSession) {
     movement_pattern: exercise.movementPattern,
     equipment: exercise.equipment,
     rehab: exercise.rehab ? 'yes' : 'no',
+    per_side: exercise.perSide ?? '',
     replaced: exercise.exerciseId !== exercise.originalExerciseId ? 'yes' : 'no',
     replacement_reason: exercise.replacementReason ?? '',
     instruction: exercise.instruction
@@ -183,6 +204,7 @@ export function downloadTemplate() {
     movement_pattern: exercise.movementPattern,
     equipment: exercise.equipment,
     rehab: exercise.rehab ? 'yes' : 'no',
+    per_side: exercise.perSide ?? '',
     badge: exercise.badge ?? '',
     instruction: exercise.instruction,
     image: exercise.image ?? ''
