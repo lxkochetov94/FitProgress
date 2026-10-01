@@ -1,6 +1,20 @@
 export type SetType = 'warmup' | 'calibration' | 'working' | 'rehab' | 'other'
 export type PerSide = 'arm' | 'leg' | 'side'
 export type WeightUnit = 'kg' | 'lb'
+export type ExerciseFinishMode = 'completed' | 'early' | 'skipped'
+export type WorkoutFinishMode = 'completed' | 'early'
+export type RestKind = 'between_sets' | 'between_exercises'
+
+export interface ActiveRestTimer {
+  kind: RestKind
+  startedAt: string
+  endsAt: string
+  durationSec: number
+  exerciseIndex: number
+  exerciseName: string
+  nextSetNo?: number
+  nextExerciseName?: string
+}
 
 export interface WorkoutSet {
   id: string
@@ -18,6 +32,8 @@ export interface WorkoutSet {
   comment: string
   completed: boolean
   completedAt?: string
+  isExtra?: boolean
+  copiedFromSetNo?: number
 }
 
 export interface ExerciseSnapshot {
@@ -67,6 +83,10 @@ export interface WorkoutExercise {
   weightUnit?: WeightUnit
   startedAt?: string
   finishedAt?: string
+  restAfterExerciseSec?: number
+  finishMode?: ExerciseFinishMode
+  finishReason?: string
+  skippedAt?: string
   sets: WorkoutSet[]
   replacementReason?: 'Занято' | 'Дискомфорт' | 'Другое'
   replacedAt?: string
@@ -87,6 +107,9 @@ export interface WorkoutSession {
   startedAt: string
   finishedAt?: string
   updatedAt: string
+  activeRest?: ActiveRestTimer
+  finishMode?: WorkoutFinishMode
+  finishReason?: string
   archived?: boolean
 }
 
