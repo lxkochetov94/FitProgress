@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx'
 import type { PerSide, WeightUnit, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
-import { getDefinition } from './exerciseLibrary'
+import { findDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
 
 const cleanKey = (key: string) => key.trim().toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '')
@@ -84,11 +84,13 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
   const meta = workoutRows[0] ?? {}
   const exercises: WorkoutExercise[] = exerciseRows
     .map((row, index) => {
-      const exerciseId = str(rowValue(row, 'exercise_id', 'id')) || `exercise_${index + 1}`
-      const def = getDefinition(exerciseId)
-      const name = str(rowValue(row, 'name', 'exercise_name', 'упражнение')) || def?.name || exerciseId
+      const sourceExerciseId = str(rowValue(row, 'exercise_id', 'id')) || `exercise_${index + 1}`
+      const importedName = str(rowValue(row, 'name', 'exercise_name', 'упражнение'))
+      const def = findDefinition(sourceExerciseId, importedName)
+      const exerciseId = def?.id || sourceExerciseId
+      const name = importedName || def?.name || sourceExerciseId
       const rawSets = setRows
-        .filter((setRow) => str(rowValue(setRow, 'exercise_id', 'id')) === exerciseId)
+        .filter((setRow) => str(rowValue(setRow, 'exercise_id', 'id')) === sourceExerciseId)
         .map((setRow, setIndex) => newSet(exerciseId, setRow, setIndex))
         .sort((a, b) => a.setNo - b.setNo)
       const perSide =
