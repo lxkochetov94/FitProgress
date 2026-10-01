@@ -5,6 +5,7 @@ import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerci
 import { downloadTemplate, exportSession, importWorkout } from './excel'
 import { archiveSession, loadActiveSession, loadHistory, saveActiveSession } from './storage'
 import { BUILTIN_EXERCISE_IMAGES } from './exerciseImages'
+import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
@@ -431,7 +432,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
       return a.muscleGroup.localeCompare(b.muscleGroup, 'ru') || a.name.localeCompare(b.name, 'ru')
     })
 
-  const currentCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym !== 'Старый зал').length
+  const currentCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym === 'Новый зал').length
   const legacyCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym === 'Старый зал').length
   const rehabCount = EXERCISE_LIBRARY.filter((x) => x.known && x.rehab).length
 
@@ -443,6 +444,26 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
         <h1>Накопленный опыт уже внутри FitProgress.</h1>
         <p>Текущие и старые упражнения, рабочие веса, лучшие результаты и rehab-контекст используются для тегов «Новое» и при подборе замен.</p>
         <div className="library-stats"><div><b>{currentCount}</b><span>текущий зал</span></div><div><b>{legacyCount}</b><span>старый зал</span></div><div><b>{rehabCount}</b><span>rehab</span></div></div>
+      </section>
+      <section className="shoulder-profile">
+        <div className="shoulder-profile-head">
+          <div>
+            <span className="eyebrow">ПЛЕЧО · ОБНОВЛЕНО {SHOULDER_PROFILE.updatedAt}</span>
+            <h2>{SHOULDER_PROFILE.phase}</h2>
+            <p>{SHOULDER_PROFILE.summary}</p>
+          </div>
+          <span className="shoulder-phase">{SHOULDER_PROFILE.focus}</span>
+        </div>
+        <div className="shoulder-checkpoints">
+          {SHOULDER_PROFILE.checkpoints.map((item) => (
+            <div className={`shoulder-check ${item.status}`} key={item.id}>
+              <div><b>{item.name}</b><span>{item.value}</span></div>
+              <div className="shoulder-pain">{item.pain}</div>
+              <p>{item.note}</p>
+            </div>
+          ))}
+        </div>
+        <div className="shoulder-next"><b>Следующий ориентир</b><p>{SHOULDER_PROFILE.nextGoal}</p><strong>{SHOULDER_PROFILE.guardrail}</strong></div>
       </section>
       <input className="search library-search" placeholder="Поиск: спина, Matrix, жим, бицепс…" value={query} onChange={(e) => setQuery(e.target.value)} />
       <div className="library-tabs">
