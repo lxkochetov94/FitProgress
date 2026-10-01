@@ -1,4 +1,5 @@
 export type SetType = 'warmup' | 'calibration' | 'working' | 'rehab' | 'other'
+export type PerSide = 'arm' | 'leg' | 'side'
 
 export interface WorkoutSet {
   id: string
@@ -29,6 +30,7 @@ export interface ExerciseSnapshot {
   instruction: string
   image?: string
   badge?: string
+  perSide?: PerSide
 }
 
 export interface WorkoutExercise {
@@ -47,6 +49,7 @@ export interface WorkoutExercise {
   instruction: string
   image?: string
   badge?: string
+  perSide?: PerSide
   sets: WorkoutSet[]
   replacementReason?: 'Занято' | 'Дискомфорт' | 'Другое'
   replacedAt?: string
@@ -83,4 +86,5 @@ export interface ExerciseDefinition {
   defaultSets?: number
   defaultReps?: string
   icon?: string
+  perSide?: PerSide
 }
