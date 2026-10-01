@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
@@ -101,13 +101,60 @@ function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: Wo
         <input aria-label={`Фактический вес, ${unit}`} inputMode="decimal" value={set.actualWeight} onChange={(e) => onChange({ actualWeight: e.target.value })} placeholder="—" />
         <input aria-label="Фактические повторы" inputMode="decimal" value={cleanReps(set.actualReps)} onChange={(e) => onChange({ actualReps: e.target.value })} placeholder="—" />
         <input aria-label="Фактический RIR" inputMode="decimal" value={set.actualRir} onChange={(e) => onChange({ actualRir: e.target.value })} placeholder="—" />
-        {rehab ? <input aria-label="Боль от 0 до 10" inputMode="decimal" value={set.pain} onChange={(e) => onChange({ pain: e.target.value })} placeholder="0" /> : <span className="pf-na">—</span>}
+        <input aria-label="Боль от 0 до 10" inputMode="decimal" value={set.pain} onChange={(e) => onChange({ pain: e.target.value })} placeholder="—" />
       </div>
       <textarea className="comment compact-comment" rows={1} value={set.comment} onChange={(e) => onChange({ comment: e.target.value })} placeholder="Комментарий к подходу — необязательно" />
       <button type="button" className={set.completed ? 'credit-set completed' : 'credit-set'} onClick={onCredit}>
         {set.completed ? 'Засчитан ✓' : 'Засчитать подход'}
       </button>
     </div>
+  )
+}
+
+function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextExerciseName, onAdd, onAdvance }: {
+  kind: 'between_sets' | 'between_exercises'
+  durationSec: number
+  restLeft: number
+  exerciseName: string
+  nextSetNo?: number
+  nextExerciseName?: string
+  onAdd: () => void
+  onAdvance: () => void
+}) {
+  const elapsed = Math.max(0, durationSec - restLeft)
+  const progress = durationSec > 0 ? Math.min(1, elapsed / durationSec) : 1
+  const ready = restLeft <= 0
+  const hue = Math.round(progress * 120)
+  const phase = ready ? 'GO!' : progress < .58 ? 'ВОССТАНОВЛЕНИЕ' : progress < .88 ? 'ГОТОВЬСЯ' : 'ПОЧТИ ГОТОВ'
+  const nextLabel = kind === 'between_sets'
+    ? `Далее: подход ${nextSetNo ?? '—'} · ${exerciseName}`
+    : nextExerciseName ? `Далее: ${nextExerciseName}` : 'Далее: завершение тренировки'
+
+  return (
+    <section
+      className={`inline-rest ${kind} ${ready ? 'is-ready' : ''}`}
+      style={{ '--rest-hue': hue, '--rest-progress': progress } as React.CSSProperties}
+      aria-live="polite"
+    >
+      <div className="rest-kicker">{kind === 'between_sets' ? 'Отдых между подходами' : 'Отдых между упражнениями'}</div>
+      <div className="rest-stage">
+        <div className="rest-ring" aria-label={ready ? 'Отдых завершён' : `Осталось ${fmtDuration(restLeft)}`}>
+          <div className="rest-ring-inner">
+            <span>{phase}</span>
+            <strong>{ready ? 'GO!' : fmtDuration(restLeft)}</strong>
+            {!ready && <small>{Math.round(progress * 100)}%</small>}
+          </div>
+        </div>
+        <div className="rest-meta">
+          <p>{nextLabel}</p>
+          {!ready && <div className="rest-actions">
+            <button type="button" className="rest-secondary" onClick={onAdd}>+30 сек</button>
+            <button type="button" className="rest-secondary" onClick={onAdvance}>Пропустить</button>
+          </div>}
+          {ready && <button type="button" className="rest-go" onClick={onAdvance}>GO!</button>}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -293,6 +340,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setSession(next)
     setOpenExercise(null)
     setExerciseEnd(null)
+    window.setTimeout(() => {
+      document.getElementById(`rest-exercise-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
   }
 
   const requestFinishExercise = (index: number) => {
@@ -304,11 +354,38 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
   const requestSkipExercise = (index: number) => setExerciseEnd({ index, mode: 'skip' })
 
-  const clearRest = () => {
+  const advanceFromRest = () => {
+    if (!session.activeRest) return
     const next = clone(session)
+    const rest = next.activeRest
     delete next.activeRest
     next.updatedAt = new Date().toISOString()
+
+    if (rest.kind === 'between_sets') {
+      const exercise = next.plan.exercises[rest.exerciseIndex]
+      setSession(next)
+      setOpenExercise(exercise.instanceId)
+      const target = exercise.sets.find((set) => set.setNo === rest.nextSetNo && !set.completed)
+      window.setTimeout(() => {
+        document.getElementById(target ? `set-${target.id}` : `exercise-${exercise.instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 80)
+      return
+    }
+
+    const nextIndex = next.plan.exercises.findIndex((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
+    if (nextIndex >= 0) {
+      const exercise = next.plan.exercises[nextIndex]
+      exercise.startedAt = exercise.startedAt ?? new Date().toISOString()
+      setSession(next)
+      setOpenExercise(exercise.instanceId)
+      window.setTimeout(() => {
+        document.getElementById(`exercise-${exercise.instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+      return
+    }
+
     setSession(next)
+    window.setTimeout(() => document.getElementById('workout-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
   }
 
   const addRestTime = (seconds: number) => {
@@ -451,9 +528,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
           const hasLocalHistory = history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
           const isNew = !(definition?.known || hasLocalHistory)
+          let exerciseNode: React.ReactNode
           if (!isOpen) {
-            return (
-              <button type="button" className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
+            exerciseNode = (
+              <button type="button" id={`exercise-${exercise.instanceId}`} className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
                 <ExerciseVisual exercise={exercise} compact />
                 <div className="preview-copy">
                   <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.muscleGroup || exercise.category}</span>
@@ -472,10 +550,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 <span className="row-chevron">›</span>
               </button>
             )
-          }
-
-          return (
-            <section className="exercise-expanded" key={exercise.instanceId}>
+          } else {
+            exerciseNode = (
+            <section id={`exercise-${exercise.instanceId}`} className="exercise-expanded" key={exercise.instanceId}>
               <button className="collapse-control" type="button" onClick={() => setOpenExercise(null)}>‹ Все упражнения</button>
               <ExerciseVisual exercise={exercise} />
               <div className="expanded-copy">
@@ -518,7 +595,27 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 <span>Вес в {exercise.weightUnit === 'lb' ? 'lbs' : 'кг'}</span>
               </div>
               <div className="sets-stack">
-                {exercise.sets.map((set, setIndex) => <SetRow key={set.id} set={set} rehab={exercise.rehab} weightUnit={exercise.weightUnit ?? 'kg'} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onCredit={() => creditSet(exerciseIndex, setIndex)} />)}
+                {exercise.sets.map((set, setIndex) => (
+                  <Fragment key={set.id}>
+                    {session.activeRest?.kind === 'between_sets' &&
+                      session.activeRest.exerciseIndex === exerciseIndex &&
+                      session.activeRest.nextSetNo === set.setNo && (
+                        <div id={`rest-set-${exerciseIndex}-${set.setNo}`}>
+                          <RestBlock
+                            kind="between_sets"
+                            durationSec={session.activeRest.durationSec}
+                            restLeft={restLeft}
+                            exerciseName={session.activeRest.exerciseName}
+                            nextSetNo={session.activeRest.nextSetNo}
+                            nextExerciseName={session.activeRest.nextExerciseName}
+                            onAdd={() => addRestTime(30)}
+                            onAdvance={advanceFromRest}
+                          />
+                        </div>
+                      )}
+                    <SetRow set={set} rehab={exercise.rehab} weightUnit={exercise.weightUnit ?? 'kg'} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onCredit={() => creditSet(exerciseIndex, setIndex)} />
+                  </Fragment>
+                ))}
               </div>
 
               {(() => {
@@ -533,25 +630,34 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 </div>
               })()}
             </section>
+            )
+          }
+
+          const showExerciseRest = session.activeRest?.kind === 'between_exercises' && session.activeRest.exerciseIndex === exerciseIndex
+          return (
+            <Fragment key={exercise.instanceId}>
+              {exerciseNode}
+              {showExerciseRest && (
+                <div id={`rest-exercise-${exerciseIndex}`} className="exercise-rest-slot">
+                  <RestBlock
+                    kind="between_exercises"
+                    durationSec={session.activeRest!.durationSec}
+                    restLeft={restLeft}
+                    exerciseName={session.activeRest!.exerciseName}
+                    nextSetNo={session.activeRest!.nextSetNo}
+                    nextExerciseName={session.activeRest!.nextExerciseName}
+                    onAdd={() => addRestTime(30)}
+                    onAdvance={advanceFromRest}
+                  />
+                </div>
+              )}
+            </Fragment>
           )
         })}
       </section>
 
-      <section className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={requestFinishWorkout}>{session.plan.exercises.every((exercise) => Boolean(exercise.finishedAt)) ? 'Завершить тренировку' : 'Завершить тренировку досрочно'}</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
+      <section id="workout-summary" className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={requestFinishWorkout}>{session.plan.exercises.every((exercise) => Boolean(exercise.finishedAt)) ? 'Завершить тренировку' : 'Завершить тренировку досрочно'}</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
 
-      {session.activeRest && <div className={`rest-timer ${session.activeRest.kind}`}>
-        <div className="rest-copy">
-          <span>{session.activeRest.kind === 'between_sets' ? 'Отдых между подходами' : 'Отдых между упражнениями'}</span>
-          <b>{restLeft > 0 ? fmtDuration(restLeft) : '00:00'}</b>
-          <small>{restLeft > 0
-            ? session.activeRest.kind === 'between_sets'
-              ? `Далее: подход ${session.activeRest.nextSetNo ?? '—'} · ${session.activeRest.exerciseName}`
-              : session.activeRest.nextExerciseName ? `Далее: ${session.activeRest.nextExerciseName}` : 'Далее: завершение тренировки'
-            : 'Можно начинать'}</small>
-        </div>
-        <button onClick={() => addRestTime(30)}>+30 сек</button>
-        <button onClick={clearRest}>{restLeft > 0 ? 'Пропустить' : 'Скрыть'}</button>
-      </div>}
       {replacementFor !== null && <ReplacementSheet exercise={session.plan.exercises[replacementFor]} onClose={() => setReplacementFor(null)} onReplace={(def, reason) => replaceExercise(replacementFor, def, reason)} onCustom={(reason) => replaceCustom(replacementFor, reason)} />}
       {exerciseEnd && <EndReasonSheet
         title={exerciseEnd.mode === 'skip' ? 'Пропустить упражнение?' : 'Завершить упражнение досрочно?'}
