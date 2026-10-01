@@ -42,43 +42,52 @@ const isWarmupExercise = (exercise: WorkoutExercise) =>
 
 const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|ый)|new/i.test(badge))
 
-function ExerciseVisual({ exercise }: { exercise: WorkoutExercise }) {
+function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
   const image = exercise.image || BUILTIN_EXERCISE_IMAGES[exercise.exerciseId]
   if (image) {
-    return <img className="exercise-image" src={image} alt={exerciseDisplayName(exercise)} />
+    return <img className={compact ? 'exercise-thumb' : 'exercise-image'} src={image} alt={exerciseDisplayName(exercise)} />
   }
   return (
-    <div className="exercise-visual" aria-label="Изображение упражнения пока не добавлено">
-      <div className="visual-dumbbell"><i /><b /><i /></div>
+    <div className={compact ? 'exercise-thumb exercise-thumb-placeholder' : 'exercise-visual'} aria-label="Изображение упражнения пока не добавлено">
+      {!compact && <div className="visual-dumbbell"><i /><b /><i /></div>}
       <strong>{def?.icon ?? exercise.name.slice(0, 3).toUpperCase()}</strong>
-      <span>{exercise.muscleGroup || exercise.movementPattern}</span>
+      {!compact && <span>{exercise.muscleGroup || exercise.movementPattern}</span>}
     </div>
   )
 }
 
-function SetRow({ set, rehab, onChange, onComplete }: { set: WorkoutSet; rehab: boolean; onChange: (patch: Partial<WorkoutSet>) => void; onComplete: () => void }) {
+function SetRow({ set, rehab, weightUnit = 'kg', onChange, onComplete }: { set: WorkoutSet; rehab: boolean; weightUnit?: 'kg' | 'lb'; onChange: (patch: Partial<WorkoutSet>) => void; onComplete: () => void }) {
   const setLabel = set.setType === 'working' ? `Рабочий ${set.setNo}` : set.setType === 'warmup' ? 'Разминка' : set.setType === 'calibration' ? 'Калибровка' : `Подход ${set.setNo}`
+  const unit = weightUnit === 'lb' ? 'lbs' : 'кг'
   return (
-    <div className={`set-card ${set.completed ? 'is-complete' : ''}`}>
-      <div className="set-topline">
-        <span className="set-label">{setLabel}</span>
-        <span className="target-line">План: {set.targetWeight || '—'} × {cleanReps(set.targetReps) || '—'}{set.targetRir ? ` · RIR ${set.targetRir}` : ''}</span>
+    <div className={`plan-fact-set ${set.completed ? 'is-complete' : ''}`}>
+      <div className="pf-set-title"><b>{setLabel}</b>{set.completed && <span>✓ выполнен</span>}</div>
+      <div className="pf-grid pf-head">
+        <span />
+        <span>Вес <small>{unit}</small></span>
+        <span>Повторы</span>
+        <span>RIR</span>
+        <span>Боль</span>
       </div>
-      <div className="set-input-grid">
-        <label><span>Вес</span><input inputMode="decimal" value={set.actualWeight} onChange={(e) => onChange({ actualWeight: e.target.value })} placeholder="—" /></label>
-        <span className="times">×</span>
-        <label><span>Повторы</span><input inputMode="decimal" value={cleanReps(set.actualReps)} onChange={(e) => onChange({ actualReps: e.target.value })} placeholder="—" /></label>
+      <div className="pf-grid pf-plan">
+        <b>План</b>
+        <span>{set.targetWeight || '—'}</span>
+        <span>{cleanReps(set.targetReps) || '—'}</span>
+        <span>{set.targetRir || '—'}</span>
+        <span>{rehab ? '≤2' : '—'}</span>
       </div>
-      <div className="quick-section">
-        <span className="quick-title">RIR</span>
-        <div className="chips compact">
-          {['0', '1', '2', '3', '4', '5+'].map((value) => <button key={value} type="button" className={set.actualRir === value ? 'chip active' : 'chip'} onClick={() => onChange({ actualRir: set.actualRir === value ? '' : value })}>{value}</button>)}
-        </div>
+      <div className="pf-grid pf-fact">
+        <b>Факт</b>
+        <input aria-label={`Фактический вес, ${unit}`} inputMode="decimal" value={set.actualWeight} onChange={(e) => onChange({ actualWeight: e.target.value })} placeholder="—" />
+        <input aria-label="Фактические повторы" inputMode="decimal" value={cleanReps(set.actualReps)} onChange={(e) => onChange({ actualReps: e.target.value })} placeholder="—" />
+        <input aria-label="Фактический RIR" inputMode="decimal" value={set.actualRir} onChange={(e) => onChange({ actualRir: e.target.value })} placeholder="—" />
+        {rehab ? <input aria-label="Боль от 0 до 10" inputMode="decimal" value={set.pain} onChange={(e) => onChange({ pain: e.target.value })} placeholder="0" /> : <span className="pf-na">—</span>}
       </div>
-      {rehab && <div className="quick-section"><span className="quick-title">Боль</span><div className="chips compact">{['0', '0,5', '1', '2', '3', '4+'].map((value) => <button key={value} type="button" className={set.pain === value ? 'chip active danger' : 'chip'} onClick={() => onChange({ pain: set.pain === value ? '' : value })}>{value}</button>)}</div></div>}
-      <textarea className="comment" rows={2} value={set.comment} onChange={(e) => onChange({ comment: e.target.value })} placeholder="Комментарий: техника, ощущения, запас…" />
-      <button type="button" className={set.completed ? 'complete-button completed' : 'complete-button'} onClick={onComplete}>{set.completed ? '✓ Подход выполнен' : 'Отметить подход ✓'}</button>
+      <div className="pf-bottom">
+        <textarea className="comment compact-comment" rows={1} value={set.comment} onChange={(e) => onChange({ comment: e.target.value })} placeholder="Комментарий к подходу…" />
+        <button type="button" className={set.completed ? 'set-check completed' : 'set-check'} onClick={onComplete} aria-label={set.completed ? 'Подход выполнен' : 'Отметить подход выполненным'}>{set.completed ? '✓' : '○'}</button>
+      </div>
     </div>
   )
 }
@@ -109,6 +118,7 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
 
 function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession; setSession: (s: WorkoutSession) => void; onExit: () => void }) {
   const [replacementFor, setReplacementFor] = useState<number | null>(null)
+  const [openExercise, setOpenExercise] = useState<string | null>(() => session.plan.exercises.find((exercise) => exercise.startedAt && !exercise.finishedAt)?.instanceId ?? null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [restLeft, setRestLeft] = useState(0)
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
@@ -150,6 +160,22 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     if (completed) setRestLeft(current.restSec || 90)
   }
 
+  const openExerciseAt = (index: number) => {
+    const exercise = session.plan.exercises[index]
+    if (!exercise.startedAt) {
+      mutateExercise(index, (draft) => ({ ...draft, startedAt: new Date().toISOString() }))
+    }
+    setOpenExercise(exercise.instanceId)
+  }
+
+  const finishExercise = (index: number) => {
+    const exercise = session.plan.exercises[index]
+    const incomplete = exercise.sets.filter((set) => !set.completed).length
+    if (incomplete > 0 && !window.confirm(`В упражнении ещё не отмечено ${incomplete} подходов. Всё равно завершить?`)) return
+    mutateExercise(index, (draft) => ({ ...draft, finishedAt: new Date().toISOString() }))
+    setOpenExercise(null)
+  }
+
   const replaceExercise = (index: number, def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => {
     mutateExercise(index, (exercise) => {
       const originalSnapshot = exercise.originalSnapshot ?? {
@@ -163,7 +189,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         instruction: exercise.instruction,
         image: exercise.image,
         badge: exercise.badge,
-        perSide: exercise.perSide
+        perSide: exercise.perSide,
+        weightUnit: exercise.weightUnit
       }
       return {
         ...exercise,
@@ -179,6 +206,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         image: undefined,
         badge: 'Замена',
         perSide: def.perSide,
+        weightUnit: def.weightUnit ?? exercise.weightUnit ?? 'kg',
+        startedAt: exercise.startedAt ?? new Date().toISOString(),
+        finishedAt: undefined,
         replacementReason: reason,
         replacedAt: new Date().toISOString(),
         sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
@@ -221,6 +251,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         replacedAt: undefined,
         badge: snapshot?.badge ?? def?.badge,
         perSide: snapshot?.perSide ?? def?.perSide,
+        weightUnit: snapshot?.weightUnit ?? def?.weightUnit ?? exercise.weightUnit ?? 'kg',
         instruction: snapshot?.instruction || def?.instruction || exercise.instruction,
         sets: exercise.sets.map((s) => ({ ...s, actualWeight: s.targetWeight, actualReps: s.targetReps, actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
       }
@@ -256,32 +287,71 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
       <div className="progress-track"><div style={{ width: `${totals.totalSets ? (totals.doneSets / totals.totalSets) * 100 : 0}%` }} /></div>
 
-      {session.plan.exercises.map((exercise, exerciseIndex) => (
-        <section className="exercise-block" key={exercise.instanceId}>
-          <div className="exercise-header">
-            <ExerciseVisual exercise={exercise} />
-            <div className="exercise-title-wrap">
-              <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.category}</span>
-              <h2>{exerciseDisplayName(exercise)}</h2>
-              <div className="tag-row">
-                {exercise.muscleGroup && <span className="context-tag">{exercise.muscleGroup}</span>}
-                {exercise.equipment && <span className="context-tag">{exercise.equipment}</span>}
-                {exercise.rehab && <span className="context-tag status">Rehab</span>}
-                {isWarmupExercise(exercise) && <span className="context-tag status">Разминка</span>}
-                {!history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId)) && <span className="context-tag new">Новое</span>}
-                {exercise.exerciseId !== exercise.originalExerciseId && <span className="context-tag replacement">Замена</span>}
-                {exercise.badge && !isLegacyNewBadge(exercise.badge) && exercise.badge !== 'Замена' && <span className="context-tag status">{exercise.badge}</span>}
+      <section className="exercise-list" aria-label="Упражнения тренировки">
+        {session.plan.exercises.map((exercise, exerciseIndex) => {
+          const isOpen = openExercise === exercise.instanceId
+          const doneSets = exercise.sets.filter((set) => set.completed).length
+          const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
+          const isNew = !history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
+          if (!isOpen) {
+            return (
+              <button type="button" className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
+                <ExerciseVisual exercise={exercise} compact />
+                <div className="preview-copy">
+                  <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.muscleGroup || exercise.category}</span>
+                  <h3>{exerciseDisplayName(exercise)}</h3>
+                  <p>{exercise.sets.length} подх.{representative ? ` · ${representative.targetWeight || '—'} ${exercise.weightUnit === 'lb' ? 'lbs' : 'кг'} × ${cleanReps(representative.targetReps) || '—'}` : ''}</p>
+                  <div className="preview-tags">
+                    {exercise.equipment && <span>{exercise.equipment}</span>}
+                    {exercise.rehab && <span>Rehab</span>}
+                    {isNew && <span className="new">Новое</span>}
+                    {exercise.finishedAt && <span className="done">Готово ✓</span>}
+                    {!exercise.finishedAt && doneSets > 0 && <span>{doneSets}/{exercise.sets.length}</span>}
+                  </div>
+                </div>
+                <span className="row-chevron">›</span>
+              </button>
+            )
+          }
+
+          return (
+            <section className="exercise-expanded" key={exercise.instanceId}>
+              <button className="collapse-control" type="button" onClick={() => setOpenExercise(null)}>‹ Все упражнения</button>
+              <ExerciseVisual exercise={exercise} />
+              <div className="expanded-copy">
+                <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.category}</span>
+                <h2>{exerciseDisplayName(exercise)}</h2>
+                <div className="tag-row">
+                  {exercise.muscleGroup && <span className="context-tag">{exercise.muscleGroup}</span>}
+                  {exercise.equipment && <span className="context-tag">{exercise.equipment}</span>}
+                  <span className="context-tag">{exercise.weightUnit === 'lb' ? 'lbs' : 'кг'}</span>
+                  {exercise.rehab && <span className="context-tag status">Rehab</span>}
+                  {isWarmupExercise(exercise) && <span className="context-tag status">Разминка</span>}
+                  {isNew && <span className="context-tag new">Новое</span>}
+                  {exercise.exerciseId !== exercise.originalExerciseId && <span className="context-tag replacement">Замена</span>}
+                </div>
+                {exercise.instruction && <p className="instruction">{exercise.instruction}</p>}
               </div>
-            </div>
-          </div>
-          {exercise.exerciseId !== exercise.originalExerciseId && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
-          {exercise.instruction && <p className="instruction">{exercise.instruction}</p>}
-          <div className="exercise-actions"><button className="secondary" onClick={() => setReplacementFor(exerciseIndex)}>↔ Заменить</button></div>
-          <div className="sets-stack">
-            {exercise.sets.map((set, setIndex) => <SetRow key={set.id} set={set} rehab={exercise.rehab} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onComplete={() => toggleSet(exerciseIndex, setIndex)} />)}
-          </div>
-        </section>
-      ))}
+
+              {exercise.exerciseId !== exercise.originalExerciseId && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
+
+              <div className="expanded-actions">
+                <button className="secondary" onClick={() => setReplacementFor(exerciseIndex)}>↔ Заменить упражнение</button>
+              </div>
+
+              <div className="plan-fact-title">
+                <b>План / факт</b>
+                <span>Вес в {exercise.weightUnit === 'lb' ? 'lbs' : 'кг'}</span>
+              </div>
+              <div className="sets-stack">
+                {exercise.sets.map((set, setIndex) => <SetRow key={set.id} set={set} rehab={exercise.rehab} weightUnit={exercise.weightUnit ?? 'kg'} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onComplete={() => toggleSet(exerciseIndex, setIndex)} />)}
+              </div>
+
+              <button className="primary big finish-exercise" type="button" onClick={() => finishExercise(exerciseIndex)}>Завершить упражнение</button>
+            </section>
+          )
+        })}
+      </section>
 
       <section className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={finish}>Завершить тренировку</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
 
