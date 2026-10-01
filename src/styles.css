@@ -69,17 +69,22 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 .progress-track { height: 6px; border-radius: 999px; background: #e7ebe8; overflow: hidden; position: sticky; top: 48px; z-index: 18; }
 .progress-track div { height: 100%; background: var(--green); transition: width .25s ease; }
 .exercise-block { background: white; border: 1px solid var(--border); border-radius: 28px; padding: 20px; margin: 18px 0; box-shadow: 0 8px 22px rgba(20,22,21,.03); scroll-margin-top: 70px; }
-.exercise-header { display: grid; grid-template-columns: 118px 1fr; gap: 18px; align-items: start; }
-.exercise-image, .exercise-visual { width: 118px; height: 150px; border-radius: 20px; object-fit: cover; }
+.exercise-header { display: grid; grid-template-columns: 190px 1fr; gap: 20px; align-items: start; }
+.exercise-image, .exercise-visual { width: 190px; height: 235px; border-radius: 22px; object-fit: cover; object-position: center; }
 .exercise-visual { background: linear-gradient(160deg, #1a1d1b, #303732); color: white; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; padding: 14px; overflow: hidden; position: relative; }
 .exercise-visual::after { content: ''; position: absolute; width: 120px; height: 120px; border-radius: 50%; background: rgba(104,197,138,.14); right: -42px; top: -34px; }
-.exercise-visual strong { font-size: 27px; letter-spacing: -.04em; position: relative; z-index: 1; }
-.exercise-visual span { font-size: 10px; opacity: .65; margin-top: 3px; position: relative; z-index: 1; }
+.exercise-visual strong { font-size: 34px; letter-spacing: -.04em; position: relative; z-index: 1; }
+.exercise-visual span { font-size: 12px; opacity: .65; margin-top: 5px; position: relative; z-index: 1; }
 .visual-dumbbell { position: absolute; top: 20px; left: 18px; display: flex; align-items: center; gap: 3px; transform: rotate(-16deg); }
 .visual-dumbbell b { width: 42px; height: 7px; border-radius: 8px; background: var(--green-soft); }
 .visual-dumbbell i { width: 8px; height: 28px; border-radius: 6px; background: var(--green-soft); }
 .eyebrow { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .04em; }
-.exercise-title-wrap h2 { margin: 7px 0 0; font-size: 29px; line-height: 1.03; letter-spacing: -.035em; }
+.exercise-title-wrap h2 { margin: 7px 0 0; font-size: 25px; line-height: 1.08; letter-spacing: -.025em; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.context-tag { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; background: #f0f2f1; color: #4f5652; font-size: 12px; font-weight: 750; }
+.context-tag.status { background: var(--green-pale); color: var(--green); }
+.context-tag.new { background: #edf4ff; color: #3269aa; }
+.context-tag.replacement { background: #fff3db; color: #8a5a00; }
 .meta-line { margin-top: 10px; color: var(--muted); font-size: 13px; }
 .instruction { color: #4d5350; font-size: 16px; line-height: 1.5; margin: 20px 2px; white-space: pre-line; }
 .exercise-actions { display: flex; justify-content: flex-end; margin-bottom: 12px; }
@@ -141,10 +146,13 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 @media (max-width: 520px) {
   .app-shell { padding-left: 12px; padding-right: 12px; }
   .hero-card, .exercise-block, .summary-card, .finish-card, .resume-card { border-radius: 24px; padding: 17px; }
-  .exercise-header { grid-template-columns: 94px 1fr; gap: 13px; }
-  .exercise-image, .exercise-visual { width: 94px; height: 124px; border-radius: 17px; }
-  .exercise-visual strong { font-size: 23px; }
-  .exercise-title-wrap h2 { font-size: 25px; }
+  .exercise-header { display: block; }
+  .exercise-image, .exercise-visual { width: 100%; height: 235px; border-radius: 20px; margin-bottom: 15px; }
+  .exercise-visual strong { font-size: 38px; }
+  .exercise-title-wrap h2 { font-size: 22px; line-height: 1.12; }
+  .eyebrow { font-size: 11px; }
+  .tag-row { margin-top: 10px; gap: 6px; }
+  .context-tag { min-height: 28px; font-size: 11px; padding: 0 9px; }
   .instruction { font-size: 15px; }
   .hero-stats b { font-size: 20px; }
   .home-hero h1 { font-size: 43px; }
