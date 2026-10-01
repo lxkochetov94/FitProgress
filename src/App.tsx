@@ -224,7 +224,40 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   )
 }
 
-function Home({ active, onStart, onResume, onDiscard }: { active: WorkoutSession | null; onStart: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void }) {
+function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: () => void; onBack: () => void }) {
+  const totalSets = plan.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0)
+  const workingSets = plan.exercises.reduce((sum, exercise) => sum + exercise.sets.filter((set) => set.setType === 'working').length, 0)
+
+  return (
+    <main className="app-shell home-page">
+      <header className="topbar"><button className="back" onClick={onBack}>‹</button><span>FitProgress</span><span className="status-dot">план загружен</span></header>
+      <section className="summary-card plan-preview">
+        <span className="pill">Готово к тренировке</span>
+        <h1>{plan.title}</h1>
+        {plan.priority && <p className="priority">{plan.priority}</p>}
+        <div className="summary-grid">
+          <div><b>{plan.exercises.length}</b><span>упражнений</span></div>
+          <div><b>{totalSets}</b><span>подходов</span></div>
+          <div><b>{workingSets}</b><span>рабочих</span></div>
+          <div><b>—</b><span>дата старта</span></div>
+        </div>
+        <p className="preview-note">Дата и время запишутся только после нажатия «Начать тренировку». Поэтому программу можно импортировать заранее — длительность тренировки не исказится.</p>
+        <div className="preview-exercises">
+          {plan.exercises.map((exercise) => (
+            <div className="preview-row" key={exercise.instanceId}>
+              <span>{String(exercise.order).padStart(2, '0')}</span>
+              <div><b>{exercise.name}</b><small>{exercise.category} · {exercise.sets.length} подх.</small></div>
+            </div>
+          ))}
+        </div>
+        <button className="primary big" onClick={onBegin}>Начать тренировку</button>
+        <button className="ghost big" onClick={onBack}>Назад</button>
+      </section>
+    </main>
+  )
+}
+
+function Home({ active, onLoadPlan, onResume, onDiscard }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const history = loadHistory().slice(0, 3)
@@ -235,7 +268,7 @@ function Home({ active, onStart, onResume, onDiscard }: { active: WorkoutSession
     try {
       setError('')
       const plan = await importWorkout(file)
-      onStart(plan)
+      onLoadPlan(plan)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось прочитать Excel.')
     } finally {
@@ -251,7 +284,7 @@ function Home({ active, onStart, onResume, onDiscard }: { active: WorkoutSession
       <section className="action-stack">
         <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
         <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
-        <button className="secondary huge" onClick={() => onStart(DEMO_PLAN)}><span>▶</span><div><b>Открыть FULL BODY K</b><small>тестовый план по твоим скринам</small></div></button>
+        <button className="secondary huge" onClick={() => onLoadPlan(DEMO_PLAN)}><span>▶</span><div><b>Открыть FULL BODY K</b><small>тестовый план по твоим скринам</small></div></button>
         <button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
       {error && <div className="error-box">{error}</div>}
@@ -264,7 +297,11 @@ function Home({ active, onStart, onResume, onDiscard }: { active: WorkoutSession
 
 export default function App() {
   const [session, setSessionState] = useState<WorkoutSession | null>(() => loadActiveSession())
-  const [inWorkout, setInWorkout] = useState(Boolean(loadActiveSession()))
+  const [pendingPlan, setPendingPlan] = useState<WorkoutPlan | null>(null)
+  const [inWorkout, setInWorkout] = useState(() => {
+    const active = loadActiveSession()
+    return Boolean(active && !active.finishedAt)
+  })
 
   const setSession = (next: WorkoutSession) => {
     setSessionState(next)
@@ -275,10 +312,18 @@ export default function App() {
     if (session) saveActiveSession(session)
   }, [session])
 
-  const start = (plan: WorkoutPlan) => {
-    if (session && !session.finishedAt && !window.confirm('Текущая тренировка будет заменена новой. Продолжить?')) return
-    const next = createSession(plan)
+  const loadPlan = (plan: WorkoutPlan) => {
+    setPendingPlan(clone(plan))
+    setInWorkout(false)
+    window.scrollTo(0, 0)
+  }
+
+  const beginPendingPlan = () => {
+    if (!pendingPlan) return
+    if (session && !session.finishedAt && !window.confirm('Текущая незавершённая тренировка будет заменена новой. Продолжить?')) return
+    const next = createSession(pendingPlan)
     setSession(next)
+    setPendingPlan(null)
     setInWorkout(true)
     window.scrollTo(0, 0)
   }
@@ -295,5 +340,6 @@ export default function App() {
   }
 
   if (session && inWorkout) return <WorkoutView session={session} setSession={setSession} onExit={exit} />
-  return <Home active={session && !session.finishedAt ? session : null} onStart={start} onResume={() => setInWorkout(true)} onDiscard={discard} />
+  if (pendingPlan) return <PlanPreview plan={pendingPlan} onBegin={beginPendingPlan} onBack={() => setPendingPlan(null)} />
+  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} />
 }
