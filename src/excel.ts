@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { PerSide, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
+import type { PerSide, WeightUnit, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { getDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
 
@@ -22,6 +22,16 @@ const detectPerSide = (value: unknown): PerSide | undefined => {
 
 const stripPerSideSuffix = (value: string) =>
   value.replace(/\s*\/\s*(?:руку|руки|рук|ногу|ноги|ног|сторону|стороны|сторон|arm|leg|side)\b.*$/i, '').trim()
+
+const detectWeightUnit = (value: unknown): WeightUnit | undefined => {
+  const text = str(value).toLowerCase()
+  if (/\b(lb|lbs|pound|pounds)\b/.test(text)) return 'lb'
+  if (/\b(kg|кг|килограмм)/.test(text)) return 'kg'
+  return undefined
+}
+
+const stripWeightUnit = (value: string) =>
+  value.replace(/\s*(?:kg|кг|lbs?|pounds?)\b/gi, '').trim()
 
 function normalizedRows(sheet?: XLSX.WorkSheet) {
   if (!sheet) return [] as Record<string, unknown>[]
@@ -85,9 +95,18 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
         detectPerSide(rowValue(row, 'per_side', 'per_side_label', 'на_сторону')) ||
         rawSets.map((set) => detectPerSide(set.targetReps)).find(Boolean) ||
         def?.perSide
-      const setsForExercise = perSide
-        ? rawSets.map((set) => ({ ...set, targetReps: stripPerSideSuffix(set.targetReps), actualReps: stripPerSideSuffix(set.actualReps) }))
-        : rawSets
+      const weightUnit =
+        detectWeightUnit(rowValue(row, 'weight_unit', 'unit', 'единица_веса')) ||
+        rawSets.map((set) => detectWeightUnit(set.targetWeight)).find(Boolean) ||
+        def?.weightUnit ||
+        'kg'
+      const setsForExercise = rawSets.map((set) => ({
+        ...set,
+        targetWeight: stripWeightUnit(set.targetWeight),
+        actualWeight: stripWeightUnit(set.actualWeight),
+        targetReps: perSide ? stripPerSideSuffix(set.targetReps) : set.targetReps,
+        actualReps: perSide ? stripPerSideSuffix(set.actualReps) : set.actualReps
+      }))
 
       return {
         instanceId: `${exerciseId}-${index}-${Date.now()}`,
@@ -105,6 +124,7 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
         image: str(rowValue(row, 'image', 'image_url', 'картинка')) || undefined,
         badge: str(rowValue(row, 'badge', 'плашка')) || def?.badge,
         perSide,
+        weightUnit,
         sets: setsForExercise.length ? setsForExercise : [newSet(exerciseId, {}, 0)]
       }
     })
@@ -147,6 +167,7 @@ export function exportSession(session: WorkoutSession) {
     equipment: exercise.equipment,
     rehab: exercise.rehab ? 'yes' : 'no',
     per_side: exercise.perSide ?? '',
+    weight_unit: exercise.weightUnit ?? 'kg',
     replaced: exercise.exerciseId !== exercise.originalExerciseId ? 'yes' : 'no',
     replacement_reason: exercise.replacementReason ?? '',
     instruction: exercise.instruction
@@ -205,6 +226,7 @@ export function downloadTemplate() {
     equipment: exercise.equipment,
     rehab: exercise.rehab ? 'yes' : 'no',
     per_side: exercise.perSide ?? '',
+    weight_unit: exercise.weightUnit ?? 'kg',
     badge: exercise.badge ?? '',
     instruction: exercise.instruction,
     image: exercise.image ?? ''
