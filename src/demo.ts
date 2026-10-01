@@ -30,7 +30,8 @@ const ex = (data: Omit<WorkoutExercise, 'instanceId' | 'originalExerciseId' | 'o
   ...data,
   instanceId: `${data.exerciseId}-${data.order}`,
   originalExerciseId: data.exerciseId,
-  originalName: data.name
+  originalName: data.name,
+  restAfterExerciseSec: data.restAfterExerciseSec ?? Math.max(90, data.sets[data.sets.length - 1]?.restSec ?? 90)
 })
 
 export const DEMO_PLAN: WorkoutPlan = {
@@ -48,6 +49,6 @@ export const DEMO_PLAN: WorkoutPlan = {
     ex({ exerciseId: 'incline_db_press', order: 7, category: 'REHAB / ЖИМ', name: 'Incline DB Press · Bottom-start', muscleGroup: 'Грудь', movementPattern: 'Наклонный жим', equipment: 'Гантели', rehab: true, instruction: '16 кг ×6 — подготовка. 24 кг ×6 — контроль нижнего старта. При спокойном плече 26 кг ×6–8 ×1–2, RIR ≥4; если следующая ступень сразу 28 кг — 24 кг ×8–10 ×2.', sets: [set('7-1', 1, 'warmup', '16', '6', '', 120), set('7-2', 2, 'calibration', '24', '6', '≥4', 150), set('7-3', 3, 'working', '26', '6–8', '≥4', 150), set('7-4', 4, 'working', '26', '6–8', '≥4', 150)] }),
     ex({ exerciseId: 'medium_lever_cable_fly', order: 8, category: 'REHAB / ГОРИЗОНТАЛЬНОЕ ПРИВЕДЕНИЕ', name: 'Medium-lever Cable Fly', muscleGroup: 'Грудь', perSide: 'arm', movementPattern: 'Горизонтальное приведение', equipment: 'Кроссовер', rehab: true, instruction: '9 кг ×10 — подготовка. 9 кг ×10–12 ×2, RIR 3–4. Локоть согнут примерно на 45–60°. Сегодня вес не повышаем.', sets: [set('8-1', 1, 'rehab', '9', '10', '', 75), set('8-2', 2, 'rehab', '9', '10–12', '3–4', 90), set('8-3', 3, 'rehab', '9', '10–12', '3–4', 90)] }),
     ex({ exerciseId: 'one_arm_db_preacher', order: 9, category: 'БИЦЕПС', name: 'One-Arm DB Preacher Curl', muscleGroup: 'Бицепс', perSide: 'arm', movementPattern: 'Сгибание локтя', equipment: 'Гантель', rehab: false, instruction: '10 кг ×8 — разминка. 14 кг ×8–12 ×2, RIR 1–2. Закрепляем вес в двух полноценных рабочих подходах.', sets: [set('9-1', 1, 'warmup', '10', '8', '', 60), set('9-2', 2, 'working', '14', '8–12', '1–2', 90), set('9-3', 3, 'working', '14', '8–12', '1–2', 90)] }),
-    ex({ exerciseId: 'one_arm_cable_pushdown', order: 10, category: 'ТРИЦЕПС', name: 'One-Arm Cable Pushdown', muscleGroup: 'Трицепс', perSide: 'arm', movementPattern: 'Разгибание локтя', equipment: 'Кроссовер', rehab: false, instruction: '11,3 кг ×10–12/руку ×2, RIR 1–2. Если оба подхода уверенные, на следующей экспозиции можно рассмотреть увеличение нагрузки.', sets: [set('10-1', 1, 'working', '11,3', '10–12', '1–2', 75), set('10-2', 2, 'working', '11,3', '10–12', '1–2', 75)] })
+    ex({ exerciseId: 'one_arm_cable_pushdown', order: 10, category: 'ТРИЦЕПС', name: 'One-Arm Cable Pushdown', muscleGroup: 'Трицепс', perSide: 'arm', movementPattern: 'Разгибание локтя', equipment: 'Кроссовер', rehab: false, instruction: '11,3 кг ×10–12 на каждую руку ×2, RIR 1–2. Если оба подхода уверенные, на следующей экспозиции можно рассмотреть увеличение нагрузки.', sets: [set('10-1', 1, 'working', '11,3', '10–12', '1–2', 75), set('10-2', 2, 'working', '11,3', '10–12', '1–2', 75)] })
   ]
 }
