@@ -4,6 +4,7 @@ import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
 import { archiveSession, loadActiveSession, loadHistory, saveActiveSession } from './storage'
+import { BUILTIN_EXERCISE_IMAGES } from './exerciseImages'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
@@ -22,13 +23,33 @@ function parseNumeric(value: string) {
   return match ? Number(match[0]) : NaN
 }
 
+const cleanReps = (value: string) =>
+  value.replace(/\s*\/\s*(?:руку|руки|рук|ногу|ноги|ног|сторону|стороны|сторон|arm|leg|side)\b.*$/i, '').trim()
+
+const perSideLabel = (exercise: WorkoutExercise) =>
+  exercise.perSide === 'arm' ? 'на каждую руку' :
+  exercise.perSide === 'leg' ? 'на каждую ногу' :
+  exercise.perSide === 'side' ? 'на каждую сторону' : ''
+
+const exerciseDisplayName = (exercise: WorkoutExercise) => {
+  const suffix = perSideLabel(exercise)
+  return suffix ? `${exercise.name} · ${suffix}` : exercise.name
+}
+
+const isWarmupExercise = (exercise: WorkoutExercise) =>
+  /размин/i.test(exercise.category) ||
+  (exercise.sets.length > 0 && exercise.sets.every((set) => set.setType === 'warmup'))
+
+const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|ый)|new/i.test(badge))
+
 function ExerciseVisual({ exercise }: { exercise: WorkoutExercise }) {
   const def = getDefinition(exercise.exerciseId)
-  if (exercise.image) {
-    return <img className="exercise-image" src={exercise.image} alt="" />
+  const image = exercise.image || BUILTIN_EXERCISE_IMAGES[exercise.exerciseId]
+  if (image) {
+    return <img className="exercise-image" src={image} alt={exerciseDisplayName(exercise)} />
   }
   return (
-    <div className="exercise-visual" aria-hidden="true">
+    <div className="exercise-visual" aria-label="Изображение упражнения пока не добавлено">
       <div className="visual-dumbbell"><i /><b /><i /></div>
       <strong>{def?.icon ?? exercise.name.slice(0, 3).toUpperCase()}</strong>
       <span>{exercise.muscleGroup || exercise.movementPattern}</span>
@@ -37,17 +58,17 @@ function ExerciseVisual({ exercise }: { exercise: WorkoutExercise }) {
 }
 
 function SetRow({ set, rehab, onChange, onComplete }: { set: WorkoutSet; rehab: boolean; onChange: (patch: Partial<WorkoutSet>) => void; onComplete: () => void }) {
-  const setLabel = set.setType === 'working' ? `Рабочий ${set.setNo}` : set.setType === 'warmup' ? 'Разминка' : set.setType === 'calibration' ? 'Калибровка' : set.setType === 'rehab' ? `Rehab ${set.setNo}` : `Подход ${set.setNo}`
+  const setLabel = set.setType === 'working' ? `Рабочий ${set.setNo}` : set.setType === 'warmup' ? 'Разминка' : set.setType === 'calibration' ? 'Калибровка' : `Подход ${set.setNo}`
   return (
     <div className={`set-card ${set.completed ? 'is-complete' : ''}`}>
       <div className="set-topline">
         <span className="set-label">{setLabel}</span>
-        <span className="target-line">План: {set.targetWeight || '—'} × {set.targetReps || '—'}{set.targetRir ? ` · RIR ${set.targetRir}` : ''}</span>
+        <span className="target-line">План: {set.targetWeight || '—'} × {cleanReps(set.targetReps) || '—'}{set.targetRir ? ` · RIR ${set.targetRir}` : ''}</span>
       </div>
       <div className="set-input-grid">
         <label><span>Вес</span><input inputMode="decimal" value={set.actualWeight} onChange={(e) => onChange({ actualWeight: e.target.value })} placeholder="—" /></label>
         <span className="times">×</span>
-        <label><span>Повторы</span><input inputMode="decimal" value={set.actualReps} onChange={(e) => onChange({ actualReps: e.target.value })} placeholder="—" /></label>
+        <label><span>Повторы</span><input inputMode="decimal" value={cleanReps(set.actualReps)} onChange={(e) => onChange({ actualReps: e.target.value })} placeholder="—" /></label>
       </div>
       <div className="quick-section">
         <span className="quick-title">RIR</span>
@@ -88,6 +109,7 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
 
 function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession; setSession: (s: WorkoutSession) => void; onExit: () => void }) {
   const [replacementFor, setReplacementFor] = useState<number | null>(null)
+  const history = useMemo(() => loadHistory(), [session.sessionId])
   const [restLeft, setRestLeft] = useState(0)
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
@@ -140,7 +162,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         rehab: exercise.rehab,
         instruction: exercise.instruction,
         image: exercise.image,
-        badge: exercise.badge
+        badge: exercise.badge,
+        perSide: exercise.perSide
       }
       return {
         ...exercise,
@@ -155,6 +178,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         instruction: def.instruction || `Замена на ${def.name}. Вес и фактические повторения внеси по ходу тренировки.`,
         image: undefined,
         badge: 'Замена',
+        perSide: def.perSide,
         replacementReason: reason,
         replacedAt: new Date().toISOString(),
         sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
@@ -196,6 +220,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         replacementReason: undefined,
         replacedAt: undefined,
         badge: snapshot?.badge ?? def?.badge,
+        perSide: snapshot?.perSide ?? def?.perSide,
         instruction: snapshot?.instruction || def?.instruction || exercise.instruction,
         sets: exercise.sets.map((s) => ({ ...s, actualWeight: s.targetWeight, actualReps: s.targetReps, actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
       }
@@ -237,9 +262,16 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
             <ExerciseVisual exercise={exercise} />
             <div className="exercise-title-wrap">
               <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.category}</span>
-              <h2>{exercise.name}</h2>
-              {exercise.badge && <span className="mini-pill">{exercise.badge}</span>}
-              <div className="meta-line">{exercise.muscleGroup}{exercise.equipment ? ` · ${exercise.equipment}` : ''}</div>
+              <h2>{exerciseDisplayName(exercise)}</h2>
+              <div className="tag-row">
+                {exercise.muscleGroup && <span className="context-tag">{exercise.muscleGroup}</span>}
+                {exercise.equipment && <span className="context-tag">{exercise.equipment}</span>}
+                {exercise.rehab && <span className="context-tag status">Rehab</span>}
+                {isWarmupExercise(exercise) && <span className="context-tag status">Разминка</span>}
+                {!history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId)) && <span className="context-tag new">Новое</span>}
+                {exercise.exerciseId !== exercise.originalExerciseId && <span className="context-tag replacement">Замена</span>}
+                {exercise.badge && !isLegacyNewBadge(exercise.badge) && exercise.badge !== 'Замена' && <span className="context-tag status">{exercise.badge}</span>}
+              </div>
             </div>
           </div>
           {exercise.exerciseId !== exercise.originalExerciseId && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
@@ -281,7 +313,7 @@ function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: ()
           {plan.exercises.map((exercise) => (
             <div className="preview-row" key={exercise.instanceId}>
               <span>{String(exercise.order).padStart(2, '0')}</span>
-              <div><b>{exercise.name}</b><small>{exercise.category} · {exercise.sets.length} подх.</small></div>
+              <div><b>{exerciseDisplayName(exercise)}</b><small>{exercise.muscleGroup}{exercise.equipment ? ` · ${exercise.equipment}` : ''} · {exercise.sets.length} подх.</small></div>
             </div>
           ))}
         </div>
