@@ -4,7 +4,7 @@ import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
 import { archiveSession, loadActiveSession, loadHistory, saveActiveSession } from './storage'
-import { BUILTIN_EXERCISE_IMAGES, EXERCISE_IMAGE_CREDIT } from './exerciseImages'
+import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 
@@ -53,11 +53,11 @@ const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
-  const image = exercise.image || BUILTIN_EXERCISE_IMAGES[exercise.exerciseId]
+  const image = exercise.image || exerciseImageForDefinition(def)
   if (image) {
     const lower = image.toLowerCase()
     const generated = lower.includes('/exercises-generated/')
-    const vector = lower.includes('/exercises-hq/') || lower.endsWith('.svg')
+    const vector = lower.includes('/exercises-hq/') || lower.endsWith('.svg') || lower.startsWith('data:image/svg+xml')
     const mediaClass = generated ? ' exercise-generated' : vector ? ' exercise-vector' : ''
     const className = compact
       ? `exercise-thumb${mediaClass}`
@@ -197,7 +197,7 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
         <div className="reason-row">{(['Занято', 'Дискомфорт', 'Другое'] as const).map((x) => <button key={x} className={reason === x ? 'reason active' : 'reason'} onClick={() => setReason(x)}>{x}</button>)}</div>
         <input className="search" placeholder="Найти по всей библиотеке…" value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="replacement-list">
-          {options.map((def) => <button type="button" className={`replacement-item ${def.suitability === 'avoid' ? 'avoid' : def.suitability === 'caution' ? 'caution' : ''}`} key={def.id} onClick={() => onReplace(def, reason)}><span className="replacement-icon">{def.icon ?? '↔'}</span><span><b>{def.name}</b><small>{def.muscleGroup} · {def.movementPattern} · {def.equipment}{def.gym ? ` · ${def.gym}` : ''}</small>{def.lastKnown && <small className="history-mini">Последняя база: {def.lastKnown}</small>}{def.suitability === 'avoid' && <small className="avoid-mini">История: не использовать как обычную замену</small>}{def.suitability === 'caution' && <small className="caution-mini">Есть ограничение / rehab-контекст</small>}</span><span className="chevron">›</span></button>)}
+          {options.map((def) => <button type="button" className={`replacement-item ${def.suitability === 'avoid' ? 'avoid' : def.suitability === 'caution' ? 'caution' : ''}`} key={def.id} onClick={() => onReplace(def, reason)}><img className="replacement-thumb" src={exerciseImageForDefinition(def)} alt="" loading="lazy" /><span><b>{def.name}</b><small>{def.muscleGroup} · {def.movementPattern} · {def.equipment}{def.gym ? ` · ${def.gym}` : ''}</small>{def.lastKnown && <small className="history-mini">Последняя база: {def.lastKnown}</small>}{def.suitability === 'avoid' && <small className="avoid-mini">История: не использовать как обычную замену</small>}{def.suitability === 'caution' && <small className="caution-mini">Есть ограничение / rehab-контекст</small>}</span><span className="chevron">›</span></button>)}
           {!options.length && <div className="empty-mini">Ничего не найдено.</div>}
         </div>
         <button type="button" className="ghost big" onClick={() => onCustom(reason)}>+ Другое упражнение вручную</button>
@@ -769,6 +769,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
       <section className="library-list">
         {items.map((exercise) => (
           <article className={`library-item ${exercise.suitability === 'avoid' ? 'avoid' : exercise.suitability === 'caution' ? 'caution' : ''}`} key={exercise.id}>
+            <div className="library-item-visual"><img src={exerciseImageForDefinition(exercise)} alt={exercise.name} loading="lazy" /></div>
             <div className="library-item-head">
               <div><span className="eyebrow">{exercise.muscleGroup} · {exercise.equipment}</span><h2>{exercise.name}</h2></div>
               <div className="library-badges">
@@ -826,7 +827,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { acti
       {error && <div className="error-box">{error}</div>}
       <section className="offline-card"><b>Без интернета</b><p>После первого полного открытия установленная PWA хранит интерфейс локально. Текущая тренировка — в памяти Safari на устройстве.</p></section>
       {history.length > 0 && <section className="history"><span className="eyebrow">ПОСЛЕДНИЕ ТРЕНИРОВКИ</span>{history.map((x) => <div className="history-row" key={x.sessionId}><div><b>{x.plan.title}</b><small>{fmtDate(x.startedAt)} · {x.finishedAt ? 'завершена' : 'не завершена'}</small></div><button onClick={() => exportSession(x)}>Excel</button></div>)}</section>}
-      <footer>FitProgress v0.3 · данные тренировки не отправляются на сервер<br /><span className="asset-credit">{EXERCISE_IMAGE_CREDIT}</span></footer>
+      <footer>FitProgress v0.4 · данные тренировки не отправляются на сервер<br /><span className="asset-credit">{EXERCISE_IMAGE_CREDIT}</span></footer>
     </main>
   )
 }
