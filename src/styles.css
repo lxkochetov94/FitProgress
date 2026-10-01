@@ -824,12 +824,12 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 
 @property --rest-hue {
   syntax: "<number>";
-  inherits: false;
+  inherits: true;
   initial-value: 0;
 }
 @property --rest-progress {
   syntax: "<percentage>";
-  inherits: false;
+  inherits: true;
   initial-value: 0%;
 }
 .inline-rest {
@@ -882,5 +882,297 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   .library-item-visual {
     aspect-ratio: 16 / 9.5;
     border-radius: 15px;
+  }
+}
+
+
+/* v0.5 — traffic-light ring timer */
+.inline-rest {
+  background: linear-gradient(145deg, #ffffff, #f8faf8);
+  border-color: hsl(var(--rest-hue) 42% 82%);
+  box-shadow:
+    0 14px 34px rgba(22, 31, 26, .06),
+    inset 0 1px 0 rgba(255,255,255,.92);
+  transition:
+    --rest-hue 1s linear,
+    --rest-progress 1s linear,
+    border-color .7s ease,
+    box-shadow .7s ease;
+}
+
+.inline-rest.is-ready {
+  background: linear-gradient(145deg, #ffffff, #f8fcf9);
+  border-color: rgba(35, 171, 85, .32);
+  box-shadow:
+    0 16px 38px rgba(27, 145, 70, .08),
+    inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+.rest-kicker {
+  color: #922f2f;
+}
+
+.rest-stage,
+.between_exercises .rest-stage {
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.rest-ring,
+.between_exercises .rest-ring {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 150px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #e7ebe8;
+  overflow: visible;
+  cursor: default;
+  box-shadow:
+    0 0 0 1px hsl(var(--rest-hue) 70% 48% / .12),
+    0 0 22px hsl(var(--rest-hue) 78% 48% / .16);
+  animation: rest-ring-heartbeat 1.18s ease-in-out infinite;
+  transition:
+    --rest-hue 1s linear,
+    --rest-progress 1s linear,
+    box-shadow .7s ease,
+    transform .2s ease;
+}
+
+.rest-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from -90deg,
+      #ff3b30 0%,
+      #ff6b22 24%,
+      #ffad0a 48%,
+      #ffd60a 66%,
+      #8bd33f 83%,
+      #20bf55 100%
+    );
+  -webkit-mask: conic-gradient(from -90deg, #000 0 var(--rest-progress), transparent var(--rest-progress) 100%);
+  mask: conic-gradient(from -90deg, #000 0 var(--rest-progress), transparent var(--rest-progress) 100%);
+  transition: --rest-progress 1s linear;
+}
+
+.rest-ring::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 11px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 25%, #ffffff 0 20%, #fbfcfb 62%, #f0f4f1 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(27, 38, 32, .05),
+    0 5px 14px rgba(22, 28, 25, .08);
+}
+
+.rest-ring:disabled {
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+
+.rest-ring:not(:disabled) {
+  cursor: pointer;
+}
+
+.rest-ring:not(:disabled):active {
+  transform: scale(.965);
+}
+
+.rest-ring-inner {
+  z-index: 2;
+}
+
+.rest-ring-inner span,
+.rest-ring-inner small {
+  display: none !important;
+}
+
+.rest-ring-inner strong,
+.between_exercises .rest-ring-inner strong,
+.inline-rest.is-ready .rest-ring-inner strong {
+  display: block;
+  margin: 0;
+  color: #121614;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: .86;
+  letter-spacing: -.055em;
+  transform: scaleY(1.18);
+  transform-origin: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.inline-rest.is-ready .rest-ring {
+  background: #e7ebe8;
+  box-shadow:
+    0 0 0 1px rgba(31, 186, 95, .15),
+    0 0 26px rgba(31, 186, 95, .22);
+  animation: rest-ring-heartbeat 1.18s ease-in-out infinite;
+}
+
+.inline-rest.is-ready .rest-ring-inner strong {
+  color: #12863f;
+  font-size: 38px;
+  letter-spacing: -.035em;
+}
+
+.rest-meta {
+  min-width: 0;
+  align-self: center;
+}
+
+.rest-next-copy {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.rest-next-copy > span {
+  color: #7b837f;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.rest-next-copy > strong {
+  color: #171b19;
+  font-size: 23px;
+  font-weight: 950;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.rest-meta > p,
+.rest-go {
+  display: none !important;
+}
+
+.rest-actions {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.rest-secondary {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
+@keyframes rest-ring-heartbeat {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px hsl(var(--rest-hue) 70% 48% / .12),
+      0 0 18px hsl(var(--rest-hue) 78% 48% / .13);
+  }
+  10% {
+    transform: scale(1.025);
+    box-shadow:
+      0 0 0 1px hsl(var(--rest-hue) 70% 48% / .17),
+      0 0 28px hsl(var(--rest-hue) 82% 48% / .24);
+  }
+  18% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px hsl(var(--rest-hue) 70% 48% / .12),
+      0 0 20px hsl(var(--rest-hue) 78% 48% / .15);
+  }
+  29% {
+    transform: scale(1.015);
+    box-shadow:
+      0 0 0 1px hsl(var(--rest-hue) 70% 48% / .15),
+      0 0 25px hsl(var(--rest-hue) 82% 48% / .20);
+  }
+  42%, 100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .rest-stage,
+  .between_exercises .rest-stage {
+    grid-template-columns: 126px minmax(0, 1fr);
+    gap: 15px;
+  }
+
+  .rest-ring,
+  .between_exercises .rest-ring {
+    width: 126px;
+  }
+
+  .rest-ring::before {
+    inset: 9px;
+  }
+
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 29px;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 35px;
+  }
+
+  .rest-next-copy {
+    margin-bottom: 12px;
+  }
+
+  .rest-next-copy > span {
+    font-size: 11px;
+  }
+
+  .rest-next-copy > strong {
+    font-size: 20px;
+  }
+
+  .rest-secondary {
+    min-height: 43px;
+  }
+}
+
+@media (max-width: 370px) {
+  .rest-stage,
+  .between_exercises .rest-stage {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .rest-ring,
+  .between_exercises .rest-ring {
+    width: 112px;
+  }
+
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 26px;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 32px;
+  }
+
+  .rest-next-copy > strong {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-ring,
+  .inline-rest.is-ready .rest-ring {
+    animation: none !important;
   }
 }
