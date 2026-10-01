@@ -533,3 +533,35 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
     grid-row: 1 / span 2;
   }
 }
+
+
+/* HQ exercise artwork */
+.exercise-image.exercise-vector,
+.exercise-thumb.exercise-vector {
+  object-fit: contain !important;
+  object-position: center !important;
+  background: linear-gradient(145deg, #f3f7f4, #e9f1ec);
+  image-rendering: auto;
+}
+.exercise-image.exercise-vector {
+  padding: 18px;
+}
+.exercise-thumb.exercise-vector {
+  padding: 7px;
+}
+.asset-credit {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.35;
+  opacity: .6;
+}
+@media (max-width: 520px) {
+  .exercise-expanded .exercise-image.exercise-vector {
+    height: 280px;
+    padding: 12px;
+  }
+  .exercise-thumb.exercise-vector {
+    padding: 6px;
+  }
+}
