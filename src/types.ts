@@ -105,4 +105,16 @@ export interface ExerciseDefinition {
   icon?: string
   perSide?: PerSide
   weightUnit?: WeightUnit
+  known?: boolean
+  gym?: 'Старый зал' | 'Новый зал' | string
+  suitability?: 'known' | 'caution' | 'avoid'
+  warmupKnown?: string
+  lastKnown?: string
+  bestKnown?: string
+  historyNote?: string
+  rehabStatus?: string
+  lastPain?: string
+  rehabNote?: string
+  lastRehabDate?: string
+  aliases?: string[]
 }
