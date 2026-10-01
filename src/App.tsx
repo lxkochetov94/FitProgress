@@ -104,8 +104,7 @@ function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: Wo
   )
 }
 
-function EndReasonSheet({ title, description, confirmLabel, onClose, onConfirm }: { title: string; description: string; confirmLabel: string; onClose: () => void; onConfirm: (reason: string) => void }) {
-  const reasons = ['Самочувствие', 'Боль / дискомфорт', 'Нет времени', 'Занято', 'Другое']
+function EndReasonSheet({ title, description, confirmLabel, onClose, onConfirm, reasons = ['Самочувствие', 'Боль / дискомфорт', 'Нет времени', 'Занято', 'Другое'] }: { title: string; description: string; confirmLabel: string; onClose: () => void; onConfirm: (reason: string) => void; reasons?: string[] }) {
   const [reason, setReason] = useState(reasons[0])
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -246,7 +245,6 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       ...clone(source),
       id: `${exercise.exerciseId}-extra-${setNo}-${Date.now()}`,
       setNo,
-      setType: 'other',
       isExtra: true,
       copiedFromSetNo: source.setNo,
       completed: false,
@@ -561,6 +559,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         title="Завершить тренировку досрочно?"
         description="Все уже внесённые подходы сохранятся. Незакрытые упражнения останутся невыполненными в Excel."
         confirmLabel="Завершить тренировку"
+        reasons={['Самочувствие', 'Боль / дискомфорт', 'Нет времени', 'Другое']}
         onClose={() => setWorkoutEndOpen(false)}
         onConfirm={(reason) => finalizeWorkout('early', reason)}
       />}
