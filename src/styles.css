@@ -306,3 +306,40 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   .pf-grid { grid-template-columns: 42px minmax(0,1fr) minmax(0,1.08fr) minmax(0,.65fr) minmax(0,.65fr); gap: 4px; }
   .pf-fact input { height: 40px; font-size: 15px; padding: 0 3px; }
 }
+
+
+/* personal history integration */
+.preview-tags span.known { background: #eef9f2; color: var(--green); }
+.context-tag.known { background: #eef9f2; color: var(--green); }
+.context-tag.caution { background: #fff3db; color: #8a5a00; }
+.context-tag.avoid { background: #fff0f0; color: #a23636; }
+.history-card {
+  margin: 14px 0 6px;
+  border: 1px solid #cfe5d6;
+  background: #f5fbf7;
+  border-radius: 18px;
+  padding: 14px;
+}
+.history-card.caution { background: #fffaf0; border-color: #eed7a4; }
+.history-card.avoid { background: #fff5f5; border-color: #efcccc; }
+.history-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.history-card-head b { font-size: 14px; }
+.history-card-head span { color: var(--muted); font-size: 11px; }
+.history-values { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.history-values div { background: rgba(255,255,255,.76); border-radius: 12px; padding: 9px; }
+.history-values span, .history-values b { display: block; }
+.history-values span { color: var(--muted); font-size: 10px; margin-bottom: 3px; }
+.history-values b { font-size: 13px; line-height: 1.25; }
+.history-card p { margin: 10px 0 0; color: #505752; font-size: 12px; line-height: 1.45; }
+.history-warning, .history-caution { display: block; margin-top: 10px; font-size: 12px; line-height: 1.35; }
+.history-warning { color: #9c3030; }
+.history-caution { color: #7d5808; }
+.replacement-item.caution { border-color: #ead5a6; background: #fffbf2; }
+.replacement-item.avoid { border-color: #efcaca; background: #fff7f7; }
+.history-mini { color: #355e44 !important; font-weight: 650; }
+.caution-mini { color: #8a5a00 !important; font-weight: 700; }
+.avoid-mini { color: #a23636 !important; font-weight: 700; }
+
+@media (max-width: 520px) {
+  .history-values { grid-template-columns: 1fr; }
+}
