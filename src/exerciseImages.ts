@@ -125,7 +125,8 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
   const [accentA, accentB] = paletteFor(def.muscleGroup)
   const pose = poseFor(def.movementPattern)
   const equipment = equipmentGlyph(def.equipment)
-  const label = esc(def.equipment || def.muscleGroup || 'Exercise')
+  const label = esc(def.name.length > 34 ? `${def.name.slice(0, 31)}…` : def.name)
+  const subLabel = esc(def.equipment || def.muscleGroup || 'Exercise')
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111714"/><stop offset="1" stop-color="#253129"/></linearGradient>
@@ -139,7 +140,8 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
     <g filter="url(#shadow)">${poseSvg(pose, accentA)}</g>
     <rect x="44" y="604" width="632" height="72" rx="24" fill="#0c100e" opacity=".62"/>
     <circle cx="82" cy="640" r="13" fill="url(#accent)"/>
-    <text x="108" y="648" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" fill="#e8efeb">${label}</text>
+    <text x="108" y="635" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#e8efeb">${label}</text>
+    <text x="108" y="658" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="600" fill="#aeb9b2">${subLabel}</text>
   </svg>`
   const uri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
   illustrationCache.set(def.id, uri)
