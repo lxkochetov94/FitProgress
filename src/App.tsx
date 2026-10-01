@@ -33,10 +33,12 @@ const humanizeInstruction = (value: string) =>
     .replace(/\/\s*ногу\b/gi, ' на каждую ногу')
     .replace(/\/\s*сторону\b/gi, ' на каждую сторону')
 
-const perSideLabel = (exercise: WorkoutExercise) =>
-  exercise.perSide === 'arm' ? 'на каждую руку' :
-  exercise.perSide === 'leg' ? 'на каждую ногу' :
-  exercise.perSide === 'side' ? 'на каждую сторону' : ''
+const perSideLabel = (exercise: WorkoutExercise) => {
+  const side = exercise.perSide ?? getDefinition(exercise.exerciseId)?.perSide
+  return side === 'arm' ? 'на каждую руку' :
+    side === 'leg' ? 'на каждую ногу' :
+    side === 'side' ? 'на каждую сторону' : ''
+}
 
 const exerciseDisplayName = (exercise: WorkoutExercise) => {
   const suffix = perSideLabel(exercise)
@@ -459,6 +461,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                     {isNew && <span className="new">Новое</span>}
                     {exercise.finishedAt && <span className="done">Готово ✓</span>}
                     {!exercise.finishedAt && doneSets > 0 && <span>{doneSets}/{exercise.sets.length}</span>}
+                    {!exercise.finishedAt && exercise.sets.length > 0 && exercise.sets.every((set) => set.completed) && <span className="ready-finish">План выполнен · завершить</span>}
                   </div>
                 </div>
                 <span className="row-chevron">›</span>
