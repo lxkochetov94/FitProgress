@@ -417,7 +417,66 @@ function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: ()
   )
 }
 
-function Home({ active, onLoadPlan, onResume, onDiscard }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void }) {
+function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
+  const [query, setQuery] = useState('')
+  const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
+  const needle = query.trim().toLowerCase()
+  const items = EXERCISE_LIBRARY
+    .filter((exercise) => exercise.known)
+    .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? [])].some((value) => value.toLowerCase().includes(needle)))
+    .sort((a, b) => {
+      if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
+      if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
+      return a.muscleGroup.localeCompare(b.muscleGroup, 'ru') || a.name.localeCompare(b.name, 'ru')
+    })
+
+  const currentCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym !== 'Старый зал').length
+  const legacyCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym === 'Старый зал').length
+  const rehabCount = EXERCISE_LIBRARY.filter((x) => x.known && x.rehab).length
+
+  return (
+    <main className="app-shell library-page">
+      <header className="topbar sticky"><button className="back" onClick={onBack}>‹</button><span>База упражнений</span><span className="status-dot">{currentCount + legacyCount} известных</span></header>
+      <section className="library-hero">
+        <span className="pill">Персональная база</span>
+        <h1>Накопленный опыт уже внутри FitProgress.</h1>
+        <p>Текущие и старые упражнения, рабочие веса, лучшие результаты и rehab-контекст используются для тегов «Новое» и при подборе замен.</p>
+        <div className="library-stats"><div><b>{currentCount}</b><span>текущий зал</span></div><div><b>{legacyCount}</b><span>старый зал</span></div><div><b>{rehabCount}</b><span>rehab</span></div></div>
+      </section>
+      <input className="search library-search" placeholder="Поиск: спина, Matrix, жим, бицепс…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <div className="library-tabs">
+        <button className={scope === 'current' ? 'active' : ''} onClick={() => setScope('current')}>Текущий зал</button>
+        <button className={scope === 'rehab' ? 'active' : ''} onClick={() => setScope('rehab')}>Rehab</button>
+        <button className={scope === 'all' ? 'active' : ''} onClick={() => setScope('all')}>Вся история</button>
+      </div>
+      <section className="library-list">
+        {items.map((exercise) => (
+          <article className={`library-item ${exercise.suitability === 'avoid' ? 'avoid' : exercise.suitability === 'caution' ? 'caution' : ''}`} key={exercise.id}>
+            <div className="library-item-head">
+              <div><span className="eyebrow">{exercise.muscleGroup} · {exercise.equipment}</span><h2>{exercise.name}</h2></div>
+              <div className="library-badges">
+                {exercise.gym && <span>{exercise.gym}</span>}
+                {exercise.rehab && <span className="rehab">Rehab</span>}
+                {exercise.suitability === 'caution' && <span className="caution">Ограничение</span>}
+                {exercise.suitability === 'avoid' && <span className="avoid">Не использовать</span>}
+              </div>
+            </div>
+            <div className="library-values">
+              {exercise.lastKnown && <div><span>Последняя база</span><b>{exercise.lastKnown}</b></div>}
+              {exercise.bestKnown && <div><span>Лучший результат</span><b>{exercise.bestKnown}</b></div>}
+              {exercise.lastPain && <div><span>Боль / плечо</span><b>{exercise.lastPain}</b></div>}
+            </div>
+            {exercise.historyNote && <p>{exercise.historyNote}</p>}
+          </article>
+        ))}
+        {!items.length && <div className="empty-mini">Ничего не найдено.</div>}
+      </section>
+    </main>
+  )
+}
+
+function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const history = loadHistory().slice(0, 3)
@@ -445,6 +504,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard }: { active: WorkoutSess
         <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
         <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
         <button className="secondary huge" onClick={() => onLoadPlan(DEMO_PLAN)}><span>▶</span><div><b>Открыть FULL BODY K</b><small>тестовый план по твоим скринам</small></div></button>
+        <button className="secondary huge" onClick={onOpenLibrary}><span>≡</span><div><b>База упражнений</b><small>ретро-данные, рабочие веса и rehab-контекст</small></div></button>
         <button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
       {error && <div className="error-box">{error}</div>}
@@ -458,6 +518,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard }: { active: WorkoutSess
 export default function App() {
   const [session, setSessionState] = useState<WorkoutSession | null>(() => loadActiveSession())
   const [pendingPlan, setPendingPlan] = useState<WorkoutPlan | null>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [inWorkout, setInWorkout] = useState(() => {
     const active = loadActiveSession()
     return Boolean(active && !active.finishedAt)
@@ -501,5 +562,6 @@ export default function App() {
 
   if (session && inWorkout) return <WorkoutView session={session} setSession={setSession} onExit={exit} />
   if (pendingPlan) return <PlanPreview plan={pendingPlan} onBegin={beginPendingPlan} onBack={() => setPendingPlan(null)} />
-  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} />
+  if (libraryOpen) return <ExerciseLibraryView onBack={() => setLibraryOpen(false)} />
+  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} onOpenLibrary={() => setLibraryOpen(true)} />
 }
