@@ -151,3 +151,13 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   .rest-timer { grid-template-columns: auto 1fr auto; }
   .rest-timer button:last-child { display: none; }
 }
+
+.plan-preview { margin-top: 18px; }
+.plan-preview h1 { font-size: clamp(40px, 10vw, 60px); line-height: .98; letter-spacing: -.05em; margin: 18px 0 10px; }
+.preview-note { color: var(--muted); line-height: 1.5; margin: 18px 0; padding: 15px; border-radius: 16px; background: #f4f6f4; }
+.preview-exercises { display: grid; gap: 0; margin-top: 8px; border-top: 1px solid var(--border); }
+.preview-row { display: grid; grid-template-columns: 38px 1fr; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--border); align-items: start; }
+.preview-row > span { color: var(--muted); font-size: 12px; font-weight: 800; padding-top: 3px; }
+.preview-row b, .preview-row small { display: block; }
+.preview-row b { line-height: 1.25; }
+.preview-row small { color: var(--muted); margin-top: 4px; line-height: 1.3; }
