@@ -18,12 +18,26 @@ export interface WorkoutSet {
   completedAt?: string
 }
 
+export interface ExerciseSnapshot {
+  exerciseId: string
+  category: string
+  name: string
+  muscleGroup: string
+  movementPattern: string
+  equipment: string
+  rehab: boolean
+  instruction: string
+  image?: string
+  badge?: string
+}
+
 export interface WorkoutExercise {
   instanceId: string
   exerciseId: string
   originalExerciseId: string
   originalName: string
   order: number
+  section?: string
   category: string
   name: string
   muscleGroup: string
@@ -36,6 +50,7 @@ export interface WorkoutExercise {
   sets: WorkoutSet[]
   replacementReason?: 'Занято' | 'Дискомфорт' | 'Другое'
   replacedAt?: string
+  originalSnapshot?: ExerciseSnapshot
 }
 
 export interface WorkoutPlan {
