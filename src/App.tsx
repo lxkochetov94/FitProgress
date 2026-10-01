@@ -157,10 +157,10 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
             <strong>{nextTitle}</strong>
           </div>
 
-          {!ready && <div className="rest-actions">
-            <button type="button" className="rest-secondary" onClick={onAdd}>+30 сек</button>
-            <button type="button" className="rest-secondary" onClick={onAdvance}>Пропустить</button>
-          </div>}
+          <div className={`rest-actions ${ready ? 'is-ready-placeholder' : ''}`} aria-hidden={ready ? 'true' : undefined}>
+            <button type="button" className="rest-secondary" onClick={onAdd} tabIndex={ready ? -1 : 0}>+30 сек</button>
+            <button type="button" className="rest-secondary" onClick={onAdvance} tabIndex={ready ? -1 : 0}>Пропустить</button>
+          </div>
         </div>
       </div>
     </section>
@@ -415,19 +415,29 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
   const advanceFromRest = () => {
     if (!session.activeRest) return
+
+    const rest = session.activeRest
+    const current = session.plan.exercises[rest.exerciseIndex]
+
+    let targetId = ''
+    if (rest.kind === 'between_sets') {
+      const target = current.sets.find((set) => set.setNo === rest.nextSetNo && !set.completed)
+      targetId = target ? `set-${target.id}` : `exercise-${current.instanceId}`
+    } else {
+      const nextExercise = session.plan.exercises.find((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
+      targetId = nextExercise ? `exercise-${nextExercise.instanceId}` : 'workout-summary'
+    }
+
+    const targetTop = targetId ? elementTop(targetId) : undefined
     const next = clone(session)
-    const rest = next.activeRest!
     delete next.activeRest
     next.updatedAt = new Date().toISOString()
 
     if (rest.kind === 'between_sets') {
-      const exercise = next.plan.exercises[rest.exerciseIndex]
       setSession(next)
-      setOpenExercise(exercise.instanceId)
-      const target = exercise.sets.find((set) => set.setNo === rest.nextSetNo && !set.completed)
-      window.setTimeout(() => {
-        document.getElementById(target ? `set-${target.id}` : `exercise-${exercise.instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 80)
+      setClock(Date.now())
+      setOpenExercise(current.instanceId)
+      restoreAnchor(targetId, targetTop)
       return
     }
 
@@ -436,15 +446,15 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       const exercise = next.plan.exercises[nextIndex]
       exercise.startedAt = exercise.startedAt ?? new Date().toISOString()
       setSession(next)
+      setClock(Date.now())
       setOpenExercise(exercise.instanceId)
-      window.setTimeout(() => {
-        document.getElementById(`exercise-${exercise.instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
+      restoreAnchor(targetId, targetTop)
       return
     }
 
     setSession(next)
-    window.setTimeout(() => document.getElementById('workout-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+    setClock(Date.now())
+    restoreAnchor('workout-summary', targetTop)
   }
 
   const addRestTime = (seconds: number) => {

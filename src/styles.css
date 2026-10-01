@@ -1213,3 +1213,84 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 html {
   overflow-anchor: none;
 }
+
+
+/* v0.7 — zero-jump rest transitions */
+.inline-rest {
+  contain: layout paint;
+}
+
+.rest-stage,
+.between_exercises .rest-stage {
+  min-height: 150px;
+}
+
+.rest-meta {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.rest-actions {
+  min-height: 100px;
+  align-content: center;
+  transition: opacity .22s ease;
+}
+
+.rest-actions.is-ready-placeholder {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rest-ring-inner strong,
+.between_exercises .rest-ring-inner strong,
+.inline-rest.is-ready .rest-ring-inner strong {
+  transform: scaleY(1.5) !important;
+  line-height: .72 !important;
+}
+
+.inline-rest.is-ready .rest-ring::after {
+  opacity: 0 !important;
+}
+
+.inline-rest.is-ready .rest-ring {
+  background-color: #20bf55 !important;
+  transition:
+    --rest-hue 1s linear,
+    --rest-progress 1s linear,
+    background-color .62s ease,
+    box-shadow .62s ease,
+    transform .2s ease !important;
+}
+
+@media (max-width: 520px) {
+  .rest-stage,
+  .between_exercises .rest-stage {
+    min-height: 126px;
+  }
+
+  .rest-meta {
+    min-height: 126px;
+  }
+
+  .rest-actions {
+    min-height: 92px;
+  }
+}
+
+@media (max-width: 370px) {
+  .rest-stage,
+  .between_exercises .rest-stage {
+    min-height: 112px;
+  }
+
+  .rest-meta {
+    min-height: 112px;
+  }
+
+  .rest-actions {
+    min-height: 86px;
+  }
+}
