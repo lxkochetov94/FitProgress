@@ -62,7 +62,7 @@ function SetRow({ set, rehab, onChange, onComplete }: { set: WorkoutSet; rehab: 
   )
 }
 
-function ReplacementSheet({ exercise, onClose, onReplace }: { exercise: WorkoutExercise; onClose: () => void; onReplace: (def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => void }) {
+function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise: WorkoutExercise; onClose: () => void; onReplace: (def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => void; onCustom: (reason: WorkoutExercise['replacementReason']) => void }) {
   const [reason, setReason] = useState<WorkoutExercise['replacementReason']>('Занято')
   const [query, setQuery] = useState('')
   const top = replacementCandidates(exercise)
@@ -80,6 +80,7 @@ function ReplacementSheet({ exercise, onClose, onReplace }: { exercise: WorkoutE
           {options.map((def) => <button type="button" className="replacement-item" key={def.id} onClick={() => onReplace(def, reason)}><span className="replacement-icon">{def.icon ?? '↔'}</span><span><b>{def.name}</b><small>{def.muscleGroup} · {def.movementPattern} · {def.equipment}</small></span><span className="chevron">›</span></button>)}
           {!options.length && <div className="empty-mini">Ничего не найдено.</div>}
         </div>
+        <button type="button" className="ghost big" onClick={() => onCustom(reason)}>+ Другое упражнение вручную</button>
       </div>
     </div>
   )
@@ -128,40 +129,74 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const replaceExercise = (index: number, def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => {
-    mutateExercise(index, (exercise) => ({
-      ...exercise,
-      exerciseId: def.id,
-      name: def.name,
-      category: def.category,
-      muscleGroup: def.muscleGroup,
-      movementPattern: def.movementPattern,
-      equipment: def.equipment,
-      rehab: Boolean(def.rehab),
-      instruction: def.instruction || `Замена на ${def.name}. Вес и фактические повторения внеси по ходу тренировки.`,
-      badge: 'Замена',
-      replacementReason: reason,
-      replacedAt: new Date().toISOString(),
-      sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
-    }))
+    mutateExercise(index, (exercise) => {
+      const originalSnapshot = exercise.originalSnapshot ?? {
+        exerciseId: exercise.exerciseId,
+        category: exercise.category,
+        name: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        movementPattern: exercise.movementPattern,
+        equipment: exercise.equipment,
+        rehab: exercise.rehab,
+        instruction: exercise.instruction,
+        image: exercise.image,
+        badge: exercise.badge
+      }
+      return {
+        ...exercise,
+        originalSnapshot,
+        exerciseId: def.id,
+        name: def.name,
+        category: def.category,
+        muscleGroup: def.muscleGroup,
+        movementPattern: def.movementPattern,
+        equipment: def.equipment,
+        rehab: Boolean(def.rehab),
+        instruction: def.instruction || `Замена на ${def.name}. Вес и фактические повторения внеси по ходу тренировки.`,
+        image: undefined,
+        badge: 'Замена',
+        replacementReason: reason,
+        replacedAt: new Date().toISOString(),
+        sets: exercise.sets.map((s, i) => ({ ...s, id: `${def.id}-${i + 1}-${Date.now()}`, actualWeight: '', actualReps: '', actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
+      }
+    })
     setReplacementFor(null)
+  }
+
+  const replaceCustom = (index: number, reason: WorkoutExercise['replacementReason']) => {
+    const source = session.plan.exercises[index]
+    const name = window.prompt('Название упражнения')?.trim()
+    if (!source || !name) return
+    replaceExercise(index, {
+      id: `custom-${id()}`,
+      name,
+      category: source.category,
+      muscleGroup: source.muscleGroup,
+      movementPattern: source.movementPattern,
+      equipment: 'Другое',
+      rehab: source.rehab,
+      icon: 'NEW'
+    }, reason)
   }
 
   const undoReplacement = (index: number) => {
     mutateExercise(index, (exercise) => {
+      const snapshot = exercise.originalSnapshot
       const def = getDefinition(exercise.originalExerciseId)
       return {
         ...exercise,
-        exerciseId: exercise.originalExerciseId,
-        name: exercise.originalName,
-        category: def?.category || exercise.category,
-        muscleGroup: def?.muscleGroup || exercise.muscleGroup,
-        movementPattern: def?.movementPattern || exercise.movementPattern,
-        equipment: def?.equipment || exercise.equipment,
-        rehab: Boolean(def?.rehab),
+        exerciseId: snapshot?.exerciseId || exercise.originalExerciseId,
+        name: snapshot?.name || exercise.originalName,
+        category: snapshot?.category || def?.category || exercise.category,
+        muscleGroup: snapshot?.muscleGroup || def?.muscleGroup || exercise.muscleGroup,
+        movementPattern: snapshot?.movementPattern || def?.movementPattern || exercise.movementPattern,
+        equipment: snapshot?.equipment || def?.equipment || exercise.equipment,
+        rehab: snapshot?.rehab ?? Boolean(def?.rehab),
+        image: snapshot?.image,
         replacementReason: undefined,
         replacedAt: undefined,
-        badge: def?.badge,
-        instruction: def?.instruction || exercise.instruction,
+        badge: snapshot?.badge ?? def?.badge,
+        instruction: snapshot?.instruction || def?.instruction || exercise.instruction,
         sets: exercise.sets.map((s) => ({ ...s, actualWeight: s.targetWeight, actualReps: s.targetReps, actualRir: '', pain: '', comment: '', completed: false, completedAt: undefined }))
       }
     })
@@ -219,7 +254,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       <section className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={finish}>Завершить тренировку</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
 
       {restLeft > 0 && <div className="rest-timer"><span>Отдых</span><b>{fmtDuration(restLeft)}</b><button onClick={() => setRestLeft((x) => x + 30)}>+30с</button><button onClick={() => setRestLeft(0)}>Пропустить</button></div>}
-      {replacementFor !== null && <ReplacementSheet exercise={session.plan.exercises[replacementFor]} onClose={() => setReplacementFor(null)} onReplace={(def, reason) => replaceExercise(replacementFor, def, reason)} />}
+      {replacementFor !== null && <ReplacementSheet exercise={session.plan.exercises[replacementFor]} onClose={() => setReplacementFor(null)} onReplace={(def, reason) => replaceExercise(replacementFor, def, reason)} onCustom={(reason) => replaceCustom(replacementFor, reason)} />}
     </main>
   )
 }
