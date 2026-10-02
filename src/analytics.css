@@ -611,3 +611,41 @@
     grid-template-columns: 84px 1fr;
   }
 }
+
+
+/* v0.14 — auditable analytics timeline */
+.analytics-audit-note {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #dfe5e1;
+  border-radius: 20px;
+  background: #f7faf8;
+}
+
+.analytics-audit-note b {
+  font-size: 13px;
+}
+
+.analytics-audit-note p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.analytics-point-head > div > small {
+  display: block;
+  margin-top: 5px;
+  color: #7b827e;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.analytics-set-list > div > span {
+  font-weight: 650;
+}
+
+.analytics-chart .chart-line {
+  stroke-linejoin: round;
+}
