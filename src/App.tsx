@@ -141,7 +141,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   const progress = durationSec > 0 ? Math.min(1, elapsed / durationSec) : 1
   const ready = restLeft <= 0
   const hue = Math.round(progress * 120)
-  const visualProgress = ready ? 100 : Math.max(4, Math.round(progress * 100))
+  const visualProgress = ready ? 100 : Math.max(0.8, Math.round(progress * 1000) / 10)
   const restAngle = ready ? 360 : progress * 360
   const nextEyebrow = kind === 'between_sets' ? 'Следующий подход' : 'Следующее упражнение'
   const nextTitle = kind === 'between_sets'
