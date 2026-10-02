@@ -4,18 +4,21 @@ import type { ExerciseProfiles } from './exerciseProgress'
 
 const ACTIVE_KEY = 'fitprogress.active-session.v1'
 const HISTORY_KEY = 'fitprogress.history.v1'
-const TEST_HISTORY_RESET_KEY = 'fitprogress.test-history-reset.2026-10-02.v1'
+const TEST_HISTORY_RESET_KEY = 'fitprogress.test-history-reset.2026-10-02.v2'
+const ANALYTICS_HISTORY_KEY = 'fitprogress.analytics-history.v1'
 const EXERCISE_PROFILES_KEY = 'fitprogress.exercise-profiles.v1'
 
 export function clearTestWorkoutHistoryOnce() {
   try {
     if (localStorage.getItem(TEST_HISTORY_RESET_KEY)) return
 
-    // One-time production reset before the first real FitProgress workout.
-    // Exercise retrospective, rehab profile and known lifts live in the app
-    // library/code and are intentionally untouched.
+    // One-time production reset immediately before the first real FitProgress workout.
+    // Remove all locally generated test sessions and their learned/analytics traces.
+    // The embedded retrospective (real workouts from the revision) lives in code and is untouched.
     localStorage.removeItem(HISTORY_KEY)
     localStorage.removeItem(ACTIVE_KEY)
+    localStorage.removeItem(EXERCISE_PROFILES_KEY)
+    localStorage.removeItem(ANALYTICS_HISTORY_KEY)
     localStorage.setItem(TEST_HISTORY_RESET_KEY, new Date().toISOString())
   } catch {
     // Storage can be unavailable in private/restricted browser contexts.
