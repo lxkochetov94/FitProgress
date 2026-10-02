@@ -2039,3 +2039,38 @@ html, body {
     transition-duration: 1ms !important;
   }
 }
+
+
+/* v0.13 — final recovery timer polish: unclipped card + time-based trail color */
+.rest-native-collapse > .native-collapse-inner {
+  box-sizing: border-box;
+  padding-block: 10px;
+}
+
+.rest-native-collapse .inline-rest {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.rest-ring::after,
+.inline-rest.is-ready .rest-ring::after {
+  background-image: none !important;
+  background-color: hsl(var(--rest-hue) 88% 48%) !important;
+  transition:
+    --rest-progress 1s linear,
+    background-color .78s linear,
+    opacity .35s ease !important;
+}
+
+.rest-ring-marker::after {
+  background-color: hsl(var(--rest-hue) 88% 48%) !important;
+  transition:
+    background-color .78s linear,
+    box-shadow .78s linear !important;
+}
+
+@media (max-width: 520px) {
+  .rest-native-collapse > .native-collapse-inner {
+    padding-block: 8px;
+  }
+}
