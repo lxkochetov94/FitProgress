@@ -25,29 +25,14 @@ function trend(first: number | null | undefined, last: number | null | undefined
   return `${pct > 0 ? '+' : ''}${formatMetric(pct, 1)}%`
 }
 
-function smoothPath(points: ChartCoord[]) {
+function linePath(points: ChartCoord[]) {
   if (!points.length) return ''
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`
-  if (points.length === 2) return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`
-
-  let path = `M ${points[0].x} ${points[0].y}`
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const previous = points[index - 1] ?? points[index]
-    const current = points[index]
-    const next = points[index + 1]
-    const after = points[index + 2] ?? next
-    const cp1x = current.x + (next.x - previous.x) / 6
-    const cp1y = current.y + (next.y - previous.y) / 6
-    const cp2x = next.x - (after.x - current.x) / 6
-    const cp2y = next.y - (after.y - current.y) / 6
-    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`
-  }
-  return path
+  return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
 }
 
 function areaPath(points: ChartCoord[], bottom = 124) {
   if (points.length < 2) return ''
-  return `${smoothPath(points)} L ${points.at(-1)!.x} ${bottom} L ${points[0].x} ${bottom} Z`
+  return `${linePath(points)} L ${points.at(-1)!.x} ${bottom} L ${points[0].x} ${bottom} Z`
 }
 
 function ChartGrid() {
@@ -80,16 +65,19 @@ function ChartPoint({ x, y, active, onSelect }: { x: number; y: number; active: 
 }
 
 function Sparkline({ values }: { values: (number | null)[] }) {
-  const data = values.map((value, index) => ({ value, index })).filter((item): item is { value: number; index: number } => item.value != null && Number.isFinite(item.value))
+  const data = values
+    .map((value, index) => ({ value, index }))
+    .filter((item): item is { value: number; index: number } => item.value != null && Number.isFinite(item.value))
   if (data.length < 2) return <span className="analytics-spark-empty">—</span>
+
   const min = Math.min(...data.map((item) => item.value))
   const max = Math.max(...data.map((item) => item.value))
   const span = Math.max(max - min, Math.max(Math.abs(max), 1) * .08)
   const coords = data.map((item) => ({
-    x: data.length === 1 ? 40 : item.index / Math.max(values.length - 1, 1) * 80,
+    x: item.index / Math.max(values.length - 1, 1) * 80,
     y: 24 - ((item.value - min) / span) * 20
   }))
-  return <svg className="analytics-spark" viewBox="0 0 80 28" preserveAspectRatio="none" aria-hidden="true"><path d={smoothPath(coords)} /></svg>
+  return <svg className="analytics-spark" viewBox="0 0 80 28" preserveAspectRatio="none" aria-hidden="true"><path d={linePath(coords)} /></svg>
 }
 
 function IndexChart({ points }: { points: IndexPoint[] }) {
@@ -107,6 +95,7 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
     x: points.length === 1 ? 160 : 18 + index / Math.max(points.length - 1, 1) * 284,
     y: 116 - ((point.value - min) / span) * 78
   }))
+
   return (
     <div className="analytics-chart-wrap">
       <div className="analytics-chart-toolbar analytics-chart-toolbar-index">
@@ -126,7 +115,7 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
         </defs>
         <ChartGrid />
         {coords.length > 1 && <path d={areaPath(coords)} fill={`url(#${uid}-fill)`} className="chart-area" />}
-        <path d={smoothPath(coords)} stroke={`url(#${uid}-stroke)`} className="chart-line" />
+        <path d={linePath(coords)} stroke={`url(#${uid}-stroke)`} className="chart-line" />
         {coords.map((point, index) => (
           <ChartPoint key={points[index].workoutId} x={point.x} y={point.y} active={index === selectedIndex} onSelect={() => setSelected(index)} />
         ))}
@@ -136,29 +125,56 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
   )
 }
 
-function SetDetails({ point }: { point: ExercisePoint }) {
+function SetDetails({ point, currentName }: { point: ExercisePoint; currentName: string }) {
+  const isHistoricalVariant = point.matchedExerciseName !== currentName
   return (
     <div className="analytics-point-detail">
-      <div className="analytics-point-head"><div><span>{point.dateLabel}</span><b>{point.workoutTitle}</b></div>{point.workWeight != null && <strong>{formatMetric(point.workWeight, 1)} {point.weightUnit}</strong>}</div>
-      <div className="analytics-set-list">
-        {point.primarySets.map((set, index) => <div key={`${set.label}-${index}`}><span>{/^\d/.test(set.label) ? `Подход ${index + 1}` : set.label}</span><b>{[set.weight, set.reps && `× ${set.reps}`].filter(Boolean).join(' ')}</b>{(set.rir || set.pain || set.intensity) && <small>{set.rir ? `RIR ${set.rir}` : set.intensity}{set.pain ? ` · боль ${set.pain}/10` : ''}</small>}</div>)}
+      <div className="analytics-point-head">
+        <div>
+          <span>{point.dateLabel}</span>
+          <b>{point.workoutTitle}</b>
+          {isHistoricalVariant && <small>Исторический вариант: {point.matchedExerciseName}</small>}
+        </div>
+        {point.workWeight != null && <strong>{formatMetric(point.workWeight, 1)} {point.weightUnit}</strong>}
       </div>
-      <div className="analytics-total"><span>Всего повторений</span><b>{formatMetric(point.totalReps, 1)}</b>{point.prepSetCount > 0 && <small>+ {point.prepSetCount} подготовит. подхода</small>}</div>
+      <div className="analytics-set-list">
+        {point.allSets.map((set, index) => (
+          <div key={`${set.label}-${index}`}>
+            <span>{/^\d/.test(set.label) ? `Подход ${set.label}` : set.label}</span>
+            <b>{[set.weight, set.reps && `× ${set.reps}`].filter(Boolean).join(' ')}</b>
+            {(set.rir || set.pain || set.intensity) && (
+              <small>{set.rir ? `RIR ${set.rir}` : set.intensity}{set.pain ? ` · боль ${set.pain}/10` : ''}</small>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="analytics-total">
+        <span>Всего повторений в учтённых сетах</span>
+        <b>{point.totalReps == null ? '—' : formatMetric(point.totalReps, 1)}</b>
+        {point.totalReps == null && <small>в источнике есть диапазон/нечисловое значение</small>}
+      </div>
     </div>
   )
 }
 
-function ExerciseChart({ points }: { points: ExercisePoint[] }) {
+const maxExactReps = (point: ExercisePoint) => {
+  const values = point.setReps.filter((value): value is number => value != null)
+  return values.length ? Math.max(...values) : null
+}
+
+function ExerciseChart({ points, name }: { points: ExercisePoint[]; name: string }) {
   const [selected, setSelected] = useState(Math.max(0, points.length - 1))
   const uid = useId().replace(/:/g, '')
   if (!points.length) return null
 
   const weighted = points.some((point) => point.workWeight != null)
-  const valueOf = (point: ExercisePoint) => point.workWeight ?? Math.max(...point.setReps)
-  const valid = points.map((point, index) => ({ point, index, value: valueOf(point) })).filter((item): item is { point: ExercisePoint; index: number; value: number } => item.value != null && Number.isFinite(item.value))
+  const valueOf = (point: ExercisePoint) => point.workWeight ?? maxExactReps(point)
+  const valid = points
+    .map((point, index) => ({ point, index, value: valueOf(point) }))
+    .filter((item): item is { point: ExercisePoint; index: number; value: number } => item.value != null && Number.isFinite(item.value))
   const selectedIndex = Math.min(selected, points.length - 1)
   const active = points[selectedIndex]
-  if (!valid.length) return <SetDetails point={active} />
+  if (!valid.length) return <SetDetails point={active} currentName={name} />
 
   const values = valid.map((item) => item.value)
   const min = Math.min(...values)
@@ -169,19 +185,20 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
     x: valid.length === 1 ? 160 : 18 + index / Math.max(valid.length - 1, 1) * 284,
     y: 116 - ((item.value - min) / span) * 78
   }))
+
   const activeValue = valueOf(active)
   const activeLabel = weighted
-    ? `${formatMetric(activeValue ?? 0, 1)} ${active.weightUnit ?? ''}`
-    : `${formatMetric(activeValue ?? 0, 1)} повт.`
+    ? activeValue == null ? '—' : `${formatMetric(activeValue, 1)} ${active.weightUnit ?? ''}`
+    : activeValue == null ? '—' : `${formatMetric(activeValue, 1)} повт.`
 
   return (
     <>
       <div className="analytics-chart-wrap exercise-chart-wrap">
         <div className="analytics-chart-toolbar">
-          <div className="analytics-chart-caption"><span>{weighted ? 'Рабочий вес' : 'Повторы в лучшем подходе'}</span></div>
+          <div className="analytics-chart-caption"><span>{weighted ? 'Вес на тренировке' : 'Повторы'}</span></div>
           <ChartValue primary={activeLabel} secondary={active.dateLabel} />
         </div>
-        <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label="Динамика упражнения">
+        <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label={`Динамика: ${name}`}>
           <defs>
             <linearGradient id={`${uid}-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#168246" />
@@ -195,14 +212,14 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
           </defs>
           <ChartGrid />
           {coords.length > 1 && <path d={areaPath(coords)} fill={`url(#${uid}-fill)`} className="chart-area" />}
-          <path d={smoothPath(coords)} stroke={`url(#${uid}-stroke)`} className="chart-line" />
+          <path d={linePath(coords)} stroke={`url(#${uid}-stroke)`} className="chart-line" />
           {coords.map((item) => (
             <ChartPoint key={item.point.workoutId} x={item.x} y={item.y} active={item.index === selectedIndex} onSelect={() => setSelected(item.index)} />
           ))}
         </svg>
         <div className="analytics-axis-labels"><span>{valid[0]?.point.dateLabel}</span><span>{valid.at(-1)?.point.dateLabel}</span></div>
       </div>
-      <SetDetails point={active} />
+      <SetDetails point={active} currentName={name} />
     </>
   )
 }
@@ -213,31 +230,50 @@ function MetricRow({ label, values, unit, absolute = false }: { label: string; v
   const last = clean.at(-1)
   return (
     <div className="analytics-metric-row">
-      <div className="analytics-metric-name"><b>{label}</b><span>{last == null ? '—' : `${formatMetric(last, 1)}${unit ? ` ${unit}` : ''}`}</span></div>
+      <div className="analytics-metric-name">
+        <b>{label}</b>
+        <span>{last == null ? '—' : `${formatMetric(last, 1)}${unit ? ` ${unit}` : ''}`}</span>
+      </div>
       <Sparkline values={values} />
-      <strong className={(first != null && last != null && last >= first) ? 'positive' : ''}>{trend(first, last, absolute ? 'absolute' : 'percent')}</strong>
+      <strong className={(first != null && last != null && last >= first) ? 'positive' : ''}>
+        {trend(first, last, absolute ? 'absolute' : 'percent')}
+      </strong>
     </div>
   )
 }
 
 function ExerciseCard({ name, points, totalCount }: { name: string; points: ExercisePoint[]; totalCount: number }) {
   if (!points.length) return null
-  const latest = points.at(-1)!
-  const first = points[0]
-  const scoreTrend = trend(first.score, latest.score)
-  const maxSets = Math.max(...points.map((point) => point.setReps.length))
   const weighted = points.some((point) => point.workWeight != null)
+  const chartValues = points
+    .map((point) => point.workWeight ?? maxExactReps(point))
+    .filter((value): value is number => value != null)
+  const chartTrend = trend(chartValues[0], chartValues.at(-1), weighted ? 'percent' : 'absolute')
+  const maxSets = Math.max(...points.map((point) => point.setReps.length))
+
   return (
     <article className="analytics-exercise-card">
       <div className="analytics-exercise-head">
-        <div><span className="eyebrow">{points.length} В ПЕРИОДЕ{totalCount > points.length ? ` · ${totalCount} ВСЕГО` : ''}</span><h2>{name}</h2></div>
-        <span className={`analytics-delta ${latest.score >= first.score ? 'positive' : ''}`}>{scoreTrend}</span>
+        <div>
+          <span className="eyebrow">
+            {points.length} {points.length === 1 ? 'ТРЕНИРОВКА' : 'ТРЕНИРОВОК'} В ПЕРИОДЕ
+            {totalCount > points.length ? ` · ${totalCount} ВСЕГО` : ''}
+          </span>
+          <h2>{name}</h2>
+        </div>
+        <span className={`analytics-delta ${chartValues.length > 1 && chartValues.at(-1)! >= chartValues[0] ? 'positive' : ''}`}>
+          {chartTrend}
+        </span>
       </div>
-      <ExerciseChart points={points} />
+
+      <ExerciseChart points={points} name={name} />
+
       <div className="analytics-distribution">
-        {weighted && <MetricRow label="Рабочий вес" values={points.map((point) => point.workWeight)} unit={latest.weightUnit ?? ''} />}
-        {weighted && <MetricRow label="Пиковый вес" values={points.map((point) => point.peakWeight)} unit={latest.weightUnit ?? ''} />}
-        {Array.from({ length: maxSets }).map((_, index) => <MetricRow key={index} label={`${index + 1}-й подход`} values={points.map((point) => point.setReps[index] ?? null)} unit="повт." absolute />)}
+        {weighted && <MetricRow label="Рабочий вес" values={points.map((point) => point.workWeight)} unit={points.at(-1)?.weightUnit ?? ''} />}
+        {weighted && <MetricRow label="Пиковый вес" values={points.map((point) => point.peakWeight)} unit={points.at(-1)?.weightUnit ?? ''} />}
+        {Array.from({ length: maxSets }).map((_, index) => (
+          <MetricRow key={index} label={`${index + 1}-й подход`} values={points.map((point) => point.setReps[index] ?? null)} unit="повт." absolute />
+        ))}
         <MetricRow label="Всего повторений" values={points.map((point) => point.totalReps)} unit="повт." absolute />
       </div>
     </article>
@@ -263,21 +299,57 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="analytics-periods" role="tablist" aria-label="Период аналитики">
-        {PERIODS.map((item) => <button key={item.id} className={period === item.id ? 'active' : ''} onClick={() => setPeriod(item.id)}>{item.label}</button>)}
+        {PERIODS.map((item) => (
+          <button key={item.id} className={period === item.id ? 'active' : ''} onClick={() => setPeriod(item.id)}>
+            {item.label}
+          </button>
+        ))}
       </div>
 
       <section className="analytics-index-card">
-        <div className="analytics-index-head"><div><span className="eyebrow">ОБЩАЯ ДИНАМИКА</span><h2>Силовой индекс</h2><p>100% = первая доступная точка каждого упражнения в выбранном периоде.</p></div><strong className={strength.length > 1 && strength.at(-1)!.value >= strength[0].value ? 'positive' : ''}>{strengthDelta}</strong></div>
+        <div className="analytics-index-head">
+          <div>
+            <span className="eyebrow">ОБЩАЯ ДИНАМИКА</span>
+            <h2>Силовой индекс</h2>
+            <p>Расчётная сводка по фактическому весу; для упражнений с собственным весом — по повторам. Rehab не раздувает индекс.</p>
+          </div>
+          <strong className={strength.length > 1 && strength.at(-1)!.value >= strength[0].value ? 'positive' : ''}>{strengthDelta}</strong>
+        </div>
         <IndexChart points={strength} />
       </section>
 
-      {latest && <section className="analytics-latest"><span className="eyebrow">ПОСЛЕДНЯЯ ТРЕНИРОВКА</span><h2>{latest.title}</h2><p>{fmtFullDate(latest.date, latest.periodLabel)} · {latestExercises.length} упражнений с фактом</p></section>}
+      {latest && (
+        <section className="analytics-latest">
+          <span className="eyebrow">ПОСЛЕДНЯЯ ТРЕНИРОВКА</span>
+          <h2>{latest.title}</h2>
+          <p>{fmtFullDate(latest.date, latest.periodLabel)} · {latestExercises.length} упражнений с фактом</p>
+        </section>
+      )}
 
-      <section className="analytics-cards">
-        {latestExercises.map((exercise) => <ExerciseCard key={exercise.exerciseId} name={exercise.name} points={exerciseSeries(filtered, exercise.exerciseId)} totalCount={exerciseSeries(workouts, exercise.exerciseId).length} />)}
+      <section className="analytics-audit-note">
+        <b>Как читать график</b>
+        <p>Одна тренировка = одна точка. Точка по весу = максимальный вес среди рабочих/учтённых сетов этой тренировки. «Пиковый вес» ниже учитывает вообще все записанные сеты, включая калибровки и пробы. Нажми на точку — увидишь исходные подходы без скрытого усреднения.</p>
       </section>
 
-      <section className="analytics-note"><b>Ретроспектива загружена</b><p>В аналитику встроены 31 тренировка из ревизии 29.06–29.09. Для Т04–Т09 точные дни в источнике отсутствуют, поэтому на графиках они остаются периодом «Июль 2026» без выдуманных дат. Новые тренировки сохраняются в отдельный аналитический архив и не меняют механику основного дневника.</p></section>
+      <section className="analytics-cards">
+        {latestExercises.map((exercise) => {
+          const periodPoints = exerciseSeries(filtered, exercise.exerciseId)
+          const allPoints = exerciseSeries(workouts, exercise.exerciseId)
+          return (
+            <ExerciseCard
+              key={exercise.exerciseId}
+              name={exercise.name}
+              points={periodPoints}
+              totalCount={allPoints.length}
+            />
+          )
+        })}
+      </section>
+
+      <section className="analytics-note">
+        <b>Источник данных</b>
+        <p>Встроены 31 ретроспективная тренировка из ревизии 29.06–29.09 плюс завершённые тренировки FitProgress. Для Т04–Т09 точные дни в исходнике отсутствуют: они остаются «Июль 2026», без выдуманных дат. Сегодняшний FULL BODY K учитывается после завершения тренировки и уже виден как 02.10.</p>
+      </section>
     </main>
   )
 }
