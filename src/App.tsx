@@ -2,7 +2,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
-import { downloadTemplate, exportSession, importWorkout } from './excel'
+import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
 import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
@@ -782,7 +782,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   if (finishedSummary) {
     const end = session.finishedAt ? new Date(session.finishedAt) : new Date()
     const duration = Math.max(0, Math.round((end.getTime() - new Date(session.startedAt).getTime()) / 60000))
-    return <main className="app-shell"><header className="topbar"><button className="back" onClick={onExit}>‹</button><span>FitProgress</span><span className="status-dot">сохранено</span></header><section className="summary-card"><span className="pill">Тренировка завершена</span><h1>{session.plan.title}</h1><p>{fmtDate(session.startedAt)} · {fmtTime(session.startedAt)}–{fmtTime(end.toISOString())}</p><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{duration}</b><span>минут</span></div><div><b>{totals.replacements}</b><span>замен</span></div></div><button className="primary big" onClick={() => exportSession(session)}>Выгрузить Excel</button><button className="secondary big" onClick={() => setFinishedSummary(false)}>Вернуться к тренировке</button><button className="ghost big" onClick={onExit}>На главный экран</button></section></main>
+    return <main className="app-shell"><header className="topbar"><button className="back" onClick={onExit}>‹</button><span>FitProgress</span><span className="status-dot">сохранено</span></header><section className="summary-card"><span className="pill">Тренировка завершена</span><h1>{session.plan.title}</h1><p>{fmtDate(session.startedAt)} · {fmtTime(session.startedAt)}–{fmtTime(end.toISOString())}</p><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{duration}</b><span>минут</span></div><div><b>{totals.replacements}</b><span>замен</span></div></div><button className="primary big" onClick={() => exportSession(session)}>Выгрузить эту тренировку</button><button className="secondary big" onClick={exportFullRegistry}>Выгрузить полный реестр</button><button className="secondary big" onClick={() => setFinishedSummary(false)}>Вернуться к тренировке</button><button className="ghost big" onClick={onExit}>На главный экран</button></section></main>
   }
 
   return (
@@ -1130,9 +1130,9 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
       <section className="action-stack">
         <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
         <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
-        <button className="secondary huge" onClick={onOpenAnalytics}><span>↗</span><div><b>Аналитика прогресса</b><small>силовой индекс, рабочие веса и повторы</small></div></button>
+        <button className="secondary huge" onClick={onOpenAnalytics}><span>↗</span><div><b>Аналитика прогресса</b><small>общий объём, рабочие веса и повторы</small></div></button>
         <button className="secondary huge" onClick={onOpenLibrary}><span>≡</span><div><b>База упражнений</b><small>ретро-данные, рабочие веса и rehab-контекст</small></div></button>
-        <button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
+        <button className="secondary huge" onClick={exportFullRegistry}><span>↓</span><div><b>Выгрузить полный реестр</b><small>вся ретроспектива + все завершённые тренировки FitProgress</small></div></button><button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
       {error && <div className="error-box">{error}</div>}
       <section className="offline-card"><b>Без интернета</b><p>После первого полного открытия установленная PWA хранит интерфейс локально. Текущая тренировка — в памяти Safari на устройстве.</p></section>
