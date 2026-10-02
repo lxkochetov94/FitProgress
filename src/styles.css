@@ -1481,3 +1481,129 @@ html {
     transition-duration: 1ms !important;
   }
 }
+
+
+/* v0.10 — slower coordinated morphs + truly centered timer typography */
+.exercise-preview-slot,
+.exercise-expanded-slot {
+  transition:
+    grid-template-rows 900ms cubic-bezier(.20,.78,.20,1),
+    opacity 420ms ease,
+    transform 900ms cubic-bezier(.20,.78,.20,1) !important;
+}
+
+.exercise-morph.is-closed .exercise-expanded-slot {
+  transition:
+    grid-template-rows 900ms cubic-bezier(.20,.78,.20,1),
+    opacity 360ms ease,
+    transform 900ms cubic-bezier(.20,.78,.20,1),
+    visibility 0s linear 900ms !important;
+}
+
+.exercise-morph.is-open .exercise-preview-slot {
+  transition:
+    grid-template-rows 900ms cubic-bezier(.20,.78,.20,1),
+    opacity 320ms ease,
+    transform 900ms cubic-bezier(.20,.78,.20,1),
+    visibility 0s linear 900ms !important;
+}
+
+.rest-transition-shell {
+  transition:
+    grid-template-rows 820ms cubic-bezier(.20,.78,.20,1),
+    opacity 430ms ease,
+    transform 820ms cubic-bezier(.20,.78,.20,1) !important;
+}
+
+/* Incoming rest blocks should unfold at the same deliberate pace as cards. */
+.inline-rest {
+  animation-duration: 760ms !important;
+  animation-timing-function: cubic-bezier(.20,.78,.20,1) !important;
+}
+
+/* Exact optical centering inside the circle. No oversized width / negative margin tricks. */
+.rest-ring-inner {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  pointer-events: none;
+  overflow: visible !important;
+}
+
+.rest-ring-inner strong,
+.between_exercises .rest-ring-inner strong {
+  width: max-content !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 64px !important;
+  font-weight: 580 !important;
+  font-variation-settings: "wdth" 74, "wght" 580;
+  letter-spacing: -.075em !important;
+  line-height: .84 !important;
+  transform: scaleX(.66) scaleY(1.45) !important;
+  transform-origin: center center !important;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.inline-rest.is-ready .rest-ring-inner strong {
+  width: max-content !important;
+  margin: 0 !important;
+  font-size: 66px !important;
+  font-weight: 620 !important;
+  font-variation-settings: "wdth" 78, "wght" 620;
+  letter-spacing: -.045em !important;
+  line-height: .84 !important;
+  transform: scaleX(.72) scaleY(1.45) !important;
+  transform-origin: center center !important;
+}
+
+@media (max-width: 520px) {
+  .exercise-preview-slot,
+  .exercise-expanded-slot {
+    transition-duration: 880ms !important;
+  }
+
+  .rest-transition-shell {
+    transition-duration: 800ms !important;
+  }
+
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 61px !important;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 64px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 55px !important;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 58px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exercise-preview-slot,
+  .exercise-expanded-slot,
+  .rest-transition-shell,
+  .inline-rest {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}

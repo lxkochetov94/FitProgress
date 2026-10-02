@@ -223,6 +223,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const [clock, setClock] = useState(Date.now())
   const [restLeaving, setRestLeaving] = useState(false)
   const glideRaf = useRef<number | null>(null)
+  const transitionTimeout = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
@@ -275,33 +276,38 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     })
   }
 
-  const glideToElement = (id: string, duration = 620, headerOffset = 88) => {
+  const glideToElement = (id: string, duration = 760, headerOffset = 88) => {
     if (glideRaf.current !== null) window.cancelAnimationFrame(glideRaf.current)
+
+    const target = document.getElementById(id)
+    if (!target) return
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const startY = window.scrollY
+    const absoluteTop = startY + target.getBoundingClientRect().top
+    const destination = Math.max(0, absoluteTop - headerOffset)
     const started = performance.now()
 
     const frame = (now: number) => {
-      const target = document.getElementById(id)
-      if (!target) {
-        glideRaf.current = null
-        return
-      }
-
-      const absoluteTop = window.scrollY + target.getBoundingClientRect().top
-      const destination = Math.max(0, absoluteTop - headerOffset)
       const raw = reduceMotion ? 1 : Math.min(1, (now - started) / duration)
-      const eased = 1 - Math.pow(1 - raw, 4)
-      const nextY = startY + (destination - startY) * eased
-
-      window.scrollTo(0, nextY)
+      const eased = 1 - Math.pow(1 - raw, 5)
+      window.scrollTo(0, startY + (destination - startY) * eased)
 
       if (raw < 1) glideRaf.current = window.requestAnimationFrame(frame)
       else glideRaf.current = null
     }
 
     glideRaf.current = window.requestAnimationFrame(frame)
+  }
+
+  const glideAfterMorph = (id: string, delay = 920, duration = 760) => {
+    if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
+    transitionTimeout.current = window.setTimeout(() => {
+      transitionTimeout.current = null
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => glideToElement(id, duration))
+      })
+    }, delay)
   }
 
   const updateSet = (exerciseIndex: number, setIndex: number, patch: Partial<WorkoutSet>) => mutateExercise(exerciseIndex, (exercise) => {
@@ -404,7 +410,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       mutateExercise(index, (draft) => ({ ...draft, startedAt: new Date().toISOString() }))
     }
     setOpenExercise(exercise.instanceId)
-    window.requestAnimationFrame(() => glideToElement(`exercise-${exercise.instanceId}`, 560))
+    glideAfterMorph(`exercise-${exercise.instanceId}`, 180, 760)
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
@@ -429,9 +435,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setOpenExercise(null)
     setExerciseEnd(null)
 
-    // The card itself now morphs closed. Follow the timer while both layout
-    // transitions are running instead of snapping the viewport.
-    window.requestAnimationFrame(() => glideToElement(`rest-exercise-${index}`, 660))
+    // Let the expanded card morph into its compact state first. Scrolling to
+    // a moving target was the remaining source of the visible "kick".
+    glideAfterMorph(`rest-exercise-${index}`, 940, 780)
   }
 
   const requestFinishExercise = (index: number) => {
@@ -474,18 +480,23 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setRestLeaving(true)
     setSession(staged)
 
-    // Timer shrinks while the destination card expands. The target position
-    // changes during the morph, so the custom glide follows it frame by frame.
-    window.requestAnimationFrame(() => glideToElement(targetId, 680))
-
-    window.setTimeout(() => {
+    // Keep the timer in the DOM for the whole exit animation. The next card
+    // expands at the same pace; only after both geometries settle do we remove
+    // the timer and glide to the stable final position.
+    if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
+    transitionTimeout.current = window.setTimeout(() => {
+      transitionTimeout.current = null
       const finalState = clone(staged)
       delete finalState.activeRest
       finalState.updatedAt = new Date().toISOString()
       setSession(finalState)
       setClock(Date.now())
       setRestLeaving(false)
-    }, 520)
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => glideToElement(targetId, 800))
+      })
+    }, 940)
   }
 
   const addRestTime = (seconds: number) => {
