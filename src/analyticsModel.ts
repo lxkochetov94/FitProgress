@@ -310,41 +310,87 @@ export function exerciseSeries(workouts: AnalyticsWorkout[], exerciseId: string)
     .sort((a, b) => a!.order - b!.order) as ExercisePoint[]
 }
 
-export interface IndexPoint {
+export interface VolumePoint {
   workoutId: string
   dateLabel: string
-  value: number
   order: number
-  count: number
+  volumeKg: number
+  relative: number
+  setCount: number
 }
 
-export function overallStrengthIndex(workouts: AnalyticsWorkout[], exerciseIds: string[]) {
-  const strengthIds = exerciseIds.filter((exerciseId) => !getDefinition(exerciseId)?.rehab)
-  const candidates = strengthIds.length ? strengthIds : exerciseIds
-  const series = candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length >= 2)
-  const usable = series.length ? series : candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length)
-  const buckets = new Map<string, { order: number; dateLabel: string; values: number[] }>()
+const volumeWeightKg = (rawWeight: string) => {
+  const raw = String(rawWeight ?? '').trim()
+  if (!raw || raw === '—' || isBodyweight(raw) || /→|гриф|без веса|%|усили/i.test(raw)) return null
+  const value = numeric(raw)
+  if (!Number.isFinite(value) || value <= 0) return null
 
-  for (const points of usable) {
-    const baseline = points[0]?.score
-    if (!baseline || baseline <= 0) continue
-    for (const point of points) {
-      const normalized = point.score / baseline * 100
-      const current = buckets.get(point.workoutId) ?? { order: point.order, dateLabel: point.dateLabel, values: [] }
-      current.values.push(normalized)
-      buckets.set(point.workoutId, current)
-    }
-  }
+  // When both kg and lb are written, the first numeric value is the kg value.
+  if (/кг/i.test(raw)) return value
+  if (/\blb\b|lbs/i.test(raw)) return value * 0.45359237
+  return value
+}
 
-  return [...buckets.entries()]
-    .map(([workoutId, bucket]) => ({
-      workoutId,
-      order: bucket.order,
-      dateLabel: bucket.dateLabel,
-      value: bucket.values.reduce((a, b) => a + b, 0) / bucket.values.length,
-      count: bucket.values.length
-    }))
-    .sort((a, b) => a.order - b.order)
+const volumeMultiplier = (exercise: AnalyticsExercise, set: AnalyticsSet) => {
+  const definition = getDefinition(exercise.exerciseId)
+  const perSide = definition?.perSide || (/\/(?:рук|ног|сторон)/i.test(set.reps) ? 'side' : undefined)
+  let multiplier = perSide ? 2 : 1
+
+  const equipment = definition?.equipment ?? ''
+  const bilateralDumbbells =
+    /гантели/i.test(equipment) &&
+    definition?.perSide !== 'arm' &&
+    !/one-arm|одной рукой|одноруч/i.test(exercise.name)
+
+  if (bilateralDumbbells) multiplier *= 2
+  if (/\/(?:сторон)/i.test(set.weight) && !/гриф/i.test(set.weight)) multiplier *= 2
+
+  return multiplier
+}
+
+const setVolumeKg = (exercise: AnalyticsExercise, set: AnalyticsSet) => {
+  const weightKg = volumeWeightKg(set.weight)
+  const reps = exactRepsValue(set.reps)
+  if (weightKg == null || reps == null || reps <= 0) return null
+  return weightKg * reps * volumeMultiplier(exercise, set)
+}
+
+export function workoutVolumeSeries(workouts: AnalyticsWorkout[]): VolumePoint[] {
+  const raw = workouts
+    .map((workout) => {
+      let volumeKg = 0
+      let setCount = 0
+
+      for (const exercise of workout.exercises) {
+        for (const set of primarySets(exercise)) {
+          const volume = setVolumeKg(exercise, set)
+          if (volume == null) continue
+          volumeKg += volume
+          setCount += 1
+        }
+      }
+
+      if (volumeKg <= 0 || setCount === 0) return null
+      return {
+        workoutId: workout.id,
+        dateLabel: workout.date
+          ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(new Date(`${workout.date}T12:00:00`))
+          : workout.periodLabel,
+        order: workout.order,
+        volumeKg,
+        setCount
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a!.order - b!.order) as Omit<VolumePoint, 'relative'>[]
+
+  const baseline = raw[0]?.volumeKg
+  if (!baseline || baseline <= 0) return []
+
+  return raw.map((point) => ({
+    ...point,
+    relative: point.volumeKg / baseline * 100
+  }))
 }
 
 export function formatMetric(value: number, decimals = 0) {
