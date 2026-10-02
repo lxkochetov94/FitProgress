@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
@@ -7,8 +8,10 @@ import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseIma
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
+import { syncAnalyticsArchive } from './analyticsModel'
 
 clearTestWorkoutHistoryOnce()
+syncAnalyticsArchive()
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 const id = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
@@ -1098,7 +1101,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   )
 }
 
-function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void }) {
+function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAnalytics }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void; onOpenAnalytics: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const history = loadHistory().slice(0, 3)
@@ -1125,6 +1128,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { acti
       <section className="action-stack">
         <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
         <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
+        <button className="secondary huge" onClick={onOpenAnalytics}><span>↗</span><div><b>Аналитика прогресса</b><small>силовой индекс, рабочие веса и повторы</small></div></button>
         <button className="secondary huge" onClick={onOpenLibrary}><span>≡</span><div><b>База упражнений</b><small>ретро-данные, рабочие веса и rehab-контекст</small></div></button>
         <button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
@@ -1140,6 +1144,7 @@ export default function App() {
   const [session, setSessionState] = useState<WorkoutSession | null>(() => loadActiveSession())
   const [pendingPlan, setPendingPlan] = useState<WorkoutPlan | null>(null)
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
   const [inWorkout, setInWorkout] = useState(() => {
     const active = loadActiveSession()
     return Boolean(active && !active.finishedAt)
@@ -1183,6 +1188,7 @@ export default function App() {
 
   if (session && inWorkout) return <WorkoutView session={session} setSession={setSession} onExit={exit} />
   if (pendingPlan) return <PlanPreview plan={pendingPlan} onBegin={beginPendingPlan} onBack={() => setPendingPlan(null)} />
+  if (analyticsOpen) return <AnalyticsView onBack={() => setAnalyticsOpen(false)} />
   if (libraryOpen) return <ExerciseLibraryView onBack={() => setLibraryOpen(false)} />
-  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} onOpenLibrary={() => setLibraryOpen(true)} />
+  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} onOpenLibrary={() => setLibraryOpen(true)} onOpenAnalytics={() => setAnalyticsOpen(true)} />
 }
