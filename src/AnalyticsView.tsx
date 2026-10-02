@@ -40,7 +40,8 @@ function Sparkline({ values }: { values: (number | null)[] }) {
 function IndexChart({ points }: { points: IndexPoint[] }) {
   const [selected, setSelected] = useState(Math.max(0, points.length - 1))
   if (!points.length) return <div className="analytics-empty-chart">Недостаточно сопоставимых тренировок для индекса.</div>
-  const active = points[Math.min(selected, points.length - 1)]
+  const selectedIndex = Math.min(selected, points.length - 1)
+  const active = points[selectedIndex]
   const values = points.map((point) => point.value)
   const min = Math.min(...values)
   const max = Math.max(...values)
@@ -55,7 +56,7 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
       <svg className="analytics-chart" viewBox="0 0 320 136" role="img" aria-label="Динамика силового индекса">
         <line x1="18" x2="302" y1="118" y2="118" className="chart-axis" />
         <polyline points={coords.map((point) => `${point.x},${point.y}`).join(' ')} className="chart-line" />
-        {coords.map((point, index) => <circle key={points[index].workoutId} cx={point.x} cy={point.y} r={index === selected ? 6 : 4} className={index === selected ? 'chart-point active' : 'chart-point'} onClick={() => setSelected(index)} />)}
+        {coords.map((point, index) => <circle key={points[index].workoutId} cx={point.x} cy={point.y} r={index === selectedIndex ? 6 : 4} className={index === selectedIndex ? 'chart-point active' : 'chart-point'} onClick={() => setSelected(index)} />)}
       </svg>
       <div className="analytics-axis-labels"><span>{points[0].dateLabel}</span><span>{points.at(-1)?.dateLabel}</span></div>
     </div>
@@ -78,9 +79,10 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
   const [selected, setSelected] = useState(Math.max(0, points.length - 1))
   if (!points.length) return null
   const weighted = points.some((point) => point.workWeight != null)
-  const valueOf = (point: ExercisePoint) => weighted ? point.workWeight : Math.max(...point.setReps)
+  const valueOf = (point: ExercisePoint) => point.workWeight ?? Math.max(...point.setReps)
   const valid = points.map((point, index) => ({ point, index, value: valueOf(point) })).filter((item): item is { point: ExercisePoint; index: number; value: number } => item.value != null && Number.isFinite(item.value))
-  const active = points[Math.min(selected, points.length - 1)]
+  const selectedIndex = Math.min(selected, points.length - 1)
+  const active = points[selectedIndex]
   if (!valid.length) return <SetDetails point={active} />
   const values = valid.map((item) => item.value)
   const min = Math.min(...values)
@@ -98,7 +100,7 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
         <svg className="analytics-chart" viewBox="0 0 320 136" role="img" aria-label="Динамика упражнения">
           <line x1="18" x2="302" y1="118" y2="118" className="chart-axis" />
           <polyline points={coords.map((item) => `${item.x},${item.y}`).join(' ')} className="chart-line" />
-          {coords.map((item) => <circle key={item.point.workoutId} cx={item.x} cy={item.y} r={item.index === selected ? 6 : 4} className={item.index === selected ? 'chart-point active' : 'chart-point'} onClick={() => setSelected(item.index)} />)}
+          {coords.map((item) => <circle key={item.point.workoutId} cx={item.x} cy={item.y} r={item.index === selectedIndex ? 6 : 4} className={item.index === selectedIndex ? 'chart-point active' : 'chart-point'} onClick={() => setSelected(item.index)} />)}
         </svg>
         <div className="analytics-axis-labels"><span>{valid[0]?.point.dateLabel}</span><span>{valid.at(-1)?.point.dateLabel}</span></div>
       </div>
