@@ -3,10 +3,12 @@ import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
-import { archiveSession, loadActiveSession, loadHistory, saveActiveSession } from './storage'
+import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadHistory, saveActiveSession } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
+
+clearTestWorkoutHistoryOnce()
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 const id = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
