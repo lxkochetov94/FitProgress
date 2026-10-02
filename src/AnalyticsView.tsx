@@ -60,17 +60,12 @@ function ChartGrid() {
   )
 }
 
-function PointTooltip({ x, y, primary, secondary }: { x: number; y: number; primary: string; secondary: string }) {
-  const width = 94
-  const height = 42
-  const left = Math.max(6, Math.min(320 - width - 6, x - width / 2))
-  const top = Math.max(4, y - height - 17)
+function ChartValue({ primary, secondary }: { primary: string; secondary: string }) {
   return (
-    <g className="chart-tooltip" transform={`translate(${left} ${top})`} pointerEvents="none">
-      <rect width={width} height={height} rx="11" />
-      <text x="10" y="17" className="chart-tooltip-primary">{primary}</text>
-      <text x="10" y="31" className="chart-tooltip-secondary">{secondary}</text>
-    </g>
+    <div className="analytics-chart-value" aria-live="polite">
+      <b>{primary}</b>
+      <span>{secondary}</span>
+    </div>
   )
 }
 
@@ -112,10 +107,11 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
     x: points.length === 1 ? 160 : 18 + index / Math.max(points.length - 1, 1) * 284,
     y: 116 - ((point.value - min) / span) * 78
   }))
-  const activeCoord = coords[selectedIndex]
-
   return (
     <div className="analytics-chart-wrap">
+      <div className="analytics-chart-toolbar analytics-chart-toolbar-index">
+        <ChartValue primary={`${formatMetric(active.value, 1)}%`} secondary={`${active.dateLabel} · ${active.count} упр.`} />
+      </div>
       <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label="Динамика силового индекса">
         <defs>
           <linearGradient id={`${uid}-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
@@ -134,7 +130,6 @@ function IndexChart({ points }: { points: IndexPoint[] }) {
         {coords.map((point, index) => (
           <ChartPoint key={points[index].workoutId} x={point.x} y={point.y} active={index === selectedIndex} onSelect={() => setSelected(index)} />
         ))}
-        <PointTooltip x={activeCoord.x} y={activeCoord.y} primary={`${formatMetric(active.value, 1)}%`} secondary={`${active.dateLabel} · ${active.count} упр.`} />
       </svg>
       <div className="analytics-axis-labels"><span>{points[0].dateLabel}</span><span>{points.at(-1)?.dateLabel}</span></div>
     </div>
@@ -174,7 +169,6 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
     x: valid.length === 1 ? 160 : 18 + index / Math.max(valid.length - 1, 1) * 284,
     y: 116 - ((item.value - min) / span) * 78
   }))
-  const activeCoord = coords.find((item) => item.index === selectedIndex) ?? coords.at(-1)!
   const activeValue = valueOf(active)
   const activeLabel = weighted
     ? `${formatMetric(activeValue ?? 0, 1)} ${active.weightUnit ?? ''}`
@@ -183,7 +177,10 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
   return (
     <>
       <div className="analytics-chart-wrap exercise-chart-wrap">
-        <div className="analytics-chart-caption"><span>{weighted ? 'Рабочий вес' : 'Повторы в лучшем подходе'}</span></div>
+        <div className="analytics-chart-toolbar">
+          <div className="analytics-chart-caption"><span>{weighted ? 'Рабочий вес' : 'Повторы в лучшем подходе'}</span></div>
+          <ChartValue primary={activeLabel} secondary={active.dateLabel} />
+        </div>
         <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label="Динамика упражнения">
           <defs>
             <linearGradient id={`${uid}-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
@@ -202,7 +199,6 @@ function ExerciseChart({ points }: { points: ExercisePoint[] }) {
           {coords.map((item) => (
             <ChartPoint key={item.point.workoutId} x={item.x} y={item.y} active={item.index === selectedIndex} onSelect={() => setSelected(item.index)} />
           ))}
-          <PointTooltip x={activeCoord.x} y={activeCoord.y} primary={activeLabel} secondary={active.dateLabel} />
         </svg>
         <div className="analytics-axis-labels"><span>{valid[0]?.point.dateLabel}</span><span>{valid.at(-1)?.point.dateLabel}</span></div>
       </div>
