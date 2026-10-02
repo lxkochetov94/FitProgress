@@ -325,10 +325,15 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const [workoutEndOpen, setWorkoutEndOpen] = useState(false)
   const [clock, setClock] = useState(Date.now())
   const [restLeaving, setRestLeaving] = useState(false)
-  const glideRaf = useRef<number | null>(null)
   const transitionTimeout = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!session.activeRest) return
@@ -379,38 +384,15 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     })
   }
 
-  const glideToElement = (id: string, duration = 760, headerOffset = 88) => {
-    if (glideRaf.current !== null) window.cancelAnimationFrame(glideRaf.current)
-
-    const target = document.getElementById(id)
-    if (!target) return
-
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    const startY = window.scrollY
-    const absoluteTop = startY + target.getBoundingClientRect().top
-    const destination = Math.max(0, absoluteTop - headerOffset)
-    const started = performance.now()
-
-    const frame = (now: number) => {
-      const raw = reduceMotion ? 1 : Math.min(1, (now - started) / duration)
-      const eased = 1 - Math.pow(1 - raw, 5)
-      window.scrollTo(0, startY + (destination - startY) * eased)
-
-      if (raw < 1) glideRaf.current = window.requestAnimationFrame(frame)
-      else glideRaf.current = null
-    }
-
-    glideRaf.current = window.requestAnimationFrame(frame)
-  }
-
-  const glideAfterMorph = (id: string, delay = 920, duration = 760) => {
-    if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
-    transitionTimeout.current = window.setTimeout(() => {
-      transitionTimeout.current = null
+  const smoothScrollToStableElement = (id: string, headerOffset = 88) => {
+    window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => glideToElement(id, duration))
+        const target = document.getElementById(id)
+        if (!target) return
+        const destination = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerOffset)
+        window.scrollTo({ top: destination, left: 0, behavior: 'smooth' })
       })
-    }, delay)
+    })
   }
 
   const updateSet = (exerciseIndex: number, setIndex: number, patch: Partial<WorkoutSet>) => mutateExercise(exerciseIndex, (exercise) => {
@@ -513,7 +495,6 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       mutateExercise(index, (draft) => ({ ...draft, startedAt: new Date().toISOString() }))
     }
     setOpenExercise(exercise.instanceId)
-    glideAfterMorph(`exercise-${exercise.instanceId}`, 260, 900)
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
@@ -538,9 +519,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setOpenExercise(null)
     setExerciseEnd(null)
 
-    // Let the expanded card morph into its compact state first. Scrolling to
-    // a moving target was the remaining source of the visible "kick".
-    glideAfterMorph(`rest-exercise-${index}`, 1120, 900)
+    // No programmatic scrolling here. The expanded card and the inline timer
+    // now exchange space through measured height transitions in document flow.
   }
 
   const requestFinishExercise = (index: number) => {
@@ -583,12 +563,13 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setRestLeaving(true)
     setSession(staged)
 
-    // Keep the timer in the DOM for the whole exit animation. The next card
-    // expands at the same pace; only after both geometries settle do we remove
-    // the timer and glide to the stable final position.
     if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
     transitionTimeout.current = window.setTimeout(() => {
       transitionTimeout.current = null
+
+      // At this point the timer is already height: 0 and the destination card
+      // has completed its measured-height morph. Removing the zero-height shell
+      // cannot change layout, so there is no intermediate jump.
       const finalState = clone(staged)
       delete finalState.activeRest
       finalState.updatedAt = new Date().toISOString()
@@ -596,10 +577,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       setClock(Date.now())
       setRestLeaving(false)
 
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => glideToElement(targetId, 800))
-      })
-    }, 1120)
+      smoothScrollToStableElement(targetId)
+    }, 1160)
   }
 
   const addRestTime = (seconds: number) => {

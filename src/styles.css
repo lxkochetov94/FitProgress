@@ -1729,3 +1729,78 @@ html {
     transition-duration: 1ms !important;
   }
 }
+
+
+/* v0.12 — single-source motion: document-flow morph first, scroll second */
+.exercise-morph-v2.is-measured {
+  transition: height 1120ms cubic-bezier(.18,.82,.18,1) !important;
+}
+
+.exercise-morph-panel {
+  transition:
+    opacity 1060ms cubic-bezier(.22,.72,.22,1),
+    transform 1120ms cubic-bezier(.18,.82,.18,1) !important;
+}
+
+/* Avoid the old "blank white shell": outgoing content remains visible almost
+   as long as its measured container is physically shrinking. */
+.exercise-morph-v2.is-closed .exercise-morph-expanded {
+  opacity: 0;
+  transform: translateY(-4px) scale(.997);
+}
+
+.exercise-morph-v2.is-open .exercise-morph-preview {
+  opacity: 0;
+  transform: translateY(-4px) scale(.997);
+}
+
+.native-collapse {
+  transition:
+    height 1120ms cubic-bezier(.18,.82,.18,1),
+    opacity 1020ms cubic-bezier(.22,.72,.22,1) !important;
+}
+
+.native-collapse-inner {
+  transition:
+    transform 1120ms cubic-bezier(.18,.82,.18,1),
+    opacity 1020ms cubic-bezier(.22,.72,.22,1) !important;
+}
+
+/* The timer stays visually present while it physically folds. */
+.native-collapse.is-closed {
+  opacity: 0;
+}
+
+.native-collapse.is-closed .native-collapse-inner {
+  opacity: 0;
+  transform: translateY(-4px) scaleY(.995);
+}
+
+/* No legacy entrance keyframes: measured height is the only animation owner. */
+.rest-native-collapse .inline-rest {
+  animation: none !important;
+}
+
+/* iOS Safari should not invent its own scroll anchoring while the measured
+   containers exchange height. */
+html, body {
+  overflow-anchor: none;
+}
+
+@media (max-width: 520px) {
+  .exercise-morph-v2.is-measured,
+  .exercise-morph-panel,
+  .native-collapse,
+  .native-collapse-inner {
+    transition-duration: 1120ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exercise-morph-v2.is-measured,
+  .exercise-morph-panel,
+  .native-collapse,
+  .native-collapse-inner {
+    transition-duration: 1ms !important;
+  }
+}
