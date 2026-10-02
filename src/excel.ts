@@ -230,37 +230,88 @@ export function exportSession(session: WorkoutSession) {
 }
 
 export function downloadTemplate() {
-  const plan = DEMO_PLAN
-  const workoutRows = [{ workout_id: plan.workoutId, title: plan.title, priority: plan.priority, notes: plan.notes }]
-  const exerciseRows = plan.exercises.map((exercise) => ({
-    exercise_id: exercise.exerciseId,
-    order: exercise.order,
-    category: exercise.category,
-    name: exercise.name,
-    muscle_group: exercise.muscleGroup,
-    movement_pattern: exercise.movementPattern,
-    equipment: exercise.equipment,
-    rehab: exercise.rehab ? 'yes' : 'no',
-    per_side: exercise.perSide ?? '',
-    weight_unit: exercise.weightUnit ?? 'kg',
-    rest_after_exercise_sec: exercise.restAfterExerciseSec ?? Math.max(90, exercise.sets[exercise.sets.length - 1]?.restSec ?? 90),
-    badge: exercise.badge ?? '',
-    instruction: exercise.instruction,
-    image: exercise.image ?? ''
-  }))
-  const setRows = plan.exercises.flatMap((exercise) => exercise.sets.map((set) => ({
-    exercise_id: exercise.exerciseId,
-    set_no: set.setNo,
-    set_type: set.setType,
-    target_weight: set.targetWeight,
-    target_reps: set.targetReps,
-    target_rir: set.targetRir,
-    rest_sec: set.restSec,
-    notes: set.notes ?? ''
-  })))
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(workoutRows), 'Workout')
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exerciseRows), 'Exercises')
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(setRows), 'Sets')
-  XLSX.writeFile(wb, 'FitProgress_workout_template.xlsx')
+
+  const readmeRows = [
+    ['FitProgress · стандартный шаблон тренировки v1'],
+    [],
+    ['Правило', 'Что делать', 'Пример'],
+    ['Workout', 'Одна строка с метаданными тренировки.', 'FULL BODY K'],
+    ['exercise_id', 'Одинаковый ID в Exercises и Sets. Для знакомых упражнений используем ID базы FitProgress.', 'barbell_rdl'],
+    ['Вес', 'target_weight без кг/lbs. Единица задаётся через weight_unit.', '50–60'],
+    ['Повторы', 'target_reps без /руку или /ногу. Односторонность задаётся через per_side.', '8–10'],
+    ['per_side', 'arm / leg / side; для двусторонних оставить пустым.', 'arm'],
+    ['Отдых между подходами', 'Sets → rest_sec, секунды.', '90'],
+    ['Отдых между упражнениями', 'Exercises → rest_after_exercise_sec, секунды.', '120'],
+    ['set_type', 'warmup / calibration / working / rehab / other.', 'working'],
+    ['RIR', 'target_rir — число или диапазон.', '1–2'],
+    ['Инструкции', 'Техника, темп, ограничения по боли — instruction; частные подсказки — notes.', 'Темп 2–1–2; боль ≤1/10'],
+    [],
+    ['Важно', 'Названия листов Workout / Exercises / Sets и канонические названия колонок лучше не менять.']
+  ]
+  const readme = XLSX.utils.aoa_to_sheet(readmeRows)
+  readme['!cols'] = [{ wch: 24 }, { wch: 72 }, { wch: 28 }]
+  XLSX.utils.book_append_sheet(wb, readme, 'README')
+
+  const workoutHeaders = ['schema_version', 'workout_id', 'title', 'priority', 'notes']
+  const workout = XLSX.utils.aoa_to_sheet([
+    workoutHeaders,
+    ['fitprogress-v1', '', '', '', '']
+  ])
+  workout['!cols'] = [{ wch: 18 }, { wch: 28 }, { wch: 30 }, { wch: 48 }, { wch: 60 }]
+  XLSX.utils.book_append_sheet(wb, workout, 'Workout')
+
+  const exerciseHeaders = [
+    'exercise_id', 'order', 'category', 'name', 'muscle_group', 'movement_pattern',
+    'equipment', 'rehab', 'per_side', 'weight_unit', 'rest_after_exercise_sec',
+    'badge', 'instruction', 'image'
+  ]
+  const exercises = XLSX.utils.aoa_to_sheet([exerciseHeaders])
+  exercises['!cols'] = [
+    { wch: 28 }, { wch: 9 }, { wch: 22 }, { wch: 36 }, { wch: 24 }, { wch: 28 },
+    { wch: 24 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 24 },
+    { wch: 18 }, { wch: 70 }, { wch: 34 }
+  ]
+  XLSX.utils.book_append_sheet(wb, exercises, 'Exercises')
+
+  const setHeaders = [
+    'exercise_id', 'set_no', 'set_type', 'target_weight',
+    'target_reps', 'target_rir', 'rest_sec', 'notes'
+  ]
+  const sets = XLSX.utils.aoa_to_sheet([setHeaders])
+  sets['!cols'] = [
+    { wch: 28 }, { wch: 10 }, { wch: 16 }, { wch: 18 },
+    { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 64 }
+  ]
+  XLSX.utils.book_append_sheet(wb, sets, 'Sets')
+
+  const dictionaries = XLSX.utils.aoa_to_sheet([
+    ['set_type', 'per_side', 'weight_unit', 'rehab'],
+    ['warmup', 'arm', 'kg', 'yes'],
+    ['calibration', 'leg', 'lb', 'no'],
+    ['working', 'side', '', 'да'],
+    ['rehab', '', '', 'нет'],
+    ['other', '', '', '']
+  ])
+  dictionaries['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }]
+  XLSX.utils.book_append_sheet(wb, dictionaries, 'Dictionaries')
+
+  const example = XLSX.utils.aoa_to_sheet([
+    ['Пример заполнения · этот лист не импортируется приложением'],
+    [],
+    exerciseHeaders,
+    ['cable_er_75_90', 1, 'REHAB / РАЗМИНКА', 'Cable ER @75–90°', 'Плечо', 'Наружная ротация', 'Кроссовер', 'yes', 'arm', 'kg', 90, 'Разминка', '6,8 кг ×10; темп 2–1–2; если дискомфорт >1/10 — остановить.', ''],
+    ['barbell_rdl', 2, 'ПРИОРИТЕТ №1', 'Румынская тяга со штангой', 'Задняя цепь', 'Hip hinge', 'Штанга', 'no', '', 'kg', 120, '', 'Нейтральный позвоночник; рабочая амплитуда без потери контроля таза.', ''],
+    [],
+    setHeaders,
+    ['cable_er_75_90', 1, 'rehab', '6,8', '10', '3–4', 90, 'На каждую руку; боль ≤1/10'],
+    ['barbell_rdl', 1, 'warmup', '20', '10', '', 90, 'Освоить движение'],
+    ['barbell_rdl', 2, 'calibration', '40', '8', '', 120, 'Калибровка'],
+    ['barbell_rdl', 3, 'working', '50–60', '8–10', '3–4', 120, ''],
+    ['barbell_rdl', 4, 'working', '50–60', '8–10', '3–4', 120, '']
+  ])
+  example['!cols'] = exercises['!cols']
+  XLSX.utils.book_append_sheet(wb, example, 'Example')
+
+  XLSX.writeFile(wb, 'FitProgress_workout_template_v1.xlsx')
 }
