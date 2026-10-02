@@ -5,6 +5,7 @@ import { RETRO_JUN } from './analyticsSeedJun'
 import { RETRO_JUL } from './analyticsSeedJul'
 import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
+import { getDefinition } from './exerciseLibrary'
 
 export type AnalyticsPeriod = '1m' | '3m' | '6m' | '12m'
 
@@ -56,6 +57,21 @@ export interface ExercisePoint {
 
 const ARCHIVE_KEY = 'fitprogress.analytics-history.v1'
 const RETRO = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
+
+/**
+ * Historical IDs that are mechanically comparable enough to belong to one
+ * analytics series. This is intentionally conservative: different machines
+ * and weight stacks stay separate even when the movement pattern is similar.
+ */
+const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
+  db_shrug: ['db_shrug', 'old_db_shrug'],
+  incline_db_press: ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press'],
+  medium_lever_cable_fly: ['medium_lever_cable_fly', 'short_lever_cable_fly'],
+  db_pullover: ['db_pullover', 'old_db_pullover'],
+  overhead_cable_extension: ['overhead_cable_extension', 'old_overhead_cable_extension']
+}
+
+const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] ?? [exerciseId]
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
@@ -233,16 +249,16 @@ export function filterByPeriod(workouts: AnalyticsWorkout[], period: AnalyticsPe
   return workouts.filter((item) => item.date ? item.date >= cutoffIso && item.date <= anchor : item.periodKey >= cutoffMonth && item.periodKey <= anchor.slice(0, 7))
 }
 
-function modeWeight(sets: AnalyticsSet[]) {
-  const values = sets.map((set) => weightValue(set.weight)).filter(Number.isFinite) as number[]
+function medianWeight(sets: AnalyticsSet[]) {
+  const values = sets.map((set) => weightValue(set.weight)).filter(Number.isFinite).sort((a, b) => a - b) as number[]
   if (!values.length) return null
-  const counts = new Map<number, number>()
-  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1)
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]
+  const middle = Math.floor(values.length / 2)
+  return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2
 }
 
 export function pointForExercise(workout: AnalyticsWorkout, exerciseId: string): ExercisePoint | null {
-  const exercise = workout.exercises.find((item) => item.exerciseId === exerciseId)
+  const acceptedIds = equivalentIds(exerciseId)
+  const exercise = workout.exercises.find((item) => acceptedIds.includes(item.exerciseId))
   if (!exercise) return null
   const primary = primarySets(exercise)
   if (!primary.length) return null
@@ -267,7 +283,7 @@ export function pointForExercise(workout: AnalyticsWorkout, exerciseId: string):
     dateLabel: workout.date ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(new Date(`${workout.date}T12:00:00`)) : workout.periodLabel,
     workoutTitle: workout.title,
     score,
-    workWeight: modeWeight(primary),
+    workWeight: medianWeight(primary),
     peakWeight,
     weightUnit: unit,
     setReps: reps,
@@ -294,8 +310,12 @@ export interface IndexPoint {
 }
 
 export function overallStrengthIndex(workouts: AnalyticsWorkout[], exerciseIds: string[]) {
-  const series = exerciseIds.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length >= 2)
-  const usable = series.length ? series : exerciseIds.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length)
+  // Rehab progressions can intentionally change lever length, ROM or joint angle;
+  // counting those load jumps as "strength" grossly inflates the global index.
+  const strengthIds = exerciseIds.filter((exerciseId) => !getDefinition(exerciseId)?.rehab)
+  const candidates = strengthIds.length ? strengthIds : exerciseIds
+  const series = candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length >= 2)
+  const usable = series.length ? series : candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length)
   const buckets = new Map<string, { order: number; dateLabel: string; values: number[] }>()
   for (const points of usable) {
     const baseline = points[0]?.score
