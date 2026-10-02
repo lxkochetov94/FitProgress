@@ -141,7 +141,8 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   const progress = durationSec > 0 ? Math.min(1, elapsed / durationSec) : 1
   const ready = restLeft <= 0
   const hue = Math.round(progress * 120)
-  const visualProgress = ready ? 100 : Math.max(4, Math.round(progress * 100))
+  const visualProgress = ready ? 100 : Math.max(0.8, Math.round(progress * 1000) / 10)
+  const restAngle = ready ? 360 : progress * 360
   const nextEyebrow = kind === 'between_sets' ? 'Следующий подход' : 'Следующее упражнение'
   const nextTitle = kind === 'between_sets'
     ? `Подход ${nextSetNo ?? '—'} · ${exerciseName}`
@@ -150,7 +151,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   return (
     <section
       className={`inline-rest ${kind} ${ready ? 'is-ready' : ''}`}
-      style={{ '--rest-hue': hue, '--rest-progress': `${visualProgress}%` } as CSSProperties & { '--rest-hue': number; '--rest-progress': string }}
+      style={{ '--rest-hue': hue, '--rest-progress': `${visualProgress}%`, '--rest-angle': `${restAngle}deg` } as CSSProperties & { '--rest-hue': number; '--rest-progress': string; '--rest-angle': string }}
       aria-live="polite"
     >
       <div className="rest-kicker">{kind === 'between_sets' ? 'Отдых между подходами' : 'Отдых между упражнениями'}</div>
@@ -162,6 +163,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
           disabled={!ready}
           onClick={ready ? onAdvance : undefined}
         >
+          <span className="rest-ring-marker" aria-hidden="true" />
           <div className="rest-ring-inner">
             <strong>{ready ? 'GO!' : fmtDuration(restLeft)}</strong>
           </div>
