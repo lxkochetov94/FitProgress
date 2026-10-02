@@ -418,43 +418,47 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
     const rest = session.activeRest
     const current = session.plan.exercises[rest.exerciseIndex]
+    const active = document.activeElement
+    if (active instanceof HTMLElement) active.blur()
+
+    const next = clone(session)
+    delete next.activeRest
+    next.updatedAt = new Date().toISOString()
 
     let targetId = ''
     if (rest.kind === 'between_sets') {
       const target = current.sets.find((set) => set.setNo === rest.nextSetNo && !set.completed)
       targetId = target ? `set-${target.id}` : `exercise-${current.instanceId}`
-    } else {
-      const nextExercise = session.plan.exercises.find((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
-      targetId = nextExercise ? `exercise-${nextExercise.instanceId}` : 'workout-summary'
-    }
-
-    const targetTop = targetId ? elementTop(targetId) : undefined
-    const next = clone(session)
-    delete next.activeRest
-    next.updatedAt = new Date().toISOString()
-
-    if (rest.kind === 'between_sets') {
       setSession(next)
       setClock(Date.now())
       setOpenExercise(current.instanceId)
-      restoreAnchor(targetId, targetTop)
-      return
+    } else {
+      const nextIndex = next.plan.exercises.findIndex((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
+      if (nextIndex >= 0) {
+        const exercise = next.plan.exercises[nextIndex]
+        exercise.startedAt = exercise.startedAt ?? new Date().toISOString()
+        targetId = `exercise-${exercise.instanceId}`
+        setSession(next)
+        setClock(Date.now())
+        setOpenExercise(exercise.instanceId)
+      } else {
+        targetId = 'workout-summary'
+        setSession(next)
+        setClock(Date.now())
+      }
     }
 
-    const nextIndex = next.plan.exercises.findIndex((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
-    if (nextIndex >= 0) {
-      const exercise = next.plan.exercises[nextIndex]
-      exercise.startedAt = exercise.startedAt ?? new Date().toISOString()
-      setSession(next)
-      setClock(Date.now())
-      setOpenExercise(exercise.instanceId)
-      restoreAnchor(targetId, targetTop)
-      return
-    }
-
-    setSession(next)
-    setClock(Date.now())
-    restoreAnchor('workout-summary', targetTop)
+    // GO / Skip is navigation, not scroll anchoring:
+    // let the inline timer disappear, then deliberately glide to the next item.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(targetId)
+        if (!target) return
+        const headerOffset = 86
+        const targetY = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerOffset)
+        window.scrollTo({ top: targetY, behavior: 'smooth' })
+      })
+    })
   }
 
   const addRestTime = (seconds: number) => {

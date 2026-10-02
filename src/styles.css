@@ -1294,3 +1294,29 @@ html {
     min-height: 86px;
   }
 }
+
+
+/* v0.8 — iOS lock-screen inspired timer typography + intentional GO glide */
+.rest-ring-inner strong,
+.between_exercises .rest-ring-inner strong,
+.inline-rest.is-ready .rest-ring-inner strong {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important;
+  font-weight: 200 !important;
+  font-stretch: ultra-condensed;
+  font-variation-settings: "wdth" 62, "wght" 200;
+  letter-spacing: -.075em !important;
+  line-height: .68 !important;
+  transform: scaleX(.62) scaleY(1.5) !important;
+  transform-origin: center !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.inline-rest.is-ready .rest-ring-inner strong {
+  font-weight: 250 !important;
+  letter-spacing: -.055em !important;
+}
+
+html {
+  scroll-behavior: auto;
+}
