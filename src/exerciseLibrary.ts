@@ -52,8 +52,8 @@ export function findDefinition(idOrName: string, name?: string) {
   })
 }
 
-export function replacementCandidates(exercise: WorkoutExercise) {
-  return EXERCISE_LIBRARY
+export function replacementCandidates(exercise: WorkoutExercise, library: ExerciseDefinition[] = EXERCISE_LIBRARY) {
+  return library
     .filter((x) => x.id !== exercise.exerciseId && x.suitability !== 'avoid')
     .map((x) => {
       let score = 0

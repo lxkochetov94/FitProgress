@@ -1825,3 +1825,62 @@ html, body {
     opacity 980ms cubic-bezier(.22,.72,.22,1),
     transform 1120ms cubic-bezier(.76,0,.24,1) !important;
 }
+
+
+/* v0.14 — self-updating exercise database */
+.library-badges .learned {
+  background: #e8f7ee;
+  color: #197a40;
+}
+
+.learned-profile {
+  margin-top: 10px;
+  border: 1px solid #d5e9dc;
+  background: #f5fbf7;
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 8px;
+}
+
+.learned-profile > div {
+  min-width: 0;
+}
+
+.learned-profile span,
+.learned-profile b {
+  display: block;
+}
+
+.learned-profile span {
+  color: var(--muted);
+  font-size: 9px;
+  margin-bottom: 3px;
+}
+
+.learned-profile b {
+  font-size: 12px;
+}
+
+.learned-profile p {
+  grid-column: 1 / -1;
+  margin: 2px 0 0 !important;
+  padding-top: 8px;
+  border-top: 1px solid #dcebe1;
+  color: #355e44 !important;
+  font-size: 11px !important;
+}
+
+.learned-meta {
+  margin-top: 9px;
+  color: #49705a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .learned-profile {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -2,8 +2,9 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
-import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadHistory, saveActiveSession } from './storage'
+import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
+import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 
@@ -51,6 +52,17 @@ const isWarmupExercise = (exercise: WorkoutExercise) =>
   (exercise.sets.length > 0 && exercise.sets.every((set) => set.setType === 'warmup'))
 
 const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|ый)|new/i.test(badge))
+
+
+function personalExerciseLibrary() {
+  const profiles = loadExerciseProfiles()
+  const merged = EXERCISE_LIBRARY.map((definition) => mergeDefinitionWithProfile(definition, profiles[definition.id]))
+  const staticIds = new Set(merged.map((definition) => definition.id))
+  const learnedOnly = Object.values(profiles)
+    .filter((profile) => !staticIds.has(profile.exerciseId))
+    .map(profileToDefinition)
+  return [...merged, ...learnedOnly]
+}
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
@@ -189,9 +201,10 @@ function EndReasonSheet({ title, description, confirmLabel, onClose, onConfirm, 
 function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise: WorkoutExercise; onClose: () => void; onReplace: (def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => void; onCustom: (reason: WorkoutExercise['replacementReason']) => void }) {
   const [reason, setReason] = useState<WorkoutExercise['replacementReason']>('Занято')
   const [query, setQuery] = useState('')
-  const top = replacementCandidates(exercise)
+  const library = useMemo(() => personalExerciseLibrary(), [exercise.exerciseId])
+  const top = replacementCandidates(exercise, library)
   const needle = query.trim().toLowerCase()
-  const all = EXERCISE_LIBRARY.filter((x) => x.id !== exercise.exerciseId && (
+  const all = library.filter((x) => x.id !== exercise.exerciseId && (
     x.name.toLowerCase().includes(needle) ||
     x.muscleGroup.toLowerCase().includes(needle) ||
     x.equipment.toLowerCase().includes(needle) ||
@@ -330,6 +343,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const transitionTimeout = useRef<number | null>(null)
   const finishRaf = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
+  const exerciseProfiles = useMemo(() => loadExerciseProfiles(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
   useEffect(() => {
@@ -782,11 +796,16 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       <section className="exercise-list" aria-label="Упражнения тренировки">
         {session.plan.exercises.map((exercise, exerciseIndex) => {
           const isOpen = openExercise === exercise.instanceId
-          const definition = getDefinition(exercise.exerciseId)
+          const staticDefinition = getDefinition(exercise.exerciseId)
+          const definition = staticDefinition
+            ? mergeDefinitionWithProfile(staticDefinition, exerciseProfiles[exercise.exerciseId])
+            : exerciseProfiles[exercise.exerciseId]
+              ? profileToDefinition(exerciseProfiles[exercise.exerciseId])
+              : undefined
           const doneSets = exercise.sets.filter((set) => set.completed).length
           const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
           const hasLocalHistory = history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
-          const isNew = !(definition?.known || hasLocalHistory)
+          const isNew = !(definition?.known || exerciseProfiles[exercise.exerciseId] || hasLocalHistory)
           const previewNode = (
               <button type="button" className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} tabIndex={isOpen ? -1 : 0} onClick={() => openExerciseAt(exerciseIndex)}>
                 <ExerciseVisual exercise={exercise} compact />
@@ -821,7 +840,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                   <span className="context-tag">{exercise.weightUnit === 'lb' ? 'lbs' : 'кг'}</span>
                   {exercise.rehab && <span className="context-tag status">Rehab</span>}
                   {isWarmupExercise(exercise) && <span className="context-tag status">Разминка</span>}
-                  {definition?.known && <span className="context-tag known">Есть ретро</span>}
+                  {definition?.known && <span className="context-tag known">{exerciseProfiles[exercise.exerciseId] ? 'Есть история' : 'Есть ретро'}</span>}
                   {definition?.suitability === 'caution' && <span className="context-tag caution">Ограничение</span>}
                   {definition?.suitability === 'avoid' && <span className="context-tag avoid">Не использовать</span>}
                   {isNew && <span className="context-tag new">Новое</span>}
@@ -833,8 +852,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                   <div className="history-values">
                     {definition.lastKnown && <div><span>Последняя база</span><b>{definition.lastKnown}</b></div>}
                     {definition.bestKnown && <div><span>Лучший результат</span><b>{definition.bestKnown}</b></div>}
-                    {definition.lastPain && <div><span>Плечо / боль</span><b>{definition.lastPain}</b></div>}
+                    {exerciseProfiles[exercise.exerciseId]?.lastRir && <div><span>Последний RIR</span><b>{exerciseProfiles[exercise.exerciseId].lastRir}</b></div>}
+                    {definition.lastPain && <div><span>Боль</span><b>{definition.lastPain}/10</b></div>}
                   </div>
+                  {exerciseProfiles[exercise.exerciseId] && <div className="learned-meta">Последняя тренировка: {fmtDate(exerciseProfiles[exercise.exerciseId].lastPerformedAt)} · записей: {exerciseProfiles[exercise.exerciseId].sessions}</div>}
                   {definition.historyNote && <p>{definition.historyNote}</p>}
                   {definition.suitability === 'avoid' && <strong className="history-warning">Не использовать как обычную замену без отдельного решения.</strong>}
                   {definition.suitability === 'caution' && <strong className="history-caution">Есть ограничение: ориентируйся на указанную механику и фактические ощущения.</strong>}
@@ -991,8 +1012,10 @@ function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: ()
 function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
+  const profiles = loadExerciseProfiles()
+  const library = personalExerciseLibrary()
   const needle = query.trim().toLowerCase()
-  const items = EXERCISE_LIBRARY
+  const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
     .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? [])].some((value) => value.toLowerCase().includes(needle)))
@@ -1002,9 +1025,9 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
       return a.muscleGroup.localeCompare(b.muscleGroup, 'ru') || a.name.localeCompare(b.name, 'ru')
     })
 
-  const currentCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym === 'Новый зал').length
-  const legacyCount = EXERCISE_LIBRARY.filter((x) => x.known && x.gym === 'Старый зал').length
-  const rehabCount = EXERCISE_LIBRARY.filter((x) => x.known && x.rehab).length
+  const currentCount = library.filter((x) => x.known && x.gym === 'Новый зал').length
+  const legacyCount = library.filter((x) => x.known && x.gym === 'Старый зал').length
+  const rehabCount = library.filter((x) => x.known && x.rehab).length
 
   return (
     <main className="app-shell library-page">
@@ -1049,6 +1072,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
               <div><span className="eyebrow">{exercise.muscleGroup} · {exercise.equipment}</span><h2>{exercise.name}</h2></div>
               <div className="library-badges">
                 {exercise.gym && <span>{exercise.gym}</span>}
+                {profiles[exercise.id] && <span className="learned">Обновлено тренировкой</span>}
                 {exercise.rehab && <span className="rehab">Rehab</span>}
                 {exercise.suitability === 'caution' && <span className="caution">Ограничение</span>}
                 {exercise.suitability === 'avoid' && <span className="avoid">Не использовать</span>}
@@ -1057,8 +1081,14 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
             <div className="library-values">
               {exercise.lastKnown && <div><span>Последняя база</span><b>{exercise.lastKnown}</b></div>}
               {exercise.bestKnown && <div><span>Лучший результат</span><b>{exercise.bestKnown}</b></div>}
-              {exercise.lastPain && <div><span>Боль / плечо</span><b>{exercise.lastPain}</b></div>}
+              {profiles[exercise.id]?.lastRir && <div><span>Последний RIR</span><b>{profiles[exercise.id].lastRir}</b></div>}
+              {exercise.lastPain && <div><span>Боль</span><b>{exercise.lastPain}/10</b></div>}
             </div>
+            {profiles[exercise.id] && <div className="learned-profile">
+              <div><span>Последняя тренировка</span><b>{fmtDate(profiles[exercise.id].lastPerformedAt)}</b></div>
+              <div><span>Тренировок</span><b>{profiles[exercise.id].sessions}</b></div>
+              {profiles[exercise.id].lastComment && <p>«{profiles[exercise.id].lastComment}»</p>}
+            </div>}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}
           </article>
         ))}

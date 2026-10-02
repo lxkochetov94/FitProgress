@@ -1,8 +1,11 @@
 import type { WorkoutSession } from './types'
+import { updateExerciseProfilesFromSession } from './exerciseProgress'
+import type { ExerciseProfiles } from './exerciseProgress'
 
 const ACTIVE_KEY = 'fitprogress.active-session.v1'
 const HISTORY_KEY = 'fitprogress.history.v1'
 const TEST_HISTORY_RESET_KEY = 'fitprogress.test-history-reset.2026-10-02.v1'
+const EXERCISE_PROFILES_KEY = 'fitprogress.exercise-profiles.v1'
 
 export function clearTestWorkoutHistoryOnce() {
   try {
@@ -33,14 +36,27 @@ export function saveActiveSession(session: WorkoutSession | null) {
   else localStorage.setItem(ACTIVE_KEY, JSON.stringify(session))
 }
 
+export function loadExerciseProfiles(): ExerciseProfiles {
+  try {
+    const raw = localStorage.getItem(EXERCISE_PROFILES_KEY)
+    return raw ? (JSON.parse(raw) as ExerciseProfiles) : {}
+  } catch {
+    return {}
+  }
+}
+
 export function archiveSession(session: WorkoutSession) {
   try {
     const raw = localStorage.getItem(HISTORY_KEY)
     const history = raw ? (JSON.parse(raw) as WorkoutSession[]) : []
-    const next = [session, ...history.filter((x) => x.sessionId !== session.sessionId)].slice(0, 30)
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
+    const nextHistory = [session, ...history.filter((x) => x.sessionId !== session.sessionId)].slice(0, 30)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory))
+
+    const profiles = loadExerciseProfiles()
+    const nextProfiles = updateExerciseProfilesFromSession(profiles, session)
+    localStorage.setItem(EXERCISE_PROFILES_KEY, JSON.stringify(nextProfiles))
   } catch {
-    // History is convenience only. The active session still remains exportable.
+    // The active session still remains exportable even if persistent storage fails.
   }
 }
 
