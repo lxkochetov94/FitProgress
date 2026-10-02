@@ -1804,3 +1804,24 @@ html, body {
     transition-duration: 1ms !important;
   }
 }
+
+
+/* v0.13 — finish-exercise scroll guard for iOS Safari */
+.finish-scroll-guard {
+  width: 1px;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  flex: 0 0 auto;
+}
+
+/* The finish transition is deliberately one coordinated 1.12s motion. */
+.exercise-morph-v2.is-measured {
+  transition: height 1120ms cubic-bezier(.76,0,.24,1) !important;
+}
+
+.exercise-morph-panel {
+  transition:
+    opacity 980ms cubic-bezier(.22,.72,.22,1),
+    transform 1120ms cubic-bezier(.76,0,.24,1) !important;
+}

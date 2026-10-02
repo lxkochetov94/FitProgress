@@ -325,15 +325,16 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const [workoutEndOpen, setWorkoutEndOpen] = useState(false)
   const [clock, setClock] = useState(Date.now())
   const [restLeaving, setRestLeaving] = useState(false)
+  const [finishGuardHeight, setFinishGuardHeight] = useState(0)
   const transitionTimeout = useRef<number | null>(null)
-  const anchorRaf = useRef<number | null>(null)
+  const finishRaf = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
   useEffect(() => {
     return () => {
       if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
-      if (anchorRaf.current !== null) window.cancelAnimationFrame(anchorRaf.current)
+      if (finishRaf.current !== null) window.cancelAnimationFrame(finishRaf.current)
     }
   }, [])
 
@@ -386,35 +387,27 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     })
   }
 
-  const pinElementDuringMorph = (id: string, viewportTop: number, duration = 1240) => {
-    if (anchorRaf.current !== null) window.cancelAnimationFrame(anchorRaf.current)
+  const animateScrollToY = (destination: number, duration = 1120) => {
+    if (finishRaf.current !== null) window.cancelAnimationFrame(finishRaf.current)
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const startY = window.scrollY
+    const targetY = Math.max(0, destination)
     const started = performance.now()
 
     const frame = (now: number) => {
-      const element = document.getElementById(id)
-      if (!element) {
-        anchorRaf.current = null
-        return
-      }
+      const raw = reduceMotion ? 1 : Math.min(1, (now - started) / duration)
+      const eased = raw < .5
+        ? 8 * Math.pow(raw, 4)
+        : 1 - Math.pow(-2 * raw + 2, 4) / 2
 
-      const currentTop = element.getBoundingClientRect().top
-      const delta = currentTop - viewportTop
+      window.scrollTo(0, startY + (targetY - startY) * eased)
 
-      // Counter only the layout movement caused by the morph. This keeps the
-      // exercise/timer boundary visually stationary instead of letting the
-      // entire page shoot toward the bottom as the large card collapses.
-      if (Math.abs(delta) > 0.25) window.scrollBy(0, delta)
-
-      if (!reduceMotion && now - started < duration) {
-        anchorRaf.current = window.requestAnimationFrame(frame)
-      } else {
-        anchorRaf.current = null
-      }
+      if (raw < 1) finishRaf.current = window.requestAnimationFrame(frame)
+      else finishRaf.current = null
     }
 
-    anchorRaf.current = window.requestAnimationFrame(frame)
+    finishRaf.current = window.requestAnimationFrame(frame)
   }
 
   const smoothScrollToStableElement = (id: string, headerOffset = 88) => {
@@ -531,8 +524,19 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
-    const boundaryId = `exercise-boundary-${index}`
-    const boundaryTop = elementTop(boundaryId)
+    const sourceExercise = session.plan.exercises[index]
+    const morph = document.getElementById(`exercise-${sourceExercise.instanceId}`)
+    const preview = morph?.querySelector('.exercise-morph-preview') as HTMLElement | null
+
+    const morphRect = morph?.getBoundingClientRect()
+    const expandedHeight = morphRect?.height ?? 0
+    const compactHeight = preview?.getBoundingClientRect().height ?? 0
+    const collapseDelta = Math.max(0, expandedHeight - compactHeight)
+
+    // Keep enough invisible document height during the collapse so iOS Safari
+    // never clamps scrollY while a multi-screen exercise becomes a ~100 px row.
+    const guardHeight = collapseDelta + Math.round(window.innerHeight * 0.45)
+    if (guardHeight > 0) setFinishGuardHeight(guardHeight)
 
     const next = clone(session)
     const exercise = next.plan.exercises[index]
@@ -555,12 +559,33 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setOpenExercise(null)
     setExerciseEnd(null)
 
-    // The boundary exists before and after finishing. While the expanded
-    // exercise shrinks (and a new timer may grow underneath), continuously
-    // compensate only that layout delta. No destination scroll is involved.
-    if (boundaryTop !== undefined) {
-      window.requestAnimationFrame(() => pinElementDuringMorph(boundaryId, boundaryTop))
+    if (morphRect) {
+      const morphAbsoluteTop = window.scrollY + morphRect.top
+      const finalBoundaryTop = morphAbsoluteTop + compactHeight
+
+      // Finish with the rest block comfortably below the sticky header.
+      // Destination is computed BEFORE the DOM changes, so it never chases a
+      // moving element and cannot overshoot.
+      const desiredTimerTop = 188
+      const destination = Math.max(0, finalBoundaryTop - desiredTimerTop)
+      animateScrollToY(destination, 1120)
     }
+
+    if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
+    transitionTimeout.current = window.setTimeout(() => {
+      transitionTimeout.current = null
+
+      // The morph is now finished. Removing a bottom-only guard does not move
+      // any workout content; only protect against a final Safari max-scroll clamp.
+      const pageHeight = document.documentElement.scrollHeight
+      const maxWithoutGuard = Math.max(0, pageHeight - guardHeight - window.innerHeight)
+      if (guardHeight > 0 && window.scrollY > maxWithoutGuard) {
+        animateScrollToY(maxWithoutGuard, 360)
+        window.setTimeout(() => setFinishGuardHeight(0), 390)
+      } else {
+        setFinishGuardHeight(0)
+      }
+    }, 1180)
   }
 
   const requestFinishExercise = (index: number) => {
@@ -880,7 +905,6 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           return (
             <Fragment key={exercise.instanceId}>
               {exerciseNode}
-              <div id={`exercise-boundary-${exerciseIndex}`} className="exercise-boundary-anchor" aria-hidden="true" />
               {showExerciseRest && (
                 <NativeCollapse
                   id={`rest-exercise-${exerciseIndex}`}
@@ -903,6 +927,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           )
         })}
       </section>
+
+      <div className="finish-scroll-guard" style={{ height: finishGuardHeight }} aria-hidden="true" />
 
       <section id="workout-summary" className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={requestFinishWorkout}>{session.plan.exercises.every((exercise) => Boolean(exercise.finishedAt)) ? 'Завершить тренировку' : 'Завершить тренировку досрочно'}</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
 
