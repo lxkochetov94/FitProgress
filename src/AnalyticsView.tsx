@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import './analytics.css'
-import { exerciseSeries, filterByPeriod, formatMetric, latestWorkout, loadAnalyticsWorkouts, overallStrengthIndex, primarySets } from './analyticsModel'
-import type { AnalyticsPeriod, ExercisePoint, IndexPoint } from './analyticsModel'
+import { exerciseSeries, filterByPeriod, formatMetric, latestWorkout, loadAnalyticsWorkouts, primarySets, workoutVolumeSeries } from './analyticsModel'
+import type { AnalyticsPeriod, ExercisePoint, VolumePoint } from './analyticsModel'
 
 const PERIODS: { id: AnalyticsPeriod; label: string }[] = [
   { id: '1m', label: '1 месяц' },
@@ -80,28 +80,36 @@ function Sparkline({ values }: { values: (number | null)[] }) {
   return <svg className="analytics-spark" viewBox="0 0 80 28" preserveAspectRatio="none" aria-hidden="true"><path d={linePath(coords)} /></svg>
 }
 
-function IndexChart({ points }: { points: IndexPoint[] }) {
+function formatVolume(valueKg: number) {
+  if (valueKg >= 1000) return `${formatMetric(valueKg / 1000, 1)} т`
+  return `${formatMetric(valueKg, 0)} кг`
+}
+
+function VolumeChart({ points }: { points: VolumePoint[] }) {
   const [selected, setSelected] = useState(Math.max(0, points.length - 1))
   const uid = useId().replace(/:/g, '')
-  if (!points.length) return <div className="analytics-empty-chart">Недостаточно сопоставимых тренировок для индекса.</div>
+  if (!points.length) return <div className="analytics-empty-chart">Недостаточно данных для расчёта общего объёма.</div>
 
   const selectedIndex = Math.min(selected, points.length - 1)
   const active = points[selectedIndex]
-  const values = points.map((point) => point.value)
+  const values = points.map((point) => point.relative)
   const min = Math.min(...values)
   const max = Math.max(...values)
-  const span = Math.max(max - min, 8)
+  const span = Math.max(max - min, Math.max(Math.abs(max), 1) * .12)
   const coords = points.map((point, index) => ({
     x: points.length === 1 ? 160 : 18 + index / Math.max(points.length - 1, 1) * 284,
-    y: 116 - ((point.value - min) / span) * 78
+    y: 116 - ((point.relative - min) / span) * 78
   }))
 
   return (
     <div className="analytics-chart-wrap">
       <div className="analytics-chart-toolbar analytics-chart-toolbar-index">
-        <ChartValue primary={`${formatMetric(active.value, 1)}%`} secondary={`${active.dateLabel} · ${active.count} упр.`} />
+        <ChartValue
+          primary={formatVolume(active.volumeKg)}
+          secondary={`${active.dateLabel} · ${formatMetric(active.relative, 1)}% от базы`}
+        />
       </div>
-      <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label="Динамика силового индекса">
+      <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label="Динамика общего объёма тренировок">
         <defs>
           <linearGradient id={`${uid}-stroke`} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#168246" />
@@ -286,9 +294,8 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
   const latest = useMemo(() => latestWorkout(workouts), [workouts])
   const filtered = useMemo(() => filterByPeriod(workouts, period, latest?.date), [workouts, period, latest?.date])
   const latestExercises = useMemo(() => latest?.exercises.filter((exercise) => primarySets(exercise).length) ?? [], [latest])
-  const ids = latestExercises.map((exercise) => exercise.exerciseId)
-  const strength = useMemo(() => overallStrengthIndex(filtered, ids), [filtered, ids.join('|')])
-  const strengthDelta = strength.length > 1 ? trend(strength[0].value, strength.at(-1)?.value) : '—'
+  const volume = useMemo(() => workoutVolumeSeries(filtered), [filtered])
+  const volumeDelta = volume.length > 1 ? trend(volume[0].volumeKg, volume.at(-1)?.volumeKg) : '—'
 
   return (
     <main className="app-shell analytics-page">
@@ -310,12 +317,12 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
         <div className="analytics-index-head">
           <div>
             <span className="eyebrow">ОБЩАЯ ДИНАМИКА</span>
-            <h2>Силовой индекс</h2>
-            <p>Расчётная сводка по фактическому весу; для упражнений с собственным весом — по повторам. Rehab не раздувает индекс.</p>
+            <h2>Общий объём</h2>
+            <p>100% = объём первой тренировки в выбранном периоде. Объём = сумма вес × повторения по учтённым подходам.</p>
           </div>
-          <strong className={strength.length > 1 && strength.at(-1)!.value >= strength[0].value ? 'positive' : ''}>{strengthDelta}</strong>
+          <strong className={volume.length > 1 && volume.at(-1)!.volumeKg >= volume[0].volumeKg ? 'positive' : ''}>{volumeDelta}</strong>
         </div>
-        <IndexChart points={strength} />
+        <VolumeChart points={volume} />
       </section>
 
       {latest && (
