@@ -23,6 +23,7 @@ export interface WorkoutSet {
   targetWeight: string
   targetReps: string
   targetRir: string
+  targetPain?: string
   restSec: number
   notes?: string
   actualWeight: string

@@ -94,7 +94,7 @@ function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: Wo
         <span>{set.targetWeight || '—'}</span>
         <span>{cleanReps(set.targetReps) || '—'}</span>
         <span>{set.targetRir || '—'}</span>
-        <span>{rehab ? '≤2' : '—'}</span>
+        <span>{set.targetPain || (rehab ? '≤2' : '—')}</span>
       </div>
       <div className="pf-grid pf-fact">
         <b>Факт</b>
