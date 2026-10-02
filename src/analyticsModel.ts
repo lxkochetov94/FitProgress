@@ -84,20 +84,40 @@ const isBodyweight = (value?: string) => /BW|собственн/i.test(String(va
 
 const unitFromWeight = (value?: string): 'кг' | 'lb' | null => {
   const raw = String(value ?? '')
-  if (/\blb\b|lbs/i.test(raw)) return 'lb'
   if (/кг/i.test(raw)) return 'кг'
+  if (/\blb\b|lbs/i.test(raw)) return 'lb'
   return null
 }
 
-const isPrepLabel = (label?: string) => /размин|подвод|подгот|калибр|пробн|тест|провокац|прерван|экспоз|контрол|maintenance/i.test(String(label ?? ''))
+const isPrepSet = (set: AnalyticsSet) =>
+  /размин|подвод|подгот|калибр|проб|тест|провокац|прерван|экспоз|контрол|maintenance/i.test(`${set.label} ${set.intensity}`)
 
 const meaningfulSet = (set: AnalyticsSet) => Number.isFinite(repsValue(set.reps)) && repsValue(set.reps) > 0
 
 export function primarySets(exercise: AnalyticsExercise) {
   const meaningful = exercise.sets.filter(meaningfulSet)
   if (!meaningful.length) return []
-  const work = meaningful.filter((set) => set.kind === 'working' || set.kind === 'other' || (!set.kind && !isPrepLabel(set.label)))
-  return work.length ? work : meaningful
+
+  const work = meaningful.filter((set) =>
+    set.kind === 'working' ||
+    set.kind === 'other' ||
+    (!set.kind && !isPrepSet(set))
+  )
+  if (!work.length) return meaningful
+
+  // Older retrospective sheets often used numbered pyramid sets without an explicit
+  // warm-up label. When there are 3+ such weighted sets, keep the heavy zone so
+  // first/second-set trends represent actual work rather than the ramp-up.
+  const unclassifiedPyramid = work.length >= 3 && work.every((set) => !set.kind && /^\d+(?:[.,]\d+)?$/.test(set.label.trim()))
+  if (unclassifiedPyramid) {
+    const weighted = work.map((set) => ({ set, weight: weightValue(set.weight) })).filter((item) => Number.isFinite(item.weight))
+    if (weighted.length >= 3) {
+      const peak = Math.max(...weighted.map((item) => item.weight))
+      const heavy = weighted.filter((item) => item.weight >= peak * .8).map((item) => item.set)
+      if (heavy.length) return heavy
+    }
+  }
+  return work
 }
 
 const localSetLabel = (set: WorkoutSet) => {
@@ -262,11 +282,7 @@ export function exerciseSeries(workouts: AnalyticsWorkout[], exerciseId: string)
   return workouts
     .map((workout) => pointForExercise(workout, exerciseId))
     .filter(Boolean)
-    .sort((a, b) => {
-      const left = a!.date ?? `${a!.periodKey}-${String(a!.order).padStart(3, '0')}`
-      const right = b!.date ?? `${b!.periodKey}-${String(b!.order).padStart(3, '0')}`
-      return left.localeCompare(right) || a!.order - b!.order
-    }) as ExercisePoint[]
+    .sort((a, b) => a!.order - b!.order) as ExercisePoint[]
 }
 
 export interface IndexPoint {
