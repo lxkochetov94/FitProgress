@@ -2,6 +2,11 @@ import * as XLSX from 'xlsx'
 import type { PerSide, WeightUnit, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { findDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
+import { loadHistory } from './storage'
+import { RETRO_JUN } from './analyticsSeedJun'
+import { RETRO_JUL } from './analyticsSeedJul'
+import { RETRO_AUG } from './analyticsSeedAug'
+import { RETRO_SEP } from './analyticsSeedSep'
 
 const cleanKey = (key: string) => key.trim().toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '')
 const str = (value: unknown) => (value === undefined || value === null ? '' : String(value).trim())
@@ -227,6 +232,250 @@ export function exportSession(session: WorkoutSession) {
 
   const date = new Date(session.startedAt).toISOString().slice(0, 10)
   XLSX.writeFile(wb, `${session.plan.title.replace(/[^a-zа-я0-9]+/gi, '_')}_${date}_result.xlsx`)
+}
+
+
+const RETRO_REGISTRY = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
+
+const retroSetType = (label: string, intensity: string) => {
+  const text = `${label} ${intensity}`.toLowerCase()
+  if (/размин|подвод|подгот/.test(text)) return 'Разминка / подготовка'
+  if (/калибр/.test(text)) return 'Калибровка'
+  if (/rehab|реабил/.test(text)) return 'Rehab'
+  if (/проб|тест|экспоз|maintenance|контрол/.test(text)) return 'Проба / контроль'
+  return 'Рабочий / фактический'
+}
+
+const registryColumns = [
+  { key: 'workout_no', width: 11 },
+  { key: 'source', width: 14 },
+  { key: 'date', width: 14 },
+  { key: 'period', width: 17 },
+  { key: 'gym', width: 16 },
+  { key: 'workout_title', width: 46 },
+  { key: 'workout_id', width: 30 },
+  { key: 'session_id', width: 38 },
+  { key: 'exercise_order', width: 13 },
+  { key: 'original_exercise_id', width: 30 },
+  { key: 'original_name', width: 34 },
+  { key: 'exercise_id', width: 30 },
+  { key: 'exercise_name', width: 38 },
+  { key: 'category', width: 24 },
+  { key: 'muscle_group', width: 24 },
+  { key: 'equipment', width: 24 },
+  { key: 'rehab', width: 10 },
+  { key: 'per_side', width: 11 },
+  { key: 'weight_unit', width: 12 },
+  { key: 'set_no', width: 10 },
+  { key: 'set_label', width: 23 },
+  { key: 'set_type', width: 23 },
+  { key: 'target_weight', width: 18 },
+  { key: 'target_reps', width: 18 },
+  { key: 'target_rir', width: 14 },
+  { key: 'actual_weight', width: 18 },
+  { key: 'actual_reps', width: 18 },
+  { key: 'actual_rir_or_intensity', width: 24 },
+  { key: 'pain_0_10', width: 12 },
+  { key: 'completed', width: 12 },
+  { key: 'completed_at', width: 24 },
+  { key: 'rest_sec', width: 12 },
+  { key: 'is_extra', width: 11 },
+  { key: 'replacement_reason', width: 22 },
+  { key: 'comment', width: 60 }
+] as const
+
+function registrySheet(rows: Record<string, unknown>[]) {
+  const sheet = XLSX.utils.json_to_sheet(rows, { header: registryColumns.map((x) => x.key) as string[] })
+  sheet['!cols'] = registryColumns.map((x) => ({ wch: x.width }))
+  if (sheet['!ref']) sheet['!autofilter'] = { ref: sheet['!ref'] }
+  return sheet
+}
+
+export function exportFullRegistry() {
+  const localHistory = loadHistory()
+    .filter((session) => Boolean(session.finishedAt))
+    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+
+  const registryRows: Record<string, unknown>[] = []
+  const workoutRows: Record<string, unknown>[] = []
+
+  for (const tuple of RETRO_REGISTRY) {
+    const [id, order, date, periodKey, periodLabel, gym, title, exercises] = tuple
+    const completedSets = exercises.reduce((sum, exercise) => sum + exercise[2].length, 0)
+
+    workoutRows.push({
+      workout_no: order,
+      source: 'Ретроспектива',
+      date: date ?? '',
+      period: periodLabel || periodKey,
+      gym,
+      workout_title: title,
+      workout_id: id,
+      session_id: '',
+      started_at: '',
+      finished_at: '',
+      duration_min: '',
+      finish_mode: '',
+      finish_reason: '',
+      exercises: exercises.length,
+      completed_sets: completedSets
+    })
+
+    exercises.forEach(([exerciseId, exerciseName, sets], exerciseIndex) => {
+      const def = findDefinition(exerciseId, exerciseName)
+      sets.forEach(([label, weight, reps, intensity], setIndex) => {
+        registryRows.push({
+          workout_no: order,
+          source: 'Ретроспектива',
+          date: date ?? '',
+          period: periodLabel || periodKey,
+          gym,
+          workout_title: title,
+          workout_id: id,
+          session_id: '',
+          exercise_order: exerciseIndex + 1,
+          original_exercise_id: exerciseId,
+          original_name: exerciseName,
+          exercise_id: def?.id ?? exerciseId,
+          exercise_name: def?.name ?? exerciseName,
+          category: def?.category ?? '',
+          muscle_group: def?.muscleGroup ?? '',
+          equipment: def?.equipment ?? '',
+          rehab: def?.rehab ? 'yes' : 'no',
+          per_side: def?.perSide ?? '',
+          weight_unit: def?.weightUnit ?? detectWeightUnit(weight) ?? '',
+          set_no: setIndex + 1,
+          set_label: label,
+          set_type: retroSetType(label, intensity),
+          target_weight: '',
+          target_reps: '',
+          target_rir: '',
+          actual_weight: weight,
+          actual_reps: reps,
+          actual_rir_or_intensity: intensity,
+          pain_0_10: '',
+          completed: 'yes',
+          completed_at: '',
+          rest_sec: '',
+          is_extra: '',
+          replacement_reason: '',
+          comment: ''
+        })
+      })
+    })
+  }
+
+  localHistory.forEach((session, localIndex) => {
+    const workoutNo = RETRO_REGISTRY.length + localIndex + 1
+    const date = session.startedAt.slice(0, 10)
+    const durationMin = session.finishedAt
+      ? Math.round((new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)
+      : ''
+    const completedSets = session.plan.exercises.reduce(
+      (sum, exercise) => sum + exercise.sets.filter((set) => set.completed).length,
+      0
+    )
+
+    workoutRows.push({
+      workout_no: workoutNo,
+      source: 'FitProgress',
+      date,
+      period: date.slice(0, 7),
+      gym: 'Новый зал',
+      workout_title: session.plan.title,
+      workout_id: session.plan.workoutId,
+      session_id: session.sessionId,
+      started_at: session.startedAt,
+      finished_at: session.finishedAt ?? '',
+      duration_min: durationMin,
+      finish_mode: session.finishMode ?? '',
+      finish_reason: session.finishReason ?? '',
+      exercises: session.plan.exercises.length,
+      completed_sets: completedSets
+    })
+
+    session.plan.exercises.forEach((exercise) => {
+      exercise.sets.forEach((set) => {
+        registryRows.push({
+          workout_no: workoutNo,
+          source: 'FitProgress',
+          date,
+          period: date.slice(0, 7),
+          gym: 'Новый зал',
+          workout_title: session.plan.title,
+          workout_id: session.plan.workoutId,
+          session_id: session.sessionId,
+          exercise_order: exercise.order,
+          original_exercise_id: exercise.originalExerciseId,
+          original_name: exercise.originalName,
+          exercise_id: exercise.exerciseId,
+          exercise_name: exercise.name,
+          category: exercise.category,
+          muscle_group: exercise.muscleGroup,
+          equipment: exercise.equipment,
+          rehab: exercise.rehab ? 'yes' : 'no',
+          per_side: exercise.perSide ?? '',
+          weight_unit: exercise.weightUnit ?? 'kg',
+          set_no: set.setNo,
+          set_label: localSetLabelForRegistry(set),
+          set_type: setTypeLabel(set.setType),
+          target_weight: set.targetWeight,
+          target_reps: set.targetReps,
+          target_rir: set.targetRir,
+          actual_weight: set.actualWeight,
+          actual_reps: set.actualReps,
+          actual_rir_or_intensity: set.actualRir,
+          pain_0_10: set.pain,
+          completed: set.completed ? 'yes' : 'no',
+          completed_at: set.completedAt ?? '',
+          rest_sec: set.restSec,
+          is_extra: set.isExtra ? 'yes' : 'no',
+          replacement_reason: exercise.replacementReason ?? '',
+          comment: set.comment
+        })
+      })
+    })
+  })
+
+  const wb = XLSX.utils.book_new()
+
+  const readme = XLSX.utils.aoa_to_sheet([
+    ['FitProgress · полный реестр тренировок'],
+    [],
+    ['Назначение', 'Единый накопительный файл для анализа всей тренировочной истории и подготовки следующих тренировок.'],
+    ['Состав', `${RETRO_REGISTRY.length} встроенных ретроспективных тренировок + ${localHistory.length} завершённых тренировок FitProgress.`],
+    ['Registry', 'Одна строка = один подход. Это основной лист для машинного и ручного анализа.'],
+    ['Workouts', 'Одна строка = одна тренировка с метаданными и количеством упражнений/подходов.'],
+    ['Даты старой истории', 'Если точный день отсутствовал в исходной ревизии, приложение сохраняет период как есть и НЕ придумывает дату.'],
+    ['Новые тренировки', 'После завершения тренировки FitProgress автоматически добавляет её в локальную историю; следующий полный экспорт уже включает её.'],
+    ['Важно', 'Не удаляй этот файл из приложения вручную: это экспорт/резервная копия. Источник новых тренировок остаётся в локальном хранилище FitProgress.'],
+    [],
+    ['Экспортировано', new Date().toISOString()]
+  ])
+  readme['!cols'] = [{ wch: 28 }, { wch: 100 }]
+  XLSX.utils.book_append_sheet(wb, readme, 'README')
+
+  const workoutsSheet = XLSX.utils.json_to_sheet(workoutRows)
+  workoutsSheet['!cols'] = [
+    { wch: 11 }, { wch: 15 }, { wch: 14 }, { wch: 17 }, { wch: 16 }, { wch: 48 },
+    { wch: 30 }, { wch: 38 }, { wch: 25 }, { wch: 25 }, { wch: 14 }, { wch: 18 },
+    { wch: 12 }, { wch: 16 }
+  ]
+  if (workoutsSheet['!ref']) workoutsSheet['!autofilter'] = { ref: workoutsSheet['!ref'] }
+  XLSX.utils.book_append_sheet(wb, workoutsSheet, 'Workouts')
+
+  XLSX.utils.book_append_sheet(wb, registrySheet(registryRows), 'Registry')
+
+  const latestDate = localHistory.at(-1)?.startedAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+  XLSX.writeFile(wb, `FitProgress_FULL_REGISTRY_${latestDate}.xlsx`)
+}
+
+function localSetLabelForRegistry(set: WorkoutSet) {
+  if (set.isExtra) return `Доп. сет ${set.setNo}`
+  if (set.setType === 'warmup') return 'Разминка'
+  if (set.setType === 'calibration') return 'Калибровка'
+  if (set.setType === 'rehab') return `Rehab ${set.setNo}`
+  return String(set.setNo)
 }
 
 export function downloadTemplate() {
