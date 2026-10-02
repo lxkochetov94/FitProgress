@@ -52,7 +52,10 @@ export function archiveSession(session: WorkoutSession) {
   try {
     const raw = localStorage.getItem(HISTORY_KEY)
     const history = raw ? (JSON.parse(raw) as WorkoutSession[]) : []
-    const nextHistory = [session, ...history.filter((x) => x.sessionId !== session.sessionId)].slice(0, 30)
+    // Keep the complete completed-session registry. The home screen can still
+    // display only the latest few items, but exports must never silently lose
+    // an older real workout just because more sessions were completed later.
+    const nextHistory = [session, ...history.filter((x) => x.sessionId !== session.sessionId)]
     localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory))
 
     const profiles = loadExerciseProfiles()
