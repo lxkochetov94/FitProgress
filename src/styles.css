@@ -952,7 +952,7 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   border-radius: 50%;
   background:
     conic-gradient(
-      from -90deg,
+      from 0deg,
       #ff3b30 0%,
       #ff6b22 24%,
       #ffad0a 48%,
@@ -1915,12 +1915,12 @@ html, body {
       #34c759 100%
     ) !important;
   -webkit-mask: conic-gradient(
-    from -90deg,
+    from 0deg,
     #000 0 var(--rest-progress),
     transparent var(--rest-progress) 100%
   ) !important;
   mask: conic-gradient(
-    from -90deg,
+    from 0deg,
     #000 0 var(--rest-progress),
     transparent var(--rest-progress) 100%
   ) !important;
@@ -1950,10 +1950,11 @@ html, body {
 .rest-ring-marker::after {
   content: "";
   position: absolute;
-  top: 4.5px;
+  top: -1.5px;
   left: 50%;
   width: 12px;
   height: 12px;
+  box-sizing: border-box;
   border: 2px solid #ffffff;
   border-radius: 50%;
   background: hsl(var(--rest-hue) 88% 48%);
@@ -2002,7 +2003,7 @@ html, body {
   }
 
   .rest-ring-marker::after {
-    top: 4px;
+    top: -1.5px;
     width: 11px;
     height: 11px;
   }
