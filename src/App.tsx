@@ -326,12 +326,14 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const [clock, setClock] = useState(Date.now())
   const [restLeaving, setRestLeaving] = useState(false)
   const transitionTimeout = useRef<number | null>(null)
+  const anchorRaf = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
   useEffect(() => {
     return () => {
       if (transitionTimeout.current !== null) window.clearTimeout(transitionTimeout.current)
+      if (anchorRaf.current !== null) window.cancelAnimationFrame(anchorRaf.current)
     }
   }, [])
 
@@ -382,6 +384,37 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         if (Math.abs(delta) > 1) window.scrollBy({ top: delta, left: 0, behavior: 'auto' })
       })
     })
+  }
+
+  const pinElementDuringMorph = (id: string, viewportTop: number, duration = 1240) => {
+    if (anchorRaf.current !== null) window.cancelAnimationFrame(anchorRaf.current)
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const started = performance.now()
+
+    const frame = (now: number) => {
+      const element = document.getElementById(id)
+      if (!element) {
+        anchorRaf.current = null
+        return
+      }
+
+      const currentTop = element.getBoundingClientRect().top
+      const delta = currentTop - viewportTop
+
+      // Counter only the layout movement caused by the morph. This keeps the
+      // exercise/timer boundary visually stationary instead of letting the
+      // entire page shoot toward the bottom as the large card collapses.
+      if (Math.abs(delta) > 0.25) window.scrollBy(0, delta)
+
+      if (!reduceMotion && now - started < duration) {
+        anchorRaf.current = window.requestAnimationFrame(frame)
+      } else {
+        anchorRaf.current = null
+      }
+    }
+
+    anchorRaf.current = window.requestAnimationFrame(frame)
   }
 
   const smoothScrollToStableElement = (id: string, headerOffset = 88) => {
@@ -498,6 +531,9 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
+    const boundaryId = `exercise-boundary-${index}`
+    const boundaryTop = elementTop(boundaryId)
+
     const next = clone(session)
     const exercise = next.plan.exercises[index]
     const now = new Date().toISOString()
@@ -519,8 +555,12 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     setOpenExercise(null)
     setExerciseEnd(null)
 
-    // No programmatic scrolling here. The expanded card and the inline timer
-    // now exchange space through measured height transitions in document flow.
+    // The boundary exists before and after finishing. While the expanded
+    // exercise shrinks (and a new timer may grow underneath), continuously
+    // compensate only that layout delta. No destination scroll is involved.
+    if (boundaryTop !== undefined) {
+      window.requestAnimationFrame(() => pinElementDuringMorph(boundaryId, boundaryTop))
+    }
   }
 
   const requestFinishExercise = (index: number) => {
@@ -840,6 +880,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           return (
             <Fragment key={exercise.instanceId}>
               {exerciseNode}
+              <div id={`exercise-boundary-${exerciseIndex}`} className="exercise-boundary-anchor" aria-hidden="true" />
               {showExerciseRest && (
                 <NativeCollapse
                   id={`rest-exercise-${exerciseIndex}`}
