@@ -220,7 +220,7 @@ function MetricRow({ label, values, unit, absolute = false }: { label: string; v
   )
 }
 
-function ExerciseCard({ name, points }: { name: string; points: ExercisePoint[] }) {
+function ExerciseCard({ name, points, totalCount }: { name: string; points: ExercisePoint[]; totalCount: number }) {
   if (!points.length) return null
   const latest = points.at(-1)!
   const first = points[0]
@@ -230,7 +230,7 @@ function ExerciseCard({ name, points }: { name: string; points: ExercisePoint[] 
   return (
     <article className="analytics-exercise-card">
       <div className="analytics-exercise-head">
-        <div><span className="eyebrow">{points.length} ТРЕНИРОВОК В ПЕРИОДЕ</span><h2>{name}</h2></div>
+        <div><span className="eyebrow">{points.length} В ПЕРИОДЕ{totalCount > points.length ? ` · ${totalCount} ВСЕГО` : ''}</span><h2>{name}</h2></div>
         <span className={`analytics-delta ${latest.score >= first.score ? 'positive' : ''}`}>{scoreTrend}</span>
       </div>
       <ExerciseChart points={points} />
@@ -274,7 +274,7 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
       {latest && <section className="analytics-latest"><span className="eyebrow">ПОСЛЕДНЯЯ ТРЕНИРОВКА</span><h2>{latest.title}</h2><p>{fmtFullDate(latest.date, latest.periodLabel)} · {latestExercises.length} упражнений с фактом</p></section>}
 
       <section className="analytics-cards">
-        {latestExercises.map((exercise) => <ExerciseCard key={exercise.exerciseId} name={exercise.name} points={exerciseSeries(filtered, exercise.exerciseId)} />)}
+        {latestExercises.map((exercise) => <ExerciseCard key={exercise.exerciseId} name={exercise.name} points={exerciseSeries(filtered, exercise.exerciseId)} totalCount={exerciseSeries(workouts, exercise.exerciseId).length} />)}
       </section>
 
       <section className="analytics-note"><b>Ретроспектива загружена</b><p>В аналитику встроены 31 тренировка из ревизии 29.06–29.09. Для Т04–Т09 точные дни в источнике отсутствуют, поэтому на графиках они остаются периодом «Июль 2026» без выдуманных дат. Новые тренировки сохраняются в отдельный аналитический архив и не меняют механику основного дневника.</p></section>
