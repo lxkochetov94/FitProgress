@@ -44,13 +44,16 @@ export interface ExercisePoint {
   periodKey: string
   dateLabel: string
   workoutTitle: string
+  matchedExerciseId: string
+  matchedExerciseName: string
   score: number
   workWeight: number | null
   peakWeight: number | null
   weightUnit: 'кг' | 'lb' | null
-  setReps: number[]
-  totalReps: number
+  setReps: (number | null)[]
+  totalReps: number | null
   primarySets: AnalyticsSet[]
+  allSets: AnalyticsSet[]
   prepSetCount: number
   bodyweight: boolean
 }
@@ -59,9 +62,8 @@ const ARCHIVE_KEY = 'fitprogress.analytics-history.v1'
 const RETRO = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
 
 /**
- * Historical IDs that are mechanically comparable enough to belong to one
- * analytics series. This is intentionally conservative: different machines
- * and weight stacks stay separate even when the movement pattern is similar.
+ * Only aliases/previous stages that the user expects to see on one historical line.
+ * Different machines and unrelated movement variants stay separate.
  */
 const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
   db_shrug: ['db_shrug', 'old_db_shrug'],
@@ -72,7 +74,6 @@ const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
 }
 
 const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] ?? [exerciseId]
-
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const numeric = (value?: string) => {
@@ -80,7 +81,7 @@ const numeric = (value?: string) => {
   return match ? Number(match[0]) : NaN
 }
 
-const repsValue = (value?: string) => {
+const looseRepsValue = (value?: string) => {
   const raw = String(value ?? '').trim().replace(',', '.')
   if (!raw || raw === '—') return NaN
   if (raw.includes('+')) {
@@ -88,6 +89,18 @@ const repsValue = (value?: string) => {
     return parts.length ? parts.reduce((sum, item) => sum + item, 0) : NaN
   }
   return numeric(raw)
+}
+
+const exactRepsValue = (value?: string): number | null => {
+  const raw = String(value ?? '').trim().replace(',', '.')
+  if (!raw || raw === '—' || /отказ|не запис/i.test(raw)) return null
+  if (/\d\s*[–—-]\s*\d/.test(raw)) return null
+  if (raw.includes('+')) {
+    const parts = raw.split('+').map((part) => numeric(part))
+    return parts.length && parts.every(Number.isFinite) ? parts.reduce((sum, item) => sum + item, 0) : null
+  }
+  const valueNumber = numeric(raw)
+  return Number.isFinite(valueNumber) ? valueNumber : null
 }
 
 const weightValue = (value?: string) => {
@@ -108,32 +121,25 @@ const unitFromWeight = (value?: string): 'кг' | 'lb' | null => {
 const isPrepSet = (set: AnalyticsSet) =>
   /размин|подвод|подгот|калибр|проб|тест|провокац|прерван|экспоз|контрол|maintenance/i.test(`${set.label} ${set.intensity}`)
 
-const meaningfulSet = (set: AnalyticsSet) => Number.isFinite(repsValue(set.reps)) && repsValue(set.reps) > 0
+const meaningfulSet = (set: AnalyticsSet) => {
+  const reps = looseRepsValue(set.reps)
+  const weight = weightValue(set.weight)
+  return (Number.isFinite(reps) && reps > 0) || (Number.isFinite(weight) && weight > 0) || isBodyweight(set.weight)
+}
 
 export function primarySets(exercise: AnalyticsExercise) {
   const meaningful = exercise.sets.filter(meaningfulSet)
   if (!meaningful.length) return []
 
-  const work = meaningful.filter((set) =>
-    set.kind === 'working' ||
-    set.kind === 'other' ||
-    (!set.kind && !isPrepSet(set))
-  )
-  if (!work.length) return meaningful
+  const work = meaningful.filter((set) => {
+    if (set.kind === 'warmup' || set.kind === 'calibration') return false
+    if (isPrepSet(set)) return false
+    return true
+  })
 
-  // Older retrospective sheets often used numbered pyramid sets without an explicit
-  // warm-up label. When there are 3+ such weighted sets, keep the heavy zone so
-  // first/second-set trends represent actual work rather than the ramp-up.
-  const unclassifiedPyramid = work.length >= 3 && work.every((set) => !set.kind && /^\d+(?:[.,]\d+)?$/.test(set.label.trim()))
-  if (unclassifiedPyramid) {
-    const weighted = work.map((set) => ({ set, weight: weightValue(set.weight) })).filter((item) => Number.isFinite(item.weight))
-    if (weighted.length >= 3) {
-      const peak = Math.max(...weighted.map((item) => item.weight))
-      const heavy = weighted.filter((item) => item.weight >= peak * .8).map((item) => item.set)
-      if (heavy.length) return heavy
-    }
-  }
-  return work
+  // If the source only contains rehab/calibration/exposure sets, do not make
+  // the whole training date disappear. Those are still factual completed sets.
+  return work.length ? work : meaningful
 }
 
 const localSetLabel = (set: WorkoutSet) => {
@@ -210,7 +216,7 @@ export function syncAnalyticsArchive(history: WorkoutSession[] = loadHistory()) 
       .slice(0, 260)
     localStorage.setItem(ARCHIVE_KEY, JSON.stringify(merged))
   } catch {
-    // Analytics archive is additive only; workout core must keep working even if storage is restricted.
+    // Analytics is read-only relative to the workout core.
   }
 }
 
@@ -249,47 +255,50 @@ export function filterByPeriod(workouts: AnalyticsWorkout[], period: AnalyticsPe
   return workouts.filter((item) => item.date ? item.date >= cutoffIso && item.date <= anchor : item.periodKey >= cutoffMonth && item.periodKey <= anchor.slice(0, 7))
 }
 
-function medianWeight(sets: AnalyticsSet[]) {
-  const values = sets.map((set) => weightValue(set.weight)).filter(Number.isFinite).sort((a, b) => a - b) as number[]
-  if (!values.length) return null
-  const middle = Math.floor(values.length / 2)
-  return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2
+const maxWeight = (sets: AnalyticsSet[]) => {
+  const values = sets.map((set) => weightValue(set.weight)).filter(Number.isFinite) as number[]
+  return values.length ? Math.max(...values) : null
 }
 
 export function pointForExercise(workout: AnalyticsWorkout, exerciseId: string): ExercisePoint | null {
   const acceptedIds = equivalentIds(exerciseId)
   const exercise = workout.exercises.find((item) => acceptedIds.includes(item.exerciseId))
   if (!exercise) return null
-  const primary = primarySets(exercise)
-  if (!primary.length) return null
 
-  const reps = primary.map((set) => repsValue(set.reps)).filter(Number.isFinite) as number[]
-  if (!reps.length) return null
-  const weighted = primary
-    .map((set) => ({ weight: weightValue(set.weight), reps: repsValue(set.reps) }))
-    .filter((item) => Number.isFinite(item.weight) && item.weight > 0 && Number.isFinite(item.reps) && item.reps > 0)
+  const allSets = exercise.sets.filter(meaningfulSet)
+  if (!allSets.length) return null
+  const primary = primarySets(exercise)
+  const workWeight = maxWeight(primary)
+  const peakWeight = maxWeight(allSets)
+  const exactReps = primary.map((set) => exactRepsValue(set.reps))
+  const exactRepValues = exactReps.filter((value): value is number => value != null)
+  const totalReps = exactReps.length && exactReps.every((value) => value != null)
+    ? exactRepValues.reduce((sum, value) => sum + value, 0)
+    : null
   const bodyweight = primary.some((set) => isBodyweight(set.weight))
-  const score = weighted.length
-    ? Math.max(...weighted.map((set) => set.weight * (1 + set.reps / 30)))
-    : Math.max(...reps)
-  const peakWeight = weighted.length ? Math.max(...weighted.map((set) => set.weight)) : null
-  const unit = primary.map((set) => unitFromWeight(set.weight)).find(Boolean) ?? null
+  const score = workWeight ?? (exactRepValues.length ? Math.max(...exactRepValues) : 0)
+  const unit = [...primary, ...allSets].map((set) => unitFromWeight(set.weight)).find(Boolean) ?? null
 
   return {
     workoutId: workout.id,
     order: workout.order,
     date: workout.date,
     periodKey: workout.periodKey,
-    dateLabel: workout.date ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(new Date(`${workout.date}T12:00:00`)) : workout.periodLabel,
+    dateLabel: workout.date
+      ? new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(new Date(`${workout.date}T12:00:00`))
+      : workout.periodLabel,
     workoutTitle: workout.title,
+    matchedExerciseId: exercise.exerciseId,
+    matchedExerciseName: exercise.name,
     score,
-    workWeight: medianWeight(primary),
+    workWeight,
     peakWeight,
     weightUnit: unit,
-    setReps: reps,
-    totalReps: reps.reduce((sum, value) => sum + value, 0),
+    setReps: exactReps,
+    totalReps,
     primarySets: primary,
-    prepSetCount: Math.max(0, exercise.sets.filter(meaningfulSet).length - primary.length),
+    allSets,
+    prepSetCount: Math.max(0, allSets.length - primary.length),
     bodyweight
   }
 }
@@ -310,13 +319,12 @@ export interface IndexPoint {
 }
 
 export function overallStrengthIndex(workouts: AnalyticsWorkout[], exerciseIds: string[]) {
-  // Rehab progressions can intentionally change lever length, ROM or joint angle;
-  // counting those load jumps as "strength" grossly inflates the global index.
   const strengthIds = exerciseIds.filter((exerciseId) => !getDefinition(exerciseId)?.rehab)
   const candidates = strengthIds.length ? strengthIds : exerciseIds
   const series = candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length >= 2)
   const usable = series.length ? series : candidates.map((exerciseId) => exerciseSeries(workouts, exerciseId)).filter((items) => items.length)
   const buckets = new Map<string, { order: number; dateLabel: string; values: number[] }>()
+
   for (const points of usable) {
     const baseline = points[0]?.score
     if (!baseline || baseline <= 0) continue
@@ -327,8 +335,15 @@ export function overallStrengthIndex(workouts: AnalyticsWorkout[], exerciseIds: 
       buckets.set(point.workoutId, current)
     }
   }
+
   return [...buckets.entries()]
-    .map(([workoutId, bucket]) => ({ workoutId, order: bucket.order, dateLabel: bucket.dateLabel, value: bucket.values.reduce((a, b) => a + b, 0) / bucket.values.length, count: bucket.values.length }))
+    .map(([workoutId, bucket]) => ({
+      workoutId,
+      order: bucket.order,
+      dateLabel: bucket.dateLabel,
+      value: bucket.values.reduce((a, b) => a + b, 0) / bucket.values.length,
+      count: bucket.values.length
+    }))
     .sort((a, b) => a.order - b.order)
 }
 
