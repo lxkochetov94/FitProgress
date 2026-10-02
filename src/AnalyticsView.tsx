@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import './analytics.css'
 import { exerciseSeries, filterByPeriod, formatMetric, latestWorkout, loadAnalyticsWorkouts, overallStrengthIndex, primarySets } from './analyticsModel'
 import type { AnalyticsPeriod, ExercisePoint, IndexPoint } from './analyticsModel'
 
