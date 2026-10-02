@@ -1320,3 +1320,164 @@ html {
 html {
   scroll-behavior: auto;
 }
+
+
+/* v0.9 — Apple-like exercise morphing and coordinated recovery navigation */
+.exercise-morph {
+  width: 100%;
+  scroll-margin-top: 88px;
+}
+
+.exercise-preview-slot,
+.exercise-expanded-slot {
+  display: grid;
+  min-width: 0;
+  transition:
+    grid-template-rows 520ms cubic-bezier(.22,.72,.22,1),
+    opacity 260ms ease,
+    transform 520ms cubic-bezier(.22,.72,.22,1);
+  will-change: grid-template-rows, opacity, transform;
+}
+
+.exercise-slot-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.exercise-morph.is-closed .exercise-preview-slot {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.exercise-morph.is-closed .exercise-expanded-slot {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(10px) scale(.992);
+  visibility: hidden;
+  transition:
+    grid-template-rows 520ms cubic-bezier(.22,.72,.22,1),
+    opacity 180ms ease,
+    transform 520ms cubic-bezier(.22,.72,.22,1),
+    visibility 0s linear 520ms;
+  pointer-events: none;
+}
+
+.exercise-morph.is-open .exercise-preview-slot {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-8px) scale(.994);
+  visibility: hidden;
+  transition:
+    grid-template-rows 520ms cubic-bezier(.22,.72,.22,1),
+    opacity 160ms ease,
+    transform 520ms cubic-bezier(.22,.72,.22,1),
+    visibility 0s linear 520ms;
+  pointer-events: none;
+}
+
+.exercise-morph.is-open .exercise-expanded-slot {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.exercise-preview-row,
+.exercise-expanded {
+  transform-origin: top center;
+}
+
+.rest-transition-shell {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    grid-template-rows 500ms cubic-bezier(.22,.72,.22,1),
+    opacity 260ms ease,
+    transform 500ms cubic-bezier(.22,.72,.22,1);
+  will-change: grid-template-rows, opacity, transform;
+}
+
+.rest-transition-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rest-transition-shell.is-leaving {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+/* Timer numerals: large, tall, condensed and readable inside the ring. */
+.rest-ring-inner {
+  width: 100%;
+  overflow: visible;
+}
+
+.rest-ring-inner strong,
+.between_exercises .rest-ring-inner strong {
+  width: 175%;
+  margin-left: -37.5% !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 62px !important;
+  font-weight: 520 !important;
+  font-stretch: condensed;
+  font-variation-settings: "wdth" 72, "wght" 520;
+  letter-spacing: -.085em !important;
+  line-height: .66 !important;
+  transform: scaleX(.56) scaleY(1.38) !important;
+  transform-origin: center !important;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.inline-rest.is-ready .rest-ring-inner strong {
+  width: 150%;
+  margin-left: -25% !important;
+  font-size: 66px !important;
+  font-weight: 580 !important;
+  font-variation-settings: "wdth" 76, "wght" 580;
+  letter-spacing: -.06em !important;
+  transform: scaleX(.64) scaleY(1.38) !important;
+}
+
+@media (max-width: 520px) {
+  .exercise-preview-slot,
+  .exercise-expanded-slot {
+    transition-duration: 500ms;
+  }
+
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 58px !important;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 62px !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .rest-ring-inner strong,
+  .between_exercises .rest-ring-inner strong {
+    font-size: 52px !important;
+  }
+
+  .inline-rest.is-ready .rest-ring-inner strong {
+    font-size: 56px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exercise-preview-slot,
+  .exercise-expanded-slot,
+  .rest-transition-shell {
+    transition-duration: 1ms !important;
+  }
+}

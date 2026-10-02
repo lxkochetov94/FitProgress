@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
+import type { ChangeEvent, CSSProperties } from 'react'
 import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
@@ -221,6 +221,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const [exerciseEnd, setExerciseEnd] = useState<{ index: number; mode: 'early' | 'skip' } | null>(null)
   const [workoutEndOpen, setWorkoutEndOpen] = useState(false)
   const [clock, setClock] = useState(Date.now())
+  const [restLeaving, setRestLeaving] = useState(false)
+  const glideRaf = useRef<number | null>(null)
   const history = useMemo(() => loadHistory(), [session.sessionId])
   const [finishedSummary, setFinishedSummary] = useState(Boolean(session.finishedAt))
 
@@ -271,6 +273,35 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
         if (Math.abs(delta) > 1) window.scrollBy({ top: delta, left: 0, behavior: 'auto' })
       })
     })
+  }
+
+  const glideToElement = (id: string, duration = 620, headerOffset = 88) => {
+    if (glideRaf.current !== null) window.cancelAnimationFrame(glideRaf.current)
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const startY = window.scrollY
+    const started = performance.now()
+
+    const frame = (now: number) => {
+      const target = document.getElementById(id)
+      if (!target) {
+        glideRaf.current = null
+        return
+      }
+
+      const absoluteTop = window.scrollY + target.getBoundingClientRect().top
+      const destination = Math.max(0, absoluteTop - headerOffset)
+      const raw = reduceMotion ? 1 : Math.min(1, (now - started) / duration)
+      const eased = 1 - Math.pow(1 - raw, 4)
+      const nextY = startY + (destination - startY) * eased
+
+      window.scrollTo(0, nextY)
+
+      if (raw < 1) glideRaf.current = window.requestAnimationFrame(frame)
+      else glideRaf.current = null
+    }
+
+    glideRaf.current = window.requestAnimationFrame(frame)
   }
 
   const updateSet = (exerciseIndex: number, setIndex: number, patch: Partial<WorkoutSet>) => mutateExercise(exerciseIndex, (exercise) => {
@@ -373,12 +404,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       mutateExercise(index, (draft) => ({ ...draft, startedAt: new Date().toISOString() }))
     }
     setOpenExercise(exercise.instanceId)
+    window.requestAnimationFrame(() => glideToElement(`exercise-${exercise.instanceId}`, 560))
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
-    const finishControlId = `finish-exercise-${index}`
-    const actionTop = elementTop(finishControlId) ?? Math.min(window.innerHeight * 0.58, 520)
-
     const next = clone(session)
     const exercise = next.plan.exercises[index]
     const now = new Date().toISOString()
@@ -394,14 +423,15 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     }
 
     next.updatedAt = now
+    setRestLeaving(false)
     setSession(next)
     if (restStartedAt !== undefined) setClock(restStartedAt)
     setOpenExercise(null)
     setExerciseEnd(null)
 
-    // The expanded card collapses by hundreds of pixels. Pin the new inline
-    // recovery block to the same visual area instead of throwing the page.
-    restoreAnchor(`rest-exercise-${index}`, actionTop, Math.min(window.innerHeight * 0.58, 520))
+    // The card itself now morphs closed. Follow the timer while both layout
+    // transitions are running instead of snapping the viewport.
+    window.requestAnimationFrame(() => glideToElement(`rest-exercise-${index}`, 660))
   }
 
   const requestFinishExercise = (index: number) => {
@@ -414,51 +444,48 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const requestSkipExercise = (index: number) => setExerciseEnd({ index, mode: 'skip' })
 
   const advanceFromRest = () => {
-    if (!session.activeRest) return
+    if (!session.activeRest || restLeaving) return
 
     const rest = session.activeRest
     const current = session.plan.exercises[rest.exerciseIndex]
     const active = document.activeElement
     if (active instanceof HTMLElement) active.blur()
 
-    const next = clone(session)
-    delete next.activeRest
-    next.updatedAt = new Date().toISOString()
+    const staged = clone(session)
+    staged.updatedAt = new Date().toISOString()
 
     let targetId = ''
     if (rest.kind === 'between_sets') {
       const target = current.sets.find((set) => set.setNo === rest.nextSetNo && !set.completed)
       targetId = target ? `set-${target.id}` : `exercise-${current.instanceId}`
-      setSession(next)
-      setClock(Date.now())
       setOpenExercise(current.instanceId)
     } else {
-      const nextIndex = next.plan.exercises.findIndex((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
+      const nextIndex = staged.plan.exercises.findIndex((exercise, index) => index > rest.exerciseIndex && !exercise.finishedAt)
       if (nextIndex >= 0) {
-        const exercise = next.plan.exercises[nextIndex]
+        const exercise = staged.plan.exercises[nextIndex]
         exercise.startedAt = exercise.startedAt ?? new Date().toISOString()
         targetId = `exercise-${exercise.instanceId}`
-        setSession(next)
-        setClock(Date.now())
         setOpenExercise(exercise.instanceId)
       } else {
         targetId = 'workout-summary'
-        setSession(next)
-        setClock(Date.now())
       }
     }
 
-    // GO / Skip is navigation, not scroll anchoring:
-    // let the inline timer disappear, then deliberately glide to the next item.
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const target = document.getElementById(targetId)
-        if (!target) return
-        const headerOffset = 86
-        const targetY = Math.max(0, window.scrollY + target.getBoundingClientRect().top - headerOffset)
-        window.scrollTo({ top: targetY, behavior: 'smooth' })
-      })
-    })
+    setRestLeaving(true)
+    setSession(staged)
+
+    // Timer shrinks while the destination card expands. The target position
+    // changes during the morph, so the custom glide follows it frame by frame.
+    window.requestAnimationFrame(() => glideToElement(targetId, 680))
+
+    window.setTimeout(() => {
+      const finalState = clone(staged)
+      delete finalState.activeRest
+      finalState.updatedAt = new Date().toISOString()
+      setSession(finalState)
+      setClock(Date.now())
+      setRestLeaving(false)
+    }, 520)
   }
 
   const addRestTime = (seconds: number) => {
@@ -601,10 +628,8 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           const representative = exercise.sets.find((set) => set.setType === 'working') ?? exercise.sets[exercise.sets.length - 1]
           const hasLocalHistory = history.some((past) => past.plan.exercises.some((pastExercise) => pastExercise.exerciseId === exercise.exerciseId || pastExercise.originalExerciseId === exercise.exerciseId))
           const isNew = !(definition?.known || hasLocalHistory)
-          let exerciseNode: ReactNode
-          if (!isOpen) {
-            exerciseNode = (
-              <button type="button" id={`exercise-${exercise.instanceId}`} className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} onClick={() => openExerciseAt(exerciseIndex)}>
+          const previewNode = (
+              <button type="button" className={`exercise-preview-row ${exercise.finishedAt ? 'is-finished' : ''}`} key={exercise.instanceId} tabIndex={isOpen ? -1 : 0} onClick={() => openExerciseAt(exerciseIndex)}>
                 <ExerciseVisual exercise={exercise} compact />
                 <div className="preview-copy">
                   <span className="eyebrow">{String(exercise.order).padStart(2, '0')} · {exercise.muscleGroup || exercise.category}</span>
@@ -622,10 +647,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 </div>
                 <span className="row-chevron">›</span>
               </button>
-            )
-          } else {
-            exerciseNode = (
-            <section id={`exercise-${exercise.instanceId}`} className="exercise-expanded" key={exercise.instanceId}>
+          )
+
+          const expandedNode = (
+            <section className="exercise-expanded" key={exercise.instanceId}>
               <button className="collapse-control" type="button" onClick={() => setOpenExercise(null)}>‹ Все упражнения</button>
               <ExerciseVisual exercise={exercise} />
               <div className="expanded-copy">
@@ -673,17 +698,19 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                     {session.activeRest?.kind === 'between_sets' &&
                       session.activeRest.exerciseIndex === exerciseIndex &&
                       session.activeRest.nextSetNo === set.setNo && (
-                        <div id={`rest-set-${exerciseIndex}-${set.setNo}`}>
-                          <RestBlock
-                            kind="between_sets"
-                            durationSec={session.activeRest.durationSec}
-                            restLeft={restLeft}
-                            exerciseName={session.activeRest.exerciseName}
-                            nextSetNo={session.activeRest.nextSetNo}
-                            nextExerciseName={session.activeRest.nextExerciseName}
-                            onAdd={() => addRestTime(30)}
-                            onAdvance={advanceFromRest}
-                          />
+                        <div id={`rest-set-${exerciseIndex}-${set.setNo}`} className={`rest-transition-shell ${restLeaving ? 'is-leaving' : ''}`}>
+                          <div className="rest-transition-inner">
+                            <RestBlock
+                              kind="between_sets"
+                              durationSec={session.activeRest.durationSec}
+                              restLeft={restLeft}
+                              exerciseName={session.activeRest.exerciseName}
+                              nextSetNo={session.activeRest.nextSetNo}
+                              nextExerciseName={session.activeRest.nextExerciseName}
+                              onAdd={() => addRestTime(30)}
+                              onAdvance={advanceFromRest}
+                            />
+                          </div>
                         </div>
                       )}
                     <SetRow set={set} rehab={exercise.rehab} weightUnit={exercise.weightUnit ?? 'kg'} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onCredit={() => creditSet(exerciseIndex, setIndex)} />
@@ -703,25 +730,37 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 </div>
               })()}
             </section>
-            )
-          }
+          )
+
+          const exerciseNode = (
+            <div id={`exercise-${exercise.instanceId}`} className={`exercise-morph ${isOpen ? 'is-open' : 'is-closed'}`}>
+              <div className="exercise-preview-slot" aria-hidden={isOpen}>
+                <div className="exercise-slot-inner">{previewNode}</div>
+              </div>
+              <div className="exercise-expanded-slot" aria-hidden={!isOpen}>
+                <div className="exercise-slot-inner">{expandedNode}</div>
+              </div>
+            </div>
+          )
 
           const showExerciseRest = session.activeRest?.kind === 'between_exercises' && session.activeRest.exerciseIndex === exerciseIndex
           return (
             <Fragment key={exercise.instanceId}>
               {exerciseNode}
               {showExerciseRest && (
-                <div id={`rest-exercise-${exerciseIndex}`} className="exercise-rest-slot">
-                  <RestBlock
-                    kind="between_exercises"
-                    durationSec={session.activeRest!.durationSec}
-                    restLeft={restLeft}
-                    exerciseName={session.activeRest!.exerciseName}
-                    nextSetNo={session.activeRest!.nextSetNo}
-                    nextExerciseName={session.activeRest!.nextExerciseName}
-                    onAdd={() => addRestTime(30)}
-                    onAdvance={advanceFromRest}
-                  />
+                <div id={`rest-exercise-${exerciseIndex}`} className={`exercise-rest-slot rest-transition-shell ${restLeaving ? 'is-leaving' : ''}`}>
+                  <div className="rest-transition-inner">
+                    <RestBlock
+                      kind="between_exercises"
+                      durationSec={session.activeRest!.durationSec}
+                      restLeft={restLeft}
+                      exerciseName={session.activeRest!.exerciseName}
+                      nextSetNo={session.activeRest!.nextSetNo}
+                      nextExerciseName={session.activeRest!.nextExerciseName}
+                      onAdd={() => addRestTime(30)}
+                      onAdvance={advanceFromRest}
+                    />
+                  </div>
                 </div>
               )}
             </Fragment>
