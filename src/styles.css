@@ -1607,3 +1607,125 @@ html {
     animation-duration: 1ms !important;
   }
 }
+
+
+/* v0.11 — measured native height transitions: no disappearing panels */
+.exercise-morph-v2 {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  scroll-margin-top: 88px;
+}
+
+.exercise-morph-v2.is-measured {
+  transition: height 1080ms cubic-bezier(.16,.84,.18,1);
+  will-change: height;
+}
+
+.exercise-morph-panel {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  transform-origin: top center;
+  transition:
+    opacity 720ms cubic-bezier(.22,.72,.22,1),
+    transform 1080ms cubic-bezier(.16,.84,.18,1);
+  will-change: opacity, transform;
+  visibility: visible !important;
+}
+
+.exercise-morph-v2.is-closed .exercise-morph-preview {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.exercise-morph-v2.is-closed .exercise-morph-expanded {
+  opacity: 0;
+  transform: translateY(12px) scale(.994);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.exercise-morph-v2.is-open .exercise-morph-preview {
+  opacity: 0;
+  transform: translateY(-10px) scale(.996);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.exercise-morph-v2.is-open .exercise-morph-expanded {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.native-collapse {
+  width: 100%;
+  overflow: hidden;
+  transition:
+    height 1080ms cubic-bezier(.16,.84,.18,1),
+    opacity 720ms ease;
+  will-change: height, opacity;
+}
+
+.native-collapse-inner {
+  width: 100%;
+  transform-origin: top center;
+  transition:
+    transform 1080ms cubic-bezier(.16,.84,.18,1),
+    opacity 720ms ease;
+}
+
+.native-collapse.is-open {
+  opacity: 1;
+}
+
+.native-collapse.is-open .native-collapse-inner {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+
+.native-collapse.is-closed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.native-collapse.is-closed .native-collapse-inner {
+  opacity: 0;
+  transform: translateY(-10px) scaleY(.985);
+}
+
+/* The timer expands/collapses through its own measured height. It never just disappears. */
+.rest-native-collapse .inline-rest {
+  animation: none !important;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Retire old 0fr/1fr geometry. */
+.exercise-preview-slot,
+.exercise-expanded-slot,
+.rest-transition-shell {
+  transition: none !important;
+}
+
+@media (max-width: 520px) {
+  .exercise-morph-v2.is-measured,
+  .exercise-morph-panel,
+  .native-collapse,
+  .native-collapse-inner {
+    transition-duration: 1040ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exercise-morph-v2.is-measured,
+  .exercise-morph-panel,
+  .native-collapse,
+  .native-collapse-inner {
+    transition-duration: 1ms !important;
+  }
+}

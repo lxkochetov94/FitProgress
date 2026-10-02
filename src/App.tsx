@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent, CSSProperties } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
@@ -215,6 +215,109 @@ function ReplacementSheet({ exercise, onClose, onReplace, onCustom }: { exercise
   )
 }
 
+function MeasuredMorph({ id, open, preview, expanded }: {
+  id: string
+  open: boolean
+  preview: ReactNode
+  expanded: ReactNode
+}) {
+  const previewRef = useRef<HTMLDivElement>(null)
+  const expandedRef = useRef<HTMLDivElement>(null)
+  const initialized = useRef(false)
+  const [height, setHeight] = useState<number | undefined>(undefined)
+
+  const measure = () => {
+    const node = open ? expandedRef.current : previewRef.current
+    if (!node) return
+    const nextHeight = Math.ceil(node.getBoundingClientRect().height)
+    if (!initialized.current) {
+      initialized.current = true
+      setHeight(nextHeight)
+      return
+    }
+    window.requestAnimationFrame(() => setHeight(nextHeight))
+  }
+
+  useLayoutEffect(() => {
+    measure()
+  }, [open])
+
+  useEffect(() => {
+    const node = open ? expandedRef.current : previewRef.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => measure())
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [open])
+
+  return (
+    <div
+      id={id}
+      className={`exercise-morph-v2 ${open ? 'is-open' : 'is-closed'} ${initialized.current ? 'is-measured' : ''}`}
+      style={height === undefined ? undefined : { height }}
+    >
+      <div ref={previewRef} className="exercise-morph-panel exercise-morph-preview" aria-hidden={open}>
+        {preview}
+      </div>
+      <div ref={expandedRef} className="exercise-morph-panel exercise-morph-expanded" aria-hidden={!open}>
+        {expanded}
+      </div>
+    </div>
+  )
+}
+
+function NativeCollapse({ id, open, className = '', children }: {
+  id?: string
+  open: boolean
+  className?: string
+  children: ReactNode
+}) {
+  const innerRef = useRef<HTMLDivElement>(null)
+  const mounted = useRef(false)
+  const [height, setHeight] = useState<number | undefined>(open ? undefined : 0)
+
+  const measureOpenHeight = () => {
+    const node = innerRef.current
+    if (!node) return
+    const nextHeight = Math.ceil(node.getBoundingClientRect().height)
+    window.requestAnimationFrame(() => setHeight(nextHeight))
+  }
+
+  useLayoutEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true
+      if (open) {
+        setHeight(0)
+        measureOpenHeight()
+      } else {
+        setHeight(0)
+      }
+      return
+    }
+    if (open) measureOpenHeight()
+    else setHeight(0)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !innerRef.current || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => measureOpenHeight())
+    observer.observe(innerRef.current)
+    return () => observer.disconnect()
+  }, [open])
+
+  return (
+    <div
+      id={id}
+      className={`native-collapse ${open ? 'is-open' : 'is-closed'} ${className}`}
+      style={{ height: height ?? 'auto' }}
+    >
+      <div ref={innerRef} className="native-collapse-inner">
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession; setSession: (s: WorkoutSession) => void; onExit: () => void }) {
   const [replacementFor, setReplacementFor] = useState<number | null>(null)
   const [openExercise, setOpenExercise] = useState<string | null>(() => session.plan.exercises.find((exercise) => exercise.startedAt && !exercise.finishedAt)?.instanceId ?? null)
@@ -410,7 +513,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       mutateExercise(index, (draft) => ({ ...draft, startedAt: new Date().toISOString() }))
     }
     setOpenExercise(exercise.instanceId)
-    glideAfterMorph(`exercise-${exercise.instanceId}`, 180, 760)
+    glideAfterMorph(`exercise-${exercise.instanceId}`, 260, 900)
   }
 
   const closeExercise = (index: number, mode: 'completed' | 'early' | 'skipped', reason = '') => {
@@ -437,7 +540,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
     // Let the expanded card morph into its compact state first. Scrolling to
     // a moving target was the remaining source of the visible "kick".
-    glideAfterMorph(`rest-exercise-${index}`, 940, 780)
+    glideAfterMorph(`rest-exercise-${index}`, 1120, 900)
   }
 
   const requestFinishExercise = (index: number) => {
@@ -496,7 +599,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => glideToElement(targetId, 800))
       })
-    }, 940)
+    }, 1120)
   }
 
   const addRestTime = (seconds: number) => {
@@ -709,20 +812,22 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                     {session.activeRest?.kind === 'between_sets' &&
                       session.activeRest.exerciseIndex === exerciseIndex &&
                       session.activeRest.nextSetNo === set.setNo && (
-                        <div id={`rest-set-${exerciseIndex}-${set.setNo}`} className={`rest-transition-shell ${restLeaving ? 'is-leaving' : ''}`}>
-                          <div className="rest-transition-inner">
-                            <RestBlock
-                              kind="between_sets"
-                              durationSec={session.activeRest.durationSec}
-                              restLeft={restLeft}
-                              exerciseName={session.activeRest.exerciseName}
-                              nextSetNo={session.activeRest.nextSetNo}
-                              nextExerciseName={session.activeRest.nextExerciseName}
-                              onAdd={() => addRestTime(30)}
-                              onAdvance={advanceFromRest}
-                            />
-                          </div>
-                        </div>
+                        <NativeCollapse
+                          id={`rest-set-${exerciseIndex}-${set.setNo}`}
+                          open={!restLeaving}
+                          className="rest-native-collapse"
+                        >
+                          <RestBlock
+                            kind="between_sets"
+                            durationSec={session.activeRest.durationSec}
+                            restLeft={restLeft}
+                            exerciseName={session.activeRest.exerciseName}
+                            nextSetNo={session.activeRest.nextSetNo}
+                            nextExerciseName={session.activeRest.nextExerciseName}
+                            onAdd={() => addRestTime(30)}
+                            onAdvance={advanceFromRest}
+                          />
+                        </NativeCollapse>
                       )}
                     <SetRow set={set} rehab={exercise.rehab} weightUnit={exercise.weightUnit ?? 'kg'} onChange={(patch) => updateSet(exerciseIndex, setIndex, patch)} onCredit={() => creditSet(exerciseIndex, setIndex)} />
                   </Fragment>
@@ -744,14 +849,12 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
           )
 
           const exerciseNode = (
-            <div id={`exercise-${exercise.instanceId}`} className={`exercise-morph ${isOpen ? 'is-open' : 'is-closed'}`}>
-              <div className="exercise-preview-slot" aria-hidden={isOpen}>
-                <div className="exercise-slot-inner">{previewNode}</div>
-              </div>
-              <div className="exercise-expanded-slot" aria-hidden={!isOpen}>
-                <div className="exercise-slot-inner">{expandedNode}</div>
-              </div>
-            </div>
+            <MeasuredMorph
+              id={`exercise-${exercise.instanceId}`}
+              open={isOpen}
+              preview={previewNode}
+              expanded={expandedNode}
+            />
           )
 
           const showExerciseRest = session.activeRest?.kind === 'between_exercises' && session.activeRest.exerciseIndex === exerciseIndex
@@ -759,20 +862,22 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
             <Fragment key={exercise.instanceId}>
               {exerciseNode}
               {showExerciseRest && (
-                <div id={`rest-exercise-${exerciseIndex}`} className={`exercise-rest-slot rest-transition-shell ${restLeaving ? 'is-leaving' : ''}`}>
-                  <div className="rest-transition-inner">
-                    <RestBlock
-                      kind="between_exercises"
-                      durationSec={session.activeRest!.durationSec}
-                      restLeft={restLeft}
-                      exerciseName={session.activeRest!.exerciseName}
-                      nextSetNo={session.activeRest!.nextSetNo}
-                      nextExerciseName={session.activeRest!.nextExerciseName}
-                      onAdd={() => addRestTime(30)}
-                      onAdvance={advanceFromRest}
-                    />
-                  </div>
-                </div>
+                <NativeCollapse
+                  id={`rest-exercise-${exerciseIndex}`}
+                  open={!restLeaving}
+                  className="exercise-rest-slot rest-native-collapse"
+                >
+                  <RestBlock
+                    kind="between_exercises"
+                    durationSec={session.activeRest!.durationSec}
+                    restLeft={restLeft}
+                    exerciseName={session.activeRest!.exerciseName}
+                    nextSetNo={session.activeRest!.nextSetNo}
+                    nextExerciseName={session.activeRest!.nextExerciseName}
+                    onAdd={() => addRestTime(30)}
+                    onAdvance={advanceFromRest}
+                  />
+                </NativeCollapse>
               )}
             </Fragment>
           )
