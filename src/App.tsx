@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
-import { DEMO_PLAN } from './demo'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportSession, importWorkout } from './excel'
 import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadHistory, saveActiveSession } from './storage'
@@ -1096,7 +1095,6 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary }: { acti
       <section className="action-stack">
         <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
         <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
-        <button className="secondary huge" onClick={() => onLoadPlan(DEMO_PLAN)}><span>▶</span><div><b>Открыть FULL BODY K</b><small>тестовый план по твоим скринам</small></div></button>
         <button className="secondary huge" onClick={onOpenLibrary}><span>≡</span><div><b>База упражнений</b><small>ретро-данные, рабочие веса и rehab-контекст</small></div></button>
         <button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
