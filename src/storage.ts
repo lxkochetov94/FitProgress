@@ -8,13 +8,204 @@ const TEST_HISTORY_RESET_KEY = 'fitprogress.test-history-reset.2026-10-02.v2'
 const ANALYTICS_HISTORY_KEY = 'fitprogress.analytics-history.v1'
 const EXERCISE_PROFILES_KEY = 'fitprogress.exercise-profiles.v1'
 
+const DB_NAME = 'fitprogress-db-v1'
+const DB_VERSION = 1
+const SESSION_STORE = 'sessions'
+const STATE_STORE = 'state'
+const ACTIVE_STATE_KEY = 'active-session'
+const LOCAL_HISTORY_MIRROR_LIMIT = 20
+
+let dbPromise: Promise<IDBDatabase | null> | null = null
+let indexedDbReady = false
+let memoryHistory: WorkoutSession[] | null = null
+let memoryActive: WorkoutSession | null | undefined
+let memoryProfiles: ExerciseProfiles | null = null
+
+const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+
+const safeJson = <T,>(raw: string | null, fallback: T): T => {
+  if (!raw) return fallback
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+const sessionTime = (session: WorkoutSession) => {
+  const updated = new Date(session.updatedAt || session.finishedAt || session.startedAt).getTime()
+  return Number.isFinite(updated) ? updated : 0
+}
+
+const newestSession = (a: WorkoutSession | undefined, b: WorkoutSession | undefined) => {
+  if (!a) return b
+  if (!b) return a
+  return sessionTime(b) >= sessionTime(a) ? b : a
+}
+
+const sortHistory = (history: WorkoutSession[]) =>
+  [...history].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+
+function openDatabase(): Promise<IDBDatabase | null> {
+  if (dbPromise) return dbPromise
+  if (typeof indexedDB === 'undefined') {
+    dbPromise = Promise.resolve(null)
+    return dbPromise
+  }
+
+  dbPromise = new Promise((resolve) => {
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION)
+
+      request.onupgradeneeded = () => {
+        const db = request.result
+        if (!db.objectStoreNames.contains(SESSION_STORE)) {
+          db.createObjectStore(SESSION_STORE, { keyPath: 'sessionId' })
+        }
+        if (!db.objectStoreNames.contains(STATE_STORE)) {
+          db.createObjectStore(STATE_STORE, { keyPath: 'key' })
+        }
+      }
+
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(null)
+      request.onblocked = () => resolve(null)
+    } catch {
+      resolve(null)
+    }
+  })
+
+  return dbPromise
+}
+
+function requestResult<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
+  })
+}
+
+function transactionDone(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => reject(transaction.error ?? new Error('IndexedDB transaction failed'))
+    transaction.onabort = () => reject(transaction.error ?? new Error('IndexedDB transaction aborted'))
+  })
+}
+
+async function readIndexedSessions(db: IDBDatabase): Promise<WorkoutSession[]> {
+  const tx = db.transaction(SESSION_STORE, 'readonly')
+  const rows = await requestResult(tx.objectStore(SESSION_STORE).getAll())
+  await transactionDone(tx)
+  return (rows as WorkoutSession[]).filter((session) => Boolean(session?.sessionId))
+}
+
+async function writeIndexedSessions(db: IDBDatabase, sessions: WorkoutSession[]) {
+  if (!sessions.length) return
+  const tx = db.transaction(SESSION_STORE, 'readwrite')
+  const store = tx.objectStore(SESSION_STORE)
+  for (const session of sessions) store.put(clone(session))
+  await transactionDone(tx)
+}
+
+async function putIndexedSession(session: WorkoutSession) {
+  const db = await openDatabase()
+  if (!db) return false
+  try {
+    const tx = db.transaction(SESSION_STORE, 'readwrite')
+    tx.objectStore(SESSION_STORE).put(clone(session))
+    await transactionDone(tx)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function readIndexedActive(db: IDBDatabase): Promise<WorkoutSession | null> {
+  const tx = db.transaction(STATE_STORE, 'readonly')
+  const row = await requestResult(tx.objectStore(STATE_STORE).get(ACTIVE_STATE_KEY)) as { key: string; value?: WorkoutSession } | undefined
+  await transactionDone(tx)
+  return row?.value ? clone(row.value) : null
+}
+
+async function writeIndexedActive(session: WorkoutSession | null) {
+  const db = await openDatabase()
+  if (!db) return false
+
+  try {
+    const tx = db.transaction(STATE_STORE, 'readwrite')
+    const store = tx.objectStore(STATE_STORE)
+    if (session) store.put({ key: ACTIVE_STATE_KEY, value: clone(session) })
+    else store.delete(ACTIVE_STATE_KEY)
+    await transactionDone(tx)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function readLocalHistory() {
+  try {
+    return safeJson<WorkoutSession[]>(localStorage.getItem(HISTORY_KEY), [])
+  } catch {
+    return []
+  }
+}
+
+function readLegacyAnalyticsHistory() {
+  try {
+    return safeJson<WorkoutSession[]>(localStorage.getItem(ANALYTICS_HISTORY_KEY), [])
+  } catch {
+    return []
+  }
+}
+
+function readLocalActive() {
+  try {
+    return safeJson<WorkoutSession | null>(localStorage.getItem(ACTIVE_KEY), null)
+  } catch {
+    return null
+  }
+}
+
+function writeLocalHistoryMirror(history: WorkoutSession[], fullFallback = false) {
+  try {
+    const rows = fullFallback ? history : history.slice(0, LOCAL_HISTORY_MIRROR_LIMIT)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(rows))
+    return true
+  } catch {
+    return false
+  }
+}
+
+function rebuildProfiles(history: WorkoutSession[]) {
+  let profiles: ExerciseProfiles = {}
+  const chronological = [...history]
+    .filter((session) => Boolean(session.finishedAt))
+    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+
+  for (const session of chronological) {
+    profiles = updateExerciseProfilesFromSession(profiles, session)
+  }
+  memoryProfiles = profiles
+
+  // Old versions stored profiles in localStorage. The complete profile history is
+  // now derived from IndexedDB sessions, so keeping another ever-growing copy
+  // would defeat the purpose of the migration.
+  try {
+    localStorage.removeItem(EXERCISE_PROFILES_KEY)
+  } catch {
+    // Ignore restricted storage contexts.
+  }
+}
+
 export function clearTestWorkoutHistoryOnce() {
   try {
     if (localStorage.getItem(TEST_HISTORY_RESET_KEY)) return
 
-    // One-time production reset immediately before the first real FitProgress workout.
-    // Remove all locally generated test sessions and their learned/analytics traces.
-    // The embedded retrospective (real workouts from the revision) lives in code and is untouched.
+    // Legacy one-time cleanup from before IndexedDB existed. Do not delete the
+    // IndexedDB database here: if localStorage was evicted independently, the
+    // database may contain the user's only durable copy.
     localStorage.removeItem(HISTORY_KEY)
     localStorage.removeItem(ACTIVE_KEY)
     localStorage.removeItem(EXERCISE_PROFILES_KEY)
@@ -25,26 +216,123 @@ export function clearTestWorkoutHistoryOnce() {
   }
 }
 
-export function loadActiveSession(): WorkoutSession | null {
-  try {
-    const raw = localStorage.getItem(ACTIVE_KEY)
-    return raw ? (JSON.parse(raw) as WorkoutSession) : null
-  } catch {
-    return null
+export async function initializeStorage() {
+  const localHistory = readLocalHistory()
+  const legacyAnalytics = readLegacyAnalyticsHistory()
+  const localActive = readLocalActive()
+
+  const db = await openDatabase()
+  if (!db) {
+    indexedDbReady = false
+    const merged = new Map<string, WorkoutSession>()
+    for (const session of [...legacyAnalytics, ...localHistory]) {
+      const previous = merged.get(session.sessionId)
+      merged.set(session.sessionId, clone(newestSession(previous, session) ?? session))
+    }
+    memoryHistory = sortHistory([...merged.values()].filter((session) => Boolean(session.finishedAt)))
+    memoryActive = localActive
+    rebuildProfiles(memoryHistory)
+    writeLocalHistoryMirror(memoryHistory, true)
+    return { backend: 'localStorage' as const, migratedSessions: 0 }
   }
+
+  indexedDbReady = true
+
+  let indexedSessions: WorkoutSession[] = []
+  let indexedActive: WorkoutSession | null = null
+  try {
+    ;[indexedSessions, indexedActive] = await Promise.all([
+      readIndexedSessions(db),
+      readIndexedActive(db)
+    ])
+  } catch {
+    indexedDbReady = false
+    memoryHistory = sortHistory([...localHistory, ...legacyAnalytics].filter((session) => Boolean(session.finishedAt)))
+    memoryActive = localActive
+    rebuildProfiles(memoryHistory)
+    writeLocalHistoryMirror(memoryHistory, true)
+    return { backend: 'localStorage' as const, migratedSessions: 0 }
+  }
+
+  const merged = new Map<string, WorkoutSession>()
+  for (const session of [...indexedSessions, ...legacyAnalytics, ...localHistory]) {
+    if (!session?.sessionId || !session.finishedAt) continue
+    const previous = merged.get(session.sessionId)
+    merged.set(session.sessionId, clone(newestSession(previous, session) ?? session))
+  }
+
+  const mergedHistory = sortHistory([...merged.values()])
+  const indexedIds = new Set(indexedSessions.map((session) => session.sessionId))
+  const sessionsToPersist = mergedHistory.filter((session) => {
+    const indexed = indexedSessions.find((item) => item.sessionId === session.sessionId)
+    return !indexedIds.has(session.sessionId) || sessionTime(session) > sessionTime(indexed!)
+  })
+
+  try {
+    await writeIndexedSessions(db, sessionsToPersist)
+  } catch {
+    indexedDbReady = false
+    memoryHistory = mergedHistory
+    memoryActive = newestSession(indexedActive ?? undefined, localActive ?? undefined) ?? null
+    rebuildProfiles(memoryHistory)
+    writeLocalHistoryMirror(memoryHistory, true)
+    return { backend: 'localStorage' as const, migratedSessions: 0 }
+  }
+
+  const active = newestSession(indexedActive ?? undefined, localActive ?? undefined) ?? null
+  if (active && active !== indexedActive) await writeIndexedActive(active)
+
+  memoryHistory = mergedHistory
+  memoryActive = active
+  rebuildProfiles(memoryHistory)
+
+  writeLocalHistoryMirror(memoryHistory)
+  try {
+    if (memoryActive) localStorage.setItem(ACTIVE_KEY, JSON.stringify(memoryActive))
+    else localStorage.removeItem(ACTIVE_KEY)
+    // This legacy archive has now been merged into IndexedDB.
+    localStorage.removeItem(ANALYTICS_HISTORY_KEY)
+  } catch {
+    // IndexedDB remains canonical even if the compatibility mirror is unavailable.
+  }
+
+  return {
+    backend: 'indexedDB' as const,
+    migratedSessions: sessionsToPersist.length
+  }
+}
+
+export function isIndexedDbStorage() {
+  return indexedDbReady
+}
+
+export function loadActiveSession(): WorkoutSession | null {
+  if (memoryActive !== undefined) return memoryActive ? clone(memoryActive) : null
+  return readLocalActive()
 }
 
 export function saveActiveSession(session: WorkoutSession | null) {
+  memoryActive = session ? clone(session) : null
+
+  let localOk = false
   try {
     if (!session) localStorage.removeItem(ACTIVE_KEY)
     else localStorage.setItem(ACTIVE_KEY, JSON.stringify(session))
-    return true
+    localOk = true
   } catch {
-    return false
+    localOk = false
   }
+
+  // Keep UI writes synchronous while persisting the same state to IndexedDB.
+  // The completed-workout archive path awaits IndexedDB explicitly.
+  void writeIndexedActive(session)
+  return indexedDbReady || localOk
 }
 
 export function loadExerciseProfiles(): ExerciseProfiles {
+  if (memoryProfiles) return clone(memoryProfiles)
+
+  // Before async bootstrap completes, allow the old cache to render safely.
   try {
     const raw = localStorage.getItem(EXERCISE_PROFILES_KEY)
     return raw ? (JSON.parse(raw) as ExerciseProfiles) : {}
@@ -53,35 +341,21 @@ export function loadExerciseProfiles(): ExerciseProfiles {
   }
 }
 
-export function archiveSession(session: WorkoutSession) {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY)
-    const history = raw ? (JSON.parse(raw) as WorkoutSession[]) : []
-    // HISTORY_KEY is the canonical completed-session registry.
-    const nextHistory = [session, ...history.filter((x) => x.sessionId !== session.sessionId)]
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory))
-  } catch {
-    return false
-  }
+export async function archiveSession(session: WorkoutSession) {
+  const current = memoryHistory ?? readLocalHistory()
+  const nextHistory = sortHistory([clone(session), ...current.filter((x) => x.sessionId !== session.sessionId)])
+  memoryHistory = nextHistory
 
-  // Exercise profiles are a derived convenience cache. A profile write failure
-  // must never invalidate a successfully archived workout.
-  try {
-    const profiles = loadExerciseProfiles()
-    const nextProfiles = updateExerciseProfilesFromSession(profiles, session)
-    localStorage.setItem(EXERCISE_PROFILES_KEY, JSON.stringify(nextProfiles))
-  } catch {
-    // The canonical workout is already safe in HISTORY_KEY.
-  }
+  const indexedOk = indexedDbReady ? await putIndexedSession(session) : false
+  const localOk = writeLocalHistoryMirror(nextHistory, !indexedDbReady)
 
-  return true
+  const profiles = memoryProfiles ?? {}
+  memoryProfiles = updateExerciseProfilesFromSession(profiles, session)
+
+  return indexedOk || localOk
 }
 
 export function loadHistory(): WorkoutSession[] {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY)
-    return raw ? (JSON.parse(raw) as WorkoutSession[]) : []
-  } catch {
-    return []
-  }
+  if (memoryHistory) return clone(memoryHistory)
+  return readLocalHistory()
 }
