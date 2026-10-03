@@ -20,6 +20,7 @@ let indexedDbReady = false
 let memoryHistory: WorkoutSession[] | null = null
 let memoryActive: WorkoutSession | null | undefined
 let memoryProfiles: ExerciseProfiles | null = null
+let activeWriteChain: Promise<boolean> = Promise.resolve(true)
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
@@ -121,11 +122,17 @@ async function putIndexedSession(session: WorkoutSession) {
   }
 }
 
-async function readIndexedActive(db: IDBDatabase): Promise<WorkoutSession | null> {
+interface ActiveStateRecord {
+  key: string
+  value: WorkoutSession | null
+  updatedAt: string
+}
+
+async function readIndexedActive(db: IDBDatabase): Promise<ActiveStateRecord | null> {
   const tx = db.transaction(STATE_STORE, 'readonly')
-  const row = await requestResult(tx.objectStore(STATE_STORE).get(ACTIVE_STATE_KEY)) as { key: string; value?: WorkoutSession } | undefined
+  const row = await requestResult(tx.objectStore(STATE_STORE).get(ACTIVE_STATE_KEY)) as ActiveStateRecord | undefined
   await transactionDone(tx)
-  return row?.value ? clone(row.value) : null
+  return row ? clone(row) : null
 }
 
 async function writeIndexedActive(session: WorkoutSession | null) {
@@ -134,14 +141,23 @@ async function writeIndexedActive(session: WorkoutSession | null) {
 
   try {
     const tx = db.transaction(STATE_STORE, 'readwrite')
-    const store = tx.objectStore(STATE_STORE)
-    if (session) store.put({ key: ACTIVE_STATE_KEY, value: clone(session) })
-    else store.delete(ACTIVE_STATE_KEY)
+    tx.objectStore(STATE_STORE).put({
+      key: ACTIVE_STATE_KEY,
+      value: session ? clone(session) : null,
+      updatedAt: new Date().toISOString()
+    } satisfies ActiveStateRecord)
     await transactionDone(tx)
     return true
   } catch {
     return false
   }
+}
+
+function queueIndexedActiveWrite(session: WorkoutSession | null) {
+  activeWriteChain = activeWriteChain
+    .catch(() => false)
+    .then(() => writeIndexedActive(session))
+  return activeWriteChain
 }
 
 function readLocalHistory() {
@@ -239,9 +255,9 @@ export async function initializeStorage() {
   indexedDbReady = true
 
   let indexedSessions: WorkoutSession[] = []
-  let indexedActive: WorkoutSession | null = null
+  let indexedActiveRecord: ActiveStateRecord | null = null
   try {
-    ;[indexedSessions, indexedActive] = await Promise.all([
+    ;[indexedSessions, indexedActiveRecord] = await Promise.all([
       readIndexedSessions(db),
       readIndexedActive(db)
     ])
@@ -273,14 +289,25 @@ export async function initializeStorage() {
   } catch {
     indexedDbReady = false
     memoryHistory = mergedHistory
+    const indexedActive = indexedActiveRecord?.value ?? null
     memoryActive = newestSession(indexedActive ?? undefined, localActive ?? undefined) ?? null
     rebuildProfiles(memoryHistory)
     writeLocalHistoryMirror(memoryHistory, true)
     return { backend: 'localStorage' as const, migratedSessions: 0 }
   }
 
-  const active = newestSession(indexedActive ?? undefined, localActive ?? undefined) ?? null
-  if (active && active !== indexedActive) await writeIndexedActive(active)
+  const indexedActive = indexedActiveRecord?.value ?? null
+  const indexedActiveStamp = indexedActiveRecord ? new Date(indexedActiveRecord.updatedAt).getTime() : -Infinity
+  const localActiveStamp = localActive ? sessionTime(localActive) : -Infinity
+
+  let active: WorkoutSession | null
+  if (indexedActiveRecord && indexedActiveStamp >= localActiveStamp) {
+    // A null value is an intentional tombstone (for example after "Удалить").
+    active = indexedActive ? clone(indexedActive) : null
+  } else {
+    active = localActive ? clone(localActive) : null
+    if (active) await writeIndexedActive(active)
+  }
 
   memoryHistory = mergedHistory
   memoryActive = active
@@ -323,10 +350,16 @@ export function saveActiveSession(session: WorkoutSession | null) {
     localOk = false
   }
 
-  // Keep UI writes synchronous while persisting the same state to IndexedDB.
-  // The completed-workout archive path awaits IndexedDB explicitly.
-  void writeIndexedActive(session)
+  // Keep UI writes synchronous while serializing the same state to IndexedDB.
+  // Serial writes prevent an older keystroke from landing after a newer one.
+  void queueIndexedActiveWrite(session)
   return indexedDbReady || localOk
+}
+
+export async function saveActiveSessionDurable(session: WorkoutSession | null) {
+  const localOk = saveActiveSession(session)
+  const indexedOk = indexedDbReady ? await activeWriteChain : false
+  return indexedOk || localOk
 }
 
 export function loadExerciseProfiles(): ExerciseProfiles {
