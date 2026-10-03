@@ -763,7 +763,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     next.updatedAt = new Date().toISOString()
     delete next.activeRest
     setSession(next)
-    archiveSession(next)
+    const archived = archiveSession(next)
+    if (!archived) {
+      window.alert('FitProgress не смог записать завершённую тренировку в локальный реестр. Не закрывай приложение: выгрузи эту тренировку в Excel как резервную копию.')
+    }
     setWorkoutEndOpen(false)
     setFinishedSummary(true)
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
