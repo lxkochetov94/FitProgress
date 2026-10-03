@@ -353,7 +353,7 @@ function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
             ))}
           </div>
         ) : (
-          <p className="pattern-all-fresh">Все рабочие паттерны текущей ротации получали стимул в пределах 72 часов.</p>
+          <p className="pattern-all-fresh">Все рабочие паттерны текущей ротации получали стимул в пределах 3 календарных дней.</p>
         )}
       </div>
 
