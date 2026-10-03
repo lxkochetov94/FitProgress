@@ -3,8 +3,8 @@ import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
-import { archiveSession, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
-import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
+import { archiveSession, initializeStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
+import { exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
@@ -1225,7 +1225,6 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
         <span>Данные хранятся на этом устройстве</span>
       </section>
 
-      <footer className="home-footer-v2">FitProgress · локальный тренировочный дневник</footer>
     </main>
   )
 }
