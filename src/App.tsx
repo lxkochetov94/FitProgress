@@ -1084,13 +1084,14 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
             </div>
             <div className="library-values">
               {exercise.lastKnown && <div><span>Последняя база</span><b>{exercise.lastKnown}</b></div>}
-              {exercise.bestKnown && <div><span>Лучший результат</span><b>{exercise.bestKnown}</b></div>}
+              {getDefinition(exercise.id)?.bestKnown && <div><span>Исторический ориентир</span><b>{getDefinition(exercise.id)!.bestKnown}</b></div>}
+              {profiles[exercise.id]?.bestKnown && !exercise.rehab && <div><span>Лучший в FitProgress</span><b>{profiles[exercise.id].bestKnown}</b></div>}
               {profiles[exercise.id]?.lastRir && <div><span>Последний RIR</span><b>{profiles[exercise.id].lastRir}</b></div>}
               {exercise.lastPain && <div><span>Боль</span><b>{exercise.lastPain}/10</b></div>}
             </div>
             {profiles[exercise.id] && <div className="learned-profile">
               <div><span>Последняя тренировка</span><b>{fmtDate(profiles[exercise.id].lastPerformedAt)}</b></div>
-              <div><span>Тренировок</span><b>{profiles[exercise.id].sessions}</b></div>
+              <div><span>Сессий в FitProgress</span><b>{profiles[exercise.id].sessions}</b></div>
               {profiles[exercise.id].lastComment && <p>«{profiles[exercise.id].lastComment}»</p>}
             </div>}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}

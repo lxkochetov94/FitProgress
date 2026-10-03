@@ -91,17 +91,39 @@ function uniqueValues(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
-function bestSetCandidate(sets: WorkoutSet[], unit: WeightUnit) {
-  let best: { score: number; label: string } | undefined
-  for (const set of sets) {
-    const weight = numeric(set.actualWeight)
-    const reps = numeric(set.actualReps)
-    if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps <= 0) continue
-    const score = weight * (1 + reps / 30)
-    const label = setLabel(set, unit)
-    if (!best || score > best.score) best = { score, label }
+const exactNumeric = (value?: string) => {
+  const raw = String(value ?? '').trim().replace(',', '.')
+  if (!raw || /\d\s*[–—-]\s*\d/.test(raw) || /→/.test(raw)) return NaN
+  const match = raw.match(/\d+(?:\.\d+)?/)
+  return match ? Number(match[0]) : NaN
+}
+
+function bestHistorySet(entries: ExerciseHistoryEntry[], unit: WeightUnit) {
+  let bestWeighted: { weight: number; reps: number; label: string } | undefined
+  let bestBodyweight: { reps: number; label: string } | undefined
+
+  for (const entry of entries) {
+    for (const set of entry.sets) {
+      const reps = exactNumeric(set.reps)
+      if (!Number.isFinite(reps) || reps <= 0) continue
+
+      const rawWeight = set.weight.trim()
+      if (/BW|собственн/i.test(rawWeight)) {
+        const label = rawWeight ? `${rawWeight} ×${set.reps}` : `BW ×${set.reps}`
+        if (!bestBodyweight || reps > bestBodyweight.reps) bestBodyweight = { reps, label }
+        continue
+      }
+
+      const weight = exactNumeric(rawWeight)
+      if (!Number.isFinite(weight) || weight <= 0) continue
+      const label = `${rawWeight} ${unitLabel(unit)} ×${set.reps}`
+      if (!bestWeighted || weight > bestWeighted.weight || (weight === bestWeighted.weight && reps > bestWeighted.reps)) {
+        bestWeighted = { weight, reps, label }
+      }
+    }
   }
-  return best
+
+  return bestWeighted?.label ?? bestBodyweight?.label
 }
 
 export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, session: WorkoutSession): ExerciseProfiles {
@@ -141,14 +163,8 @@ export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, se
     const painValues = uniqueValues(sets.map((set) => set.pain))
     const comments = sets.map((set) => set.comment.trim()).filter(Boolean)
     const latestSummary = summarizeSets(sets, unit)
-    const bestCandidate = exercise.rehab ? undefined : bestSetCandidate(sets, unit)
-
-    let bestKnown = previous?.bestKnown
-    let bestScore = previous?.bestScore
-    if (bestCandidate && (!Number.isFinite(bestScore) || bestCandidate.score > Number(bestScore))) {
-      bestKnown = bestCandidate.label
-      bestScore = bestCandidate.score
-    }
+    const fullLocalHistory = [entry, ...historyWithoutSameSession]
+    const bestKnown = exercise.rehab ? previous?.bestKnown : (bestHistorySet(fullLocalHistory, unit) ?? previous?.bestKnown)
 
     next[exercise.exerciseId] = {
       exerciseId: exercise.exerciseId,
@@ -166,7 +182,6 @@ export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, se
       lastPerformedAt: session.startedAt,
       lastKnown: latestSummary || previous?.lastKnown,
       bestKnown,
-      bestScore,
       lastRir: rirValues.length ? rirValues.join(' / ') : previous?.lastRir,
       lastPain: painValues.length ? painValues.join(' / ') : previous?.lastPain,
       lastComment: comments.length ? comments[comments.length - 1] : previous?.lastComment,
@@ -187,7 +202,7 @@ export function mergeDefinitionWithProfile(definition: ExerciseDefinition, profi
     weightUnit: profile.weightUnit ?? definition.weightUnit,
     perSide: profile.perSide ?? definition.perSide,
     lastKnown: profile.lastKnown ?? definition.lastKnown,
-    bestKnown: profile.rehab ? definition.bestKnown : (profile.bestKnown ?? definition.bestKnown),
+    bestKnown: definition.bestKnown ?? (profile.rehab ? undefined : profile.bestKnown),
     lastPain: profile.lastPain ?? definition.lastPain,
     historyNote: profile.lastComment
       ? `Последний комментарий: ${profile.lastComment}`

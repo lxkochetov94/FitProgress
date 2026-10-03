@@ -52,6 +52,7 @@ export interface ExercisePoint {
   workoutTitle: string
   matchedExerciseId: string
   matchedExerciseName: string
+  comparisonKey: string
   score: number
   workWeight: number | null
   peakWeight: number | null
@@ -80,6 +81,14 @@ const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
 }
 
 const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] ?? [exerciseId]
+const comparisonKeyFor = (requestedExerciseId: string, matchedExerciseId: string) => {
+  // These histories are useful context but the mechanics/lever changed enough
+  // that a percentage trend must not compare them as one continuous variant.
+  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly') {
+    return matchedExerciseId
+  }
+  return requestedExerciseId
+}
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const numeric = (value?: string) => {
@@ -315,6 +324,7 @@ export function pointForExercise(workout: AnalyticsWorkout, exerciseId: string):
     workoutTitle: workout.title,
     matchedExerciseId: exercise.exerciseId,
     matchedExerciseName: exercise.name,
+    comparisonKey: comparisonKeyFor(exerciseId, exercise.exerciseId),
     score,
     workWeight,
     peakWeight,
