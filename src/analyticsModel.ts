@@ -26,6 +26,8 @@ export interface AnalyticsExercise {
   weightUnit?: WeightUnit
   perSide?: PerSide
   equipment?: string
+  muscleGroup?: string
+  movementPattern?: string
   sets: AnalyticsSet[]
 }
 
@@ -171,6 +173,8 @@ function localToAnalytics(session: WorkoutSession, order: number): AnalyticsWork
       weightUnit: exercise.weightUnit,
       perSide: exercise.perSide,
       equipment: exercise.equipment,
+      muscleGroup: exercise.muscleGroup,
+      movementPattern: exercise.movementPattern,
       sets: exercise.sets.filter((set) => set.completed).map((set) => ({
         label: localSetLabel(set),
         weight: set.actualWeight,
@@ -203,6 +207,8 @@ function retroToAnalytics(tuple: RetroWorkoutTuple): AnalyticsWorkout {
         weightUnit: definition?.weightUnit,
         perSide: definition?.perSide,
         equipment: definition?.equipment,
+        muscleGroup: definition?.muscleGroup,
+        movementPattern: definition?.movementPattern,
         sets: sets.map(([label, weight, reps, intensity]) => ({ label, weight, reps, intensity }))
       }
     })
