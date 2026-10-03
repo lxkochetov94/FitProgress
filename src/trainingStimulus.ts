@@ -154,10 +154,10 @@ const laterDate = (a: string | null, b: string) => !a || b > a ? b : a
 
 function statusFor(daysSinceAny: number | null): Pick<MuscleStimulusSummary, 'status' | 'explanation'> {
   if (daysSinceAny == null) return { status: 'none', explanation: 'Нет точной датированной рабочей нагрузки.' }
-  if (daysSinceAny <= 1) return { status: 'fresh', explanation: 'Рабочий стимул был в последние 48 часов.' }
-  if (daysSinceAny <= 3) return { status: 'within72', explanation: 'Последний прямой или косвенный стимул укладывается в 72 часа.' }
-  if (daysSinceAny <= 4) return { status: 'due', explanation: 'По правилу 72 часов мышцу уже желательно вернуть в работу.' }
-  return { status: 'high', explanation: 'Более 4 дней без значимой рабочей нагрузки — высокий приоритет следующей тренировки.' }
+  if (daysSinceAny <= 1) return { status: 'fresh', explanation: 'Последний рабочий стимул был сегодня или вчера.' }
+  if (daysSinceAny <= 3) return { status: 'within72', explanation: 'Последний прямой или косвенный стимул был в пределах 3 календарных дней.' }
+  if (daysSinceAny <= 4) return { status: 'due', explanation: 'Прошло 4 календарных дня — мышцу уже желательно вернуть в работу.' }
+  return { status: 'high', explanation: 'Более 4 календарных дней без значимой рабочей нагрузки — высокий приоритет следующей тренировки.' }
 }
 
 export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate = localDateKey()): StimulusDashboard {
