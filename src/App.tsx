@@ -1173,10 +1173,6 @@ export default function App() {
     saveActiveSession(next)
   }
 
-  useEffect(() => {
-    if (storageReady && session) saveActiveSession(session)
-  }, [storageReady, session])
-
   const loadPlan = (plan: WorkoutPlan) => {
     setPendingPlan(clone(plan))
     setInWorkout(false)
