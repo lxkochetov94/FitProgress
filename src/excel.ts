@@ -159,6 +159,7 @@ function setTypeLabel(type: WorkoutSet['setType']) {
 export function exportSession(session: WorkoutSession) {
   const workoutRows = [{
     session_id: session.sessionId,
+    date: sessionDateKey(session.startedAt, session.startedLocalDate),
     workout_id: session.plan.workoutId,
     title: session.plan.title,
     priority: session.plan.priority,
