@@ -1101,10 +1101,30 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   )
 }
 
+type HomeGlyphName = 'upload' | 'analytics' | 'database' | 'registry' | 'excel' | 'dumbbell' | 'phone' | 'chevron'
+
+function HomeGlyph({ name }: { name: HomeGlyphName }) {
+  const common = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+
+  if (name === 'upload') return <svg {...common}><path d="M12 16V4" /><path d="m7.5 8.5 4.5-4.5 4.5 4.5" /><path d="M5 20h14" /></svg>
+  if (name === 'analytics') return <svg {...common}><path d="M5 18v-4" /><path d="M10 18V9" /><path d="M15 18V5" /><path d="M20 18V2" /></svg>
+  if (name === 'database') return <svg {...common}><ellipse cx="12" cy="5" rx="7" ry="3" /><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5" /><path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></svg>
+  if (name === 'registry') return <svg {...common}><rect x="4" y="5" width="16" height="15" rx="2.5" /><path d="M8 3v4M16 3v4M4 9h16" /><path d="M8 13h3M13 13h3M8 17h3M13 17h3" /></svg>
+  if (name === 'excel') return <svg {...common}><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v5h5" /><path d="m9 12 5 5M14 12l-5 5" /></svg>
+  if (name === 'dumbbell') return <svg {...common}><path d="M7 9v6M17 9v6M4 10v4M20 10v4M7 12h10" /><path d="M2.5 9v6M21.5 9v6" /></svg>
+  if (name === 'phone') return <svg {...common}><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M10 5h4M11 18.5h2" /></svg>
+  return <svg {...common}><path d="m9 5 7 7-7 7" /></svg>
+}
+
 function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAnalytics }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void; onOpenAnalytics: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
-  const history = loadHistory().slice(0, 3)
+  const history = loadHistory()
+  const latest = history[0] ?? null
+  const latestVolume = latest ? sessionWorkingVolumeKg(latest) : 0
+  const latestDuration = latest?.finishedAt
+    ? Math.max(0, Math.round((new Date(latest.finishedAt).getTime() - new Date(latest.startedAt).getTime()) / 60000))
+    : null
 
   const chooseFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -1121,21 +1141,91 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
   }
 
   return (
-    <main className="app-shell home-page">
-      <header className="brand"><div className="brand-mark"><span /><i /><span /></div><div><b>FitProgress</b><small>офлайн-дневник тренировок</small></div></header>
-      {active && <section className="resume-card"><span className="pill">Незавершённая тренировка</span><h1>{active.plan.title}</h1><p>{fmtDate(active.startedAt)} · начало {fmtTime(active.startedAt)}</p><div className="resume-actions"><button className="primary" onClick={onResume}>Продолжить</button><button className="ghost" onClick={onDiscard}>Удалить</button></div></section>}
-      <section className="home-hero"><span className="pill">MVP · работает офлайн</span><h1>Программа из Excel → удобная тренировка → Excel с фактом.</h1><p>Вес, повторы, RIR, боль, комментарии и замены упражнений сохраняются на телефоне после каждого изменения.</p></section>
-      <section className="action-stack">
-        <button className="primary huge" onClick={() => fileRef.current?.click()}><span>↑</span><div><b>Импортировать тренировку</b><small>.xlsx по шаблону FitProgress</small></div></button>
-        <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
-        <button className="secondary huge" onClick={onOpenAnalytics}><span>↗</span><div><b>Аналитика прогресса</b><small>общий объём, рабочие веса и повторы</small></div></button>
-        <button className="secondary huge" onClick={onOpenLibrary}><span>≡</span><div><b>База упражнений</b><small>ретро-данные, рабочие веса и rehab-контекст</small></div></button>
-        <button className="secondary huge" onClick={exportFullRegistry}><span>↓</span><div><b>Выгрузить полный реестр</b><small>вся ретроспектива + все завершённые тренировки FitProgress</small></div></button><button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
+    <main className="app-shell home-page home-page-v2">
+      <header className="home-brand-v2">
+        <div className="brand-mark home-brand-mark"><span /><i /><span /></div>
+        <div className="home-brand-copy"><b>FitProgress</b><small>тренировочный дневник</small></div>
+      </header>
+
+      {active && (
+        <section className="home-resume-v2">
+          <div>
+            <span>Незавершённая тренировка</span>
+            <h2>{active.plan.title}</h2>
+            <p>{fmtDate(active.startedAt)} · начало {fmtTime(active.startedAt)}</p>
+          </div>
+          <div className="home-resume-actions">
+            <button className="home-resume-primary" onClick={onResume}>Продолжить</button>
+            <button className="home-resume-delete" onClick={onDiscard}>Удалить</button>
+          </div>
+        </section>
+      )}
+
+      <button className="home-import-card" onClick={() => fileRef.current?.click()}>
+        <span className="home-import-icon"><HomeGlyph name="upload" /></span>
+        <span className="home-import-copy">
+          <b>Импортировать тренировку</b>
+          <small>Загрузить .xlsx по шаблону FitProgress</small>
+        </span>
+        <span className="home-import-chevron"><HomeGlyph name="chevron" /></span>
+      </button>
+      <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
+
+      {error && <div className="error-box home-error-v2">{error}</div>}
+
+      <section className="home-section-v2">
+        <h2>Быстрый доступ</h2>
+        <div className="home-quick-grid">
+          <button className="home-quick-card" onClick={onOpenAnalytics}>
+            <span className="home-quick-icon"><HomeGlyph name="analytics" /></span>
+            <span className="home-quick-copy"><b>Аналитика прогресса</b><small>Объём, веса и повторы</small></span>
+            <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
+          </button>
+          <button className="home-quick-card" onClick={onOpenLibrary}>
+            <span className="home-quick-icon"><HomeGlyph name="database" /></span>
+            <span className="home-quick-copy"><b>База упражнений</b><small>Упражнения и рабочие веса</small></span>
+            <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
+          </button>
+          <button className="home-quick-card" onClick={exportFullRegistry}>
+            <span className="home-quick-icon"><HomeGlyph name="registry" /></span>
+            <span className="home-quick-copy"><b>Полный реестр</b><small>Все завершённые тренировки</small></span>
+            <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
+          </button>
+          <button className="home-quick-card" onClick={downloadTemplate}>
+            <span className="home-quick-icon"><HomeGlyph name="excel" /></span>
+            <span className="home-quick-copy"><b>Excel-шаблон</b><small>Скачать файл для импорта</small></span>
+            <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
+          </button>
+        </div>
       </section>
-      {error && <div className="error-box">{error}</div>}
-      <section className="offline-card"><b>Без интернета · {isIndexedDbStorage() ? 'IndexedDB' : 'localStorage fallback'}</b><p>{isIndexedDbStorage() ? 'Основная база тренировок — встроенная IndexedDB; localStorage используется только как ограниченное совместимое зеркало.' : 'IndexedDB недоступна в этом режиме браузера, поэтому FitProgress временно использует localStorage как резервное хранилище.'} Сервер, аккаунт и VPN не нужны.</p></section>
-      {history.length > 0 && <section className="history"><span className="eyebrow">ПОСЛЕДНИЕ ТРЕНИРОВКИ</span>{history.map((x) => <div className="history-row" key={x.sessionId}><div><b>{x.plan.title}</b><small>{fmtDate(x.startedAt)} · {x.finishedAt ? 'завершена' : 'не завершена'}</small></div><button onClick={() => exportSession(x)}>Excel</button></div>)}</section>}
-      <footer>FitProgress v0.4 · данные тренировки не отправляются на сервер<br /><span className="asset-credit">{EXERCISE_IMAGE_CREDIT}</span></footer>
+
+      {latest && (
+        <section className="home-section-v2 home-latest-section">
+          <h2>Последняя тренировка</h2>
+          <article className="home-latest-card">
+            <div className="home-latest-head">
+              <span className="home-latest-icon"><HomeGlyph name="dumbbell" /></span>
+              <div className="home-latest-title">
+                <b>{latest.plan.title}</b>
+                <small>{fmtDate(latest.startedAt)} · завершена</small>
+              </div>
+              <button className="home-excel-button" onClick={() => exportSession(latest)}><HomeGlyph name="excel" /><span>Excel</span></button>
+            </div>
+            <div className="home-latest-stats">
+              <div><strong>{latest.plan.exercises.length}</strong><span>упражнений</span></div>
+              <div><strong>{latestVolume > 0 ? Math.round(latestVolume).toLocaleString('ru-RU') : '—'}</strong><span>тоннаж, кг</span></div>
+              <div><strong>{latestDuration ?? '—'}</strong><span>минут</span></div>
+            </div>
+          </article>
+        </section>
+      )}
+
+      <section className="home-storage-v2" aria-label="Локальное хранение данных">
+        <span className="home-storage-icon"><HomeGlyph name="phone" /></span>
+        <span>Данные хранятся на этом устройстве</span>
+      </section>
+
+      <footer className="home-footer-v2">FitProgress · локальный тренировочный дневник</footer>
     </main>
   )
 }
