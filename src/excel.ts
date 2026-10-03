@@ -7,6 +7,8 @@ import { RETRO_JUN } from './analyticsSeedJun'
 import { RETRO_JUL } from './analyticsSeedJul'
 import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
+import { loadAnalyticsWorkouts } from './analyticsModel'
+import { buildStimulusDashboard } from './trainingStimulus'
 
 const cleanKey = (key: string) => key.trim().toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '')
 const str = (value: unknown) => (value === undefined || value === null ? '' : String(value).trim())
@@ -437,6 +439,39 @@ export function exportFullRegistry() {
     })
   })
 
+  const stimulus = buildStimulusDashboard(loadAnalyticsWorkouts())
+
+  const muscleStatusRows = stimulus.muscles.map((item) => ({
+    as_of: stimulus.anchorDate,
+    muscle_group: item.muscle,
+    effective_sets_7d: item.effectiveSets7d,
+    direct_sets_7d: item.directSets7d,
+    indirect_sets_7d: item.indirectSets7d,
+    last_direct_stimulus: item.lastDirectDate ?? '',
+    days_since_direct: item.daysSinceDirect ?? '',
+    last_any_stimulus: item.lastAnyDate ?? '',
+    days_since_any: item.daysSinceAny ?? '',
+    status_code: item.status,
+    status: ({
+      fresh: 'Свежо',
+      within72: '≤72 ч',
+      due: 'Пора вернуть',
+      high: 'Высокий приоритет',
+      none: 'Нет данных'
+    } as const)[item.status],
+    explanation: item.explanation
+  }))
+
+  const movementPatternRows = stimulus.patterns.map((item) => ({
+    as_of: stimulus.anchorDate,
+    movement_pattern: item.pattern,
+    last_stimulus: item.lastDate ?? '',
+    days_since: item.daysSince ?? '',
+    sessions_7d: item.sessions7d,
+    working_sets_7d: item.workingSets7d,
+    over_72h: item.overdue ? 'yes' : 'no'
+  }))
+
   const wb = XLSX.utils.book_new()
 
   const readme = XLSX.utils.aoa_to_sheet([
@@ -446,8 +481,11 @@ export function exportFullRegistry() {
     ['Состав', `${RETRO_REGISTRY.length} встроенных ретроспективных тренировок + ${localHistory.length} завершённых тренировок FitProgress.`],
     ['Registry', 'Одна строка = один подход. Это основной лист для машинного и ручного анализа.'],
     ['Workouts', 'Одна строка = одна тренировка с метаданными и количеством упражнений/подходов.'],
+    ['Muscle Status', 'Актуальная на момент экспорта свежесть мышечных групп: эффективные/прямые/косвенные сеты за 7 дней, последние стимулы и приоритет.'],
+    ['Movement Patterns', 'Актуальная на момент экспорта давность паттернов движения: последняя дата, дней с последнего стимула, рабочие сеты и сессии за 7 дней.'],
     ['Даты старой истории', 'Если точный день отсутствовал в исходной ревизии, приложение сохраняет период как есть и НЕ придумывает дату.'],
     ['Новые тренировки', 'После завершения тренировки FitProgress автоматически добавляет её в локальную историю; следующий полный экспорт уже включает её.'],
+    ['Статус мышц', 'Пересчитывается заново при каждом экспорте по всей доступной истории. Основной рабочий сет = 1,0; косвенный вклад = 0,25–0,75 по фиксированному паттерну движения. Разминка, калибровка и rehab не считаются рабочим стимулом.'],
     ['Важно', 'Не удаляй этот файл из приложения вручную: это экспорт/резервная копия. Источник новых тренировок остаётся в локальном хранилище FitProgress.'],
     [],
     ['Экспортировано', new Date().toISOString()]
@@ -465,6 +503,23 @@ export function exportFullRegistry() {
   XLSX.utils.book_append_sheet(wb, workoutsSheet, 'Workouts')
 
   XLSX.utils.book_append_sheet(wb, registrySheet(registryRows), 'Registry')
+
+  const muscleStatusSheet = XLSX.utils.json_to_sheet(muscleStatusRows)
+  muscleStatusSheet['!cols'] = [
+    { wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 18 },
+    { wch: 22 }, { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 16 },
+    { wch: 22 }, { wch: 68 }
+  ]
+  if (muscleStatusSheet['!ref']) muscleStatusSheet['!autofilter'] = { ref: muscleStatusSheet['!ref'] }
+  XLSX.utils.book_append_sheet(wb, muscleStatusSheet, 'Muscle Status')
+
+  const movementPatternSheet = XLSX.utils.json_to_sheet(movementPatternRows)
+  movementPatternSheet['!cols'] = [
+    { wch: 14 }, { wch: 34 }, { wch: 20 }, { wch: 14 },
+    { wch: 14 }, { wch: 18 }, { wch: 12 }
+  ]
+  if (movementPatternSheet['!ref']) movementPatternSheet['!autofilter'] = { ref: movementPatternSheet['!ref'] }
+  XLSX.utils.book_append_sheet(wb, movementPatternSheet, 'Movement Patterns')
 
   const latestDate = localHistory.at(-1)?.startedAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
   XLSX.writeFile(wb, `FitProgress_FULL_REGISTRY_${latestDate}.xlsx`)
