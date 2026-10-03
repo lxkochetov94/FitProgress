@@ -3,7 +3,7 @@ import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
-import { archiveSession, clearTestWorkoutHistoryOnce, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession } from './storage'
+import { archiveSession, clearTestWorkoutHistoryOnce, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
@@ -1193,9 +1193,13 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
-  const discard = () => {
+  const discard = async () => {
     if (!window.confirm('Удалить незавершённую тренировку с этого устройства?')) return
-    saveActiveSession(null)
+    const saved = await saveActiveSessionDurable(null)
+    if (!saved) {
+      window.alert('FitProgress не смог подтвердить удаление в локальном хранилище. Попробуй ещё раз перед закрытием приложения.')
+      return
+    }
     setSessionState(null)
   }
 
