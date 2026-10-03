@@ -3,7 +3,7 @@ import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
-import { archiveSession, clearTestWorkoutHistoryOnce, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
+import { archiveSession, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
@@ -1152,7 +1152,6 @@ export default function App() {
     let cancelled = false
 
     const bootstrap = async () => {
-      clearTestWorkoutHistoryOnce()
       await initializeStorage()
       if (cancelled) return
 
@@ -1199,7 +1198,14 @@ export default function App() {
     setSessionState(null)
   }
 
-  const exit = () => {
+  const exit = async () => {
+    if (session?.finishedAt) {
+      const archived = await archiveSession(session)
+      if (!archived) {
+        window.alert('FitProgress не смог подтвердить сохранение последних правок завершённой тренировки. Перед закрытием приложения выгрузи эту тренировку в Excel как резервную копию.')
+        return
+      }
+    }
     setInWorkout(false)
     window.scrollTo(0, 0)
   }
