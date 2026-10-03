@@ -2,6 +2,8 @@ import { useId, useMemo, useState } from 'react'
 import './analytics.css'
 import { exerciseSeries, filterByPeriod, formatMetric, latestWorkout, loadAnalyticsWorkouts, primarySets, workoutVolumeSeries } from './analyticsModel'
 import type { AnalyticsPeriod, ExercisePoint, VolumePoint } from './analyticsModel'
+import { buildStimulusDashboard } from './trainingStimulus'
+import type { MuscleStimulusSummary, StimulusDashboard, StimulusStatus } from './trainingStimulus'
 
 const PERIODS: { id: AnalyticsPeriod; label: string }[] = [
   { id: '1m', label: '1 месяц' },
@@ -288,6 +290,81 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
   )
 }
 
+const STIMULUS_LABELS: Record<StimulusStatus, string> = {
+  fresh: 'Свежо',
+  within72: '≤72 ч',
+  due: 'Пора вернуть',
+  high: 'Высокий приоритет',
+  none: 'Нет данных'
+}
+
+function daysAgoLabel(days: number | null) {
+  if (days == null) return '—'
+  if (days === 0) return 'сегодня'
+  if (days === 1) return '1 день назад'
+  if (days >= 2 && days <= 4) return `${days} дня назад`
+  return `${days} дней назад`
+}
+
+function MuscleStimulusRow({ item }: { item: MuscleStimulusSummary }) {
+  return (
+    <div className="stimulus-row">
+      <div className="stimulus-row-main">
+        <b>{item.muscle}</b>
+        <span>{formatMetric(item.effectiveSets7d, 2)} эфф. сетов / 7 дней</span>
+      </div>
+      <div className="stimulus-row-recency">
+        <span>прямой: {daysAgoLabel(item.daysSinceDirect)}</span>
+        <span>любой: {daysAgoLabel(item.daysSinceAny)}</span>
+      </div>
+      <span className={`stimulus-status ${item.status}`}>{STIMULUS_LABELS[item.status]}</span>
+      <small>{item.explanation}</small>
+    </div>
+  )
+}
+
+function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
+  const overduePatterns = dashboard.patterns.filter((item) => item.overdue)
+
+  return (
+    <section className="analytics-stimulus-card">
+      <div className="stimulus-head">
+        <span className="eyebrow">ПЛАНИРОВАНИЕ СЛЕДУЮЩЕЙ ТРЕНИРОВКИ</span>
+        <h2>Свежесть мышечных групп</h2>
+        <p>Показывает, когда мышца последний раз получила рабочий прямой или косвенный стимул и сколько эффективных сетов накопилось за 7 дней.</p>
+      </div>
+
+      <div className="stimulus-list">
+        {dashboard.muscles.map((item) => <MuscleStimulusRow key={item.muscle} item={item} />)}
+      </div>
+
+      <div className="pattern-recency">
+        <div className="pattern-recency-head">
+          <b>Паттерны движения старше 72 часов</b>
+          <span>{overduePatterns.length}</span>
+        </div>
+        {overduePatterns.length ? (
+          <div className="pattern-chips">
+            {overduePatterns.map((item) => (
+              <span key={item.pattern}>
+                <b>{item.pattern}</b>
+                <small>{daysAgoLabel(item.daysSince)} · {formatMetric(item.workingSets7d)} раб. сетов / 7 дн.</small>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="pattern-all-fresh">Все рабочие паттерны текущей ротации получали стимул в пределах 72 часов.</p>
+        )}
+      </div>
+
+      <div className="stimulus-rule-note">
+        <b>Как считается</b>
+        <p>Рабочий сет даёт основной мышце 1,0 сета; вторичным мышцам — 0,25–0,75 в зависимости от паттерна движения. Разминка, калибровка и rehab-сеты не считаются. Более 72 часов без любого рабочего стимула = «пора вернуть», более 96 часов = высокий приоритет. Это правило планирования частоты, а не жёсткая физиологическая граница восстановления.</p>
+      </div>
+    </section>
+  )
+}
+
 export default function AnalyticsView({ onBack }: { onBack: () => void }) {
   const [period, setPeriod] = useState<AnalyticsPeriod>('3m')
   const workouts = useMemo(() => loadAnalyticsWorkouts(), [])
@@ -296,6 +373,7 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
   const latestExercises = useMemo(() => latest?.exercises.filter((exercise) => primarySets(exercise).length) ?? [], [latest])
   const volume = useMemo(() => workoutVolumeSeries(filtered), [filtered])
   const volumeDelta = volume.length > 1 ? trend(volume[0].volumeKg, volume.at(-1)?.volumeKg) : '—'
+  const stimulus = useMemo(() => buildStimulusDashboard(workouts), [workouts])
 
   return (
     <main className="app-shell analytics-page">
@@ -332,6 +410,8 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
           <p>{fmtFullDate(latest.date, latest.periodLabel)} · {latestExercises.length} упражнений с фактом</p>
         </section>
       )}
+
+      <StimulusPanel dashboard={stimulus} />
 
       <section className="analytics-audit-note">
         <b>Как читать график</b>
