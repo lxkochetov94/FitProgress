@@ -2,12 +2,11 @@ import * as XLSX from 'xlsx'
 import type { PerSide, WeightUnit, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { findDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
-import { loadHistory } from './storage'
 import { RETRO_JUN } from './analyticsSeedJun'
 import { RETRO_JUL } from './analyticsSeedJul'
 import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
-import { loadAnalyticsWorkouts } from './analyticsModel'
+import { loadAnalyticsWorkouts, loadCompletedSessionHistory } from './analyticsModel'
 import { buildStimulusDashboard } from './trainingStimulus'
 import { localDateKey, sessionDateKey } from './dateUtils'
 
@@ -295,9 +294,7 @@ function registrySheet(rows: Record<string, unknown>[]) {
 }
 
 export function exportFullRegistry() {
-  const localHistory = loadHistory()
-    .filter((session) => Boolean(session.finishedAt))
-    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+  const localHistory = loadCompletedSessionHistory()
 
   const registryRows: Record<string, unknown>[] = []
   const workoutRows: Record<string, unknown>[] = []
