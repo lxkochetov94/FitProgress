@@ -1,5 +1,6 @@
 import type { AnalyticsExercise, AnalyticsSet, AnalyticsWorkout } from './analyticsModel'
 import { findDefinition } from './exerciseLibrary'
+import { localDateKey } from './dateUtils'
 
 export type StimulusStatus = 'fresh' | 'within72' | 'due' | 'high' | 'none'
 
@@ -112,7 +113,7 @@ const isTrainingSet = (set: AnalyticsSet) => {
 
   if (set.kind) {
     if (set.kind === 'warmup' || set.kind === 'calibration' || set.kind === 'rehab') return false
-    return set.kind === 'working' || set.kind === 'other' || /доп\.?s*сет/i.test(set.label)
+    return set.kind === 'working' || set.kind === 'other' || /доп\.?\s*сет/i.test(set.label)
   }
 
   const text = `${set.label} ${set.intensity}`.toLowerCase()
@@ -142,14 +143,6 @@ const exerciseLoads = (exercise: AnalyticsExercise) => {
   return result
 }
 
-const localDateIso = () => {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 const dayNumber = (iso: string) => {
   const [year, month, day] = iso.split('-').map(Number)
   return Date.UTC(year, month - 1, day) / 86400000
@@ -167,7 +160,7 @@ function statusFor(daysSinceAny: number | null): Pick<MuscleStimulusSummary, 'st
   return { status: 'high', explanation: 'Более 4 дней без значимой рабочей нагрузки — высокий приоритет следующей тренировки.' }
 }
 
-export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate = localDateIso()): StimulusDashboard {
+export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate = localDateKey()): StimulusDashboard {
   const muscleState = new Map(TRACKED_MUSCLES.map((muscle) => [muscle, {
     effectiveSets7d: 0,
     directSets7d: 0,
