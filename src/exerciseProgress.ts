@@ -113,7 +113,9 @@ export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, se
 
     const unit = exercise.weightUnit ?? 'kg'
     const previous = next[exercise.exerciseId]
-    const historyWithoutSameSession = (previous?.history ?? []).filter((entry) => entry.sessionId !== session.sessionId)
+    const previousHistory = previous?.history ?? []
+    const sameSessionAlreadyCounted = previousHistory.some((entry) => entry.sessionId === session.sessionId)
+    const historyWithoutSameSession = previousHistory.filter((entry) => entry.sessionId !== session.sessionId)
 
     const entry: ExerciseHistoryEntry = {
       sessionId: session.sessionId,
@@ -158,7 +160,9 @@ export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, se
       rehab: exercise.rehab,
       perSide: exercise.perSide,
       weightUnit: unit,
-      sessions: historyWithoutSameSession.length + 1,
+      sessions: sameSessionAlreadyCounted
+        ? (previous?.sessions ?? historyWithoutSameSession.length + 1)
+        : (previous?.sessions ?? historyWithoutSameSession.length) + 1,
       lastPerformedAt: session.startedAt,
       lastKnown: latestSummary || previous?.lastKnown,
       bestKnown,
@@ -167,7 +171,7 @@ export function updateExerciseProfilesFromSession(existing: ExerciseProfiles, se
       lastPain: painValues.length ? painValues.join(' / ') : previous?.lastPain,
       lastComment: comments.length ? comments[comments.length - 1] : previous?.lastComment,
       latestSetsSummary: latestSummary || previous?.latestSetsSummary,
-      history: [entry, ...historyWithoutSameSession].slice(0, 24)
+      history: [entry, ...historyWithoutSameSession]
     }
   }
 
