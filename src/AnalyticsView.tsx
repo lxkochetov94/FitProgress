@@ -167,18 +167,13 @@ function SetDetails({ point, currentName }: { point: ExercisePoint; currentName:
   )
 }
 
-const maxExactReps = (point: ExercisePoint) => {
-  const values = point.setReps.filter((value): value is number => value != null)
-  return values.length ? Math.max(...values) : null
-}
-
 function ExerciseChart({ points, name }: { points: ExercisePoint[]; name: string }) {
   const [selected, setSelected] = useState(Math.max(0, points.length - 1))
   const uid = useId().replace(/:/g, '')
   if (!points.length) return null
 
   const weighted = points.some((point) => point.workWeight != null)
-  const valueOf = (point: ExercisePoint) => point.workWeight ?? maxExactReps(point)
+  const valueOf = (point: ExercisePoint) => weighted ? point.workWeight : point.totalReps
   const valid = points
     .map((point, index) => ({ point, index, value: valueOf(point) }))
     .filter((item): item is { point: ExercisePoint; index: number; value: number } => item.value != null && Number.isFinite(item.value))
@@ -205,7 +200,7 @@ function ExerciseChart({ points, name }: { points: ExercisePoint[]; name: string
     <>
       <div className="analytics-chart-wrap exercise-chart-wrap">
         <div className="analytics-chart-toolbar">
-          <div className="analytics-chart-caption"><span>{weighted ? 'Вес на тренировке' : 'Повторы'}</span></div>
+          <div className="analytics-chart-caption"><span>{weighted ? 'Вес на тренировке' : 'Суммарные повторы'}</span></div>
           <ChartValue primary={activeLabel} secondary={active.dateLabel} />
         </div>
         <svg className="analytics-chart" viewBox="0 0 320 142" role="img" aria-label={`Динамика: ${name}`}>
@@ -271,7 +266,7 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
   const hasHistoricalVariants = new Set(points.map((point) => point.comparisonKey)).size > 1
   const weighted = comparablePoints.some((point) => point.workWeight != null)
   const chartValues = comparablePoints
-    .map((point) => point.workWeight ?? maxExactReps(point))
+    .map((point) => weighted ? point.workWeight : point.totalReps)
     .filter((value): value is number => value != null)
   const chartTrend = trend(chartValues[0], chartValues.at(-1), weighted ? 'percent' : 'absolute')
   const maxSets = Math.max(...comparablePoints.map((point) => point.setReps.length))
