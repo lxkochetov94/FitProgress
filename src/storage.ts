@@ -358,8 +358,9 @@ export function saveActiveSession(session: WorkoutSession | null) {
 
 export async function saveActiveSessionDurable(session: WorkoutSession | null) {
   const localOk = saveActiveSession(session)
-  const indexedOk = indexedDbReady ? await activeWriteChain : false
-  return indexedOk || localOk
+  if (!indexedDbReady) return localOk
+  const indexedOk = await activeWriteChain
+  return indexedOk
 }
 
 export function loadExerciseProfiles(): ExerciseProfiles {
