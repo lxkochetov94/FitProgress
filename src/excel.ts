@@ -9,6 +9,7 @@ import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
 import { loadAnalyticsWorkouts } from './analyticsModel'
 import { buildStimulusDashboard } from './trainingStimulus'
+import { localDateKey, sessionDateKey } from './dateUtils'
 
 const cleanKey = (key: string) => key.trim().toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '')
 const str = (value: unknown) => (value === undefined || value === null ? '' : String(value).trim())
@@ -232,7 +233,7 @@ export function exportSession(session: WorkoutSession) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(setRows), 'Sets')
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary')
 
-  const date = new Date(session.startedAt).toISOString().slice(0, 10)
+  const date = sessionDateKey(session.startedAt, session.startedLocalDate)
   XLSX.writeFile(wb, `${session.plan.title.replace(/[^a-zа-я0-9]+/gi, '_')}_${date}_result.xlsx`)
 }
 
@@ -369,7 +370,7 @@ export function exportFullRegistry() {
 
   localHistory.forEach((session, localIndex) => {
     const workoutNo = RETRO_REGISTRY.length + localIndex + 1
-    const date = session.startedAt.slice(0, 10)
+    const date = sessionDateKey(session.startedAt, session.startedLocalDate)
     const durationMin = session.finishedAt
       ? Math.round((new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)
       : ''
@@ -521,7 +522,8 @@ export function exportFullRegistry() {
   if (movementPatternSheet['!ref']) movementPatternSheet['!autofilter'] = { ref: movementPatternSheet['!ref'] }
   XLSX.utils.book_append_sheet(wb, movementPatternSheet, 'Movement Patterns')
 
-  const latestDate = localHistory.at(-1)?.startedAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+  const latestSession = localHistory.at(-1)
+  const latestDate = latestSession ? sessionDateKey(latestSession.startedAt, latestSession.startedLocalDate) : localDateKey()
   XLSX.writeFile(wb, `FitProgress_FULL_REGISTRY_${latestDate}.xlsx`)
 }
 
