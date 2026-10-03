@@ -6,6 +6,7 @@ import { RETRO_JUL } from './analyticsSeedJul'
 import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
 import { getDefinition } from './exerciseLibrary'
+import { localDateKey, sessionDateKey } from './dateUtils'
 
 export type AnalyticsPeriod = '1m' | '3m' | '6m' | '12m'
 
@@ -154,7 +155,7 @@ const localSetLabel = (set: WorkoutSet) => {
 }
 
 function localToAnalytics(session: WorkoutSession, order: number): AnalyticsWorkout {
-  const date = session.startedAt.slice(0, 10)
+  const date = sessionDateKey(session.startedAt, session.startedLocalDate)
   return {
     id: `local-${session.sessionId}`,
     order,
@@ -259,10 +260,10 @@ const periodDays: Record<AnalyticsPeriod, number> = { '1m': 31, '3m': 93, '6m': 
 
 export function filterByPeriod(workouts: AnalyticsWorkout[], period: AnalyticsPeriod, anchorDate?: string | null) {
   const exactDates = workouts.map((item) => item.date).filter(Boolean) as string[]
-  const anchor = anchorDate ?? exactDates.sort().at(-1) ?? new Date().toISOString().slice(0, 10)
+  const anchor = anchorDate ?? exactDates.sort().at(-1) ?? localDateKey()
   const cutoff = new Date(`${anchor}T12:00:00`)
   cutoff.setDate(cutoff.getDate() - periodDays[period])
-  const cutoffIso = cutoff.toISOString().slice(0, 10)
+  const cutoffIso = localDateKey(cutoff)
   const cutoffMonth = cutoffIso.slice(0, 7)
   return workouts.filter((item) => item.date ? item.date >= cutoffIso && item.date <= anchor : item.periodKey >= cutoffMonth && item.periodKey <= anchor.slice(0, 7))
 }
