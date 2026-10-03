@@ -1,5 +1,5 @@
 import { loadHistory } from './storage'
-import type { WorkoutSession, WorkoutSet } from './types'
+import type { PerSide, WeightUnit, WorkoutSession, WorkoutSet } from './types'
 import type { RetroWorkoutTuple } from './analyticsSeedTypes'
 import { RETRO_JUN } from './analyticsSeedJun'
 import { RETRO_JUL } from './analyticsSeedJul'
@@ -22,6 +22,9 @@ export interface AnalyticsSet {
 export interface AnalyticsExercise {
   exerciseId: string
   name: string
+  weightUnit?: WeightUnit
+  perSide?: PerSide
+  equipment?: string
   sets: AnalyticsSet[]
 }
 
@@ -164,6 +167,9 @@ function localToAnalytics(session: WorkoutSession, order: number): AnalyticsWork
     exercises: session.plan.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
       name: exercise.name,
+      weightUnit: exercise.weightUnit,
+      perSide: exercise.perSide,
+      equipment: exercise.equipment,
       sets: exercise.sets.filter((set) => set.completed).map((set) => ({
         label: localSetLabel(set),
         weight: set.actualWeight,
@@ -188,11 +194,17 @@ function retroToAnalytics(tuple: RetroWorkoutTuple): AnalyticsWorkout {
     gym,
     title,
     source: 'retro',
-    exercises: exercises.map(([exerciseId, name, sets]) => ({
-      exerciseId,
-      name,
-      sets: sets.map(([label, weight, reps, intensity]) => ({ label, weight, reps, intensity }))
-    }))
+    exercises: exercises.map(([exerciseId, name, sets]) => {
+      const definition = getDefinition(exerciseId)
+      return {
+        exerciseId,
+        name,
+        weightUnit: definition?.weightUnit,
+        perSide: definition?.perSide,
+        equipment: definition?.equipment,
+        sets: sets.map(([label, weight, reps, intensity]) => ({ label, weight, reps, intensity }))
+      }
+    })
   }
 }
 
@@ -277,7 +289,8 @@ export function pointForExercise(workout: AnalyticsWorkout, exerciseId: string):
     : null
   const bodyweight = primary.some((set) => isBodyweight(set.weight))
   const score = workWeight ?? (exactRepValues.length ? Math.max(...exactRepValues) : 0)
-  const unit = [...primary, ...allSets].map((set) => unitFromWeight(set.weight)).find(Boolean) ?? null
+  const unit = [...primary, ...allSets].map((set) => unitFromWeight(set.weight)).find(Boolean)
+    ?? (exercise.weightUnit === 'kg' ? 'кг' : exercise.weightUnit === 'lb' ? 'lb' : null)
 
   return {
     workoutId: workout.id,
@@ -319,27 +332,30 @@ export interface VolumePoint {
   setCount: number
 }
 
-const volumeWeightKg = (rawWeight: string) => {
+const volumeWeightKg = (rawWeight: string, fallbackUnit?: WeightUnit) => {
   const raw = String(rawWeight ?? '').trim()
   if (!raw || raw === '—' || isBodyweight(raw) || /→|гриф|без веса|%|усили/i.test(raw)) return null
+  // A range is a plan, not a factual performed weight. Do not silently use its lower bound.
+  if (/\d\s*[–—-]\s*\d/.test(raw)) return null
   const value = numeric(raw)
   if (!Number.isFinite(value) || value <= 0) return null
 
   // When both kg and lb are written, the first numeric value is the kg value.
   if (/кг/i.test(raw)) return value
   if (/\blb\b|lbs/i.test(raw)) return value * 0.45359237
+  if (fallbackUnit === 'lb') return value * 0.45359237
   return value
 }
 
 const volumeMultiplier = (exercise: AnalyticsExercise, set: AnalyticsSet) => {
   const definition = getDefinition(exercise.exerciseId)
-  const perSide = definition?.perSide || (/\/(?:рук|ног|сторон)/i.test(set.reps) ? 'side' : undefined)
+  const perSide = exercise.perSide ?? definition?.perSide ?? (/\/(?:рук|ног|сторон)/i.test(set.reps) ? 'side' : undefined)
   let multiplier = perSide ? 2 : 1
 
-  const equipment = definition?.equipment ?? ''
+  const equipment = exercise.equipment ?? definition?.equipment ?? ''
   const bilateralDumbbells =
     /гантели/i.test(equipment) &&
-    definition?.perSide !== 'arm' &&
+    perSide !== 'arm' &&
     !/one-arm|одной рукой|одноруч/i.test(exercise.name)
 
   if (bilateralDumbbells) multiplier *= 2
@@ -349,11 +365,19 @@ const volumeMultiplier = (exercise: AnalyticsExercise, set: AnalyticsSet) => {
 }
 
 const setVolumeKg = (exercise: AnalyticsExercise, set: AnalyticsSet) => {
-  const weightKg = volumeWeightKg(set.weight)
+  const weightKg = volumeWeightKg(set.weight, exercise.weightUnit ?? getDefinition(exercise.exerciseId)?.weightUnit)
   const reps = exactRepsValue(set.reps)
   if (weightKg == null || reps == null || reps <= 0) return null
   return weightKg * reps * volumeMultiplier(exercise, set)
 }
+
+const volumeEligibleSets = (exercise: AnalyticsExercise) =>
+  exercise.sets.filter((set) => {
+    if (!meaningfulSet(set)) return false
+    if (set.kind === 'warmup' || set.kind === 'calibration' || set.kind === 'rehab') return false
+    if (isPrepSet(set) || /rehab|реабил/i.test(`${set.label} ${set.intensity}`)) return false
+    return true
+  })
 
 export function workoutVolumeSeries(workouts: AnalyticsWorkout[]): VolumePoint[] {
   const raw = workouts
@@ -362,7 +386,7 @@ export function workoutVolumeSeries(workouts: AnalyticsWorkout[]): VolumePoint[]
       let setCount = 0
 
       for (const exercise of workout.exercises) {
-        for (const set of primarySets(exercise)) {
+        for (const set of volumeEligibleSets(exercise)) {
           const volume = setVolumeKg(exercise, set)
           if (volume == null) continue
           volumeKg += volume
