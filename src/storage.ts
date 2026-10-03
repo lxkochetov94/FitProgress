@@ -4,7 +4,6 @@ import type { ExerciseProfiles } from './exerciseProgress'
 
 const ACTIVE_KEY = 'fitprogress.active-session.v1'
 const HISTORY_KEY = 'fitprogress.history.v1'
-const TEST_HISTORY_RESET_KEY = 'fitprogress.test-history-reset.2026-10-02.v2'
 const ANALYTICS_HISTORY_KEY = 'fitprogress.analytics-history.v1'
 const EXERCISE_PROFILES_KEY = 'fitprogress.exercise-profiles.v1'
 
@@ -144,7 +143,7 @@ async function writeIndexedActive(session: WorkoutSession | null) {
     tx.objectStore(STATE_STORE).put({
       key: ACTIVE_STATE_KEY,
       value: session ? clone(session) : null,
-      updatedAt: new Date().toISOString()
+      updatedAt: session?.updatedAt ?? new Date().toISOString()
     } satisfies ActiveStateRecord)
     await transactionDone(tx)
     return true
@@ -215,23 +214,6 @@ function rebuildProfiles(history: WorkoutSession[]) {
   }
 }
 
-export function clearTestWorkoutHistoryOnce() {
-  try {
-    if (localStorage.getItem(TEST_HISTORY_RESET_KEY)) return
-
-    // Legacy one-time cleanup from before IndexedDB existed. Do not delete the
-    // IndexedDB database here: if localStorage was evicted independently, the
-    // database may contain the user's only durable copy.
-    localStorage.removeItem(HISTORY_KEY)
-    localStorage.removeItem(ACTIVE_KEY)
-    localStorage.removeItem(EXERCISE_PROFILES_KEY)
-    localStorage.removeItem(ANALYTICS_HISTORY_KEY)
-    localStorage.setItem(TEST_HISTORY_RESET_KEY, new Date().toISOString())
-  } catch {
-    // Storage can be unavailable in private/restricted browser contexts.
-  }
-}
-
 export async function initializeStorage() {
   const localHistory = readLocalHistory()
   const legacyAnalytics = readLegacyAnalyticsHistory()
@@ -263,7 +245,13 @@ export async function initializeStorage() {
     ])
   } catch {
     indexedDbReady = false
-    memoryHistory = sortHistory([...localHistory, ...legacyAnalytics].filter((session) => Boolean(session.finishedAt)))
+    const fallback = new Map<string, WorkoutSession>()
+    for (const session of [...legacyAnalytics, ...localHistory]) {
+      if (!session?.sessionId || !session.finishedAt) continue
+      const previous = fallback.get(session.sessionId)
+      fallback.set(session.sessionId, clone(newestSession(previous, session) ?? session))
+    }
+    memoryHistory = sortHistory([...fallback.values()])
     memoryActive = localActive
     rebuildProfiles(memoryHistory)
     writeLocalHistoryMirror(memoryHistory, true)
@@ -277,7 +265,7 @@ export async function initializeStorage() {
     merged.set(session.sessionId, clone(newestSession(previous, session) ?? session))
   }
 
-  const mergedHistory = sortHistory([...merged.values()])
+  let mergedHistory = sortHistory([...merged.values()])
   const indexedIds = new Set(indexedSessions.map((session) => session.sessionId))
   const sessionsToPersist = mergedHistory.filter((session) => {
     const indexed = indexedSessions.find((item) => item.sessionId === session.sessionId)
@@ -309,11 +297,23 @@ export async function initializeStorage() {
     if (active) await writeIndexedActive(active)
   }
 
+  if (active?.finishedAt) {
+    const archived = mergedHistory.find((session) => session.sessionId === active.sessionId)
+    if (!archived || sessionTime(active) > sessionTime(archived)) {
+      mergedHistory = sortHistory([clone(active), ...mergedHistory.filter((session) => session.sessionId !== active.sessionId)])
+      try {
+        await writeIndexedSessions(db, [active])
+      } catch {
+        indexedDbReady = false
+      }
+    }
+  }
+
   memoryHistory = mergedHistory
   memoryActive = active
   rebuildProfiles(memoryHistory)
 
-  writeLocalHistoryMirror(memoryHistory)
+  writeLocalHistoryMirror(memoryHistory, !indexedDbReady)
   try {
     if (memoryActive) localStorage.setItem(ACTIVE_KEY, JSON.stringify(memoryActive))
     else localStorage.removeItem(ACTIVE_KEY)
@@ -381,6 +381,7 @@ export async function archiveSession(session: WorkoutSession) {
   memoryHistory = nextHistory
 
   const indexedOk = indexedDbReady ? await putIndexedSession(session) : false
+  if (indexedDbReady && !indexedOk) indexedDbReady = false
   const localOk = writeLocalHistoryMirror(nextHistory, !indexedDbReady)
 
   const profiles = memoryProfiles ?? {}
