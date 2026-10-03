@@ -106,6 +106,7 @@ export interface WorkoutSession {
   sessionId: string
   plan: WorkoutPlan
   startedAt: string
+  startedLocalDate?: string
   finishedAt?: string
   updatedAt: string
   activeRest?: ActiveRestTimer
