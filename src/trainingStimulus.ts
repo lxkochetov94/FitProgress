@@ -124,8 +124,8 @@ const isTrainingSet = (set: AnalyticsSet) => {
 const exerciseMeta = (exercise: AnalyticsExercise) => {
   const def = findDefinition(exercise.exerciseId, exercise.name)
   return {
-    muscleGroup: def?.muscleGroup ?? '',
-    movementPattern: def?.movementPattern ?? ''
+    muscleGroup: exercise.muscleGroup ?? def?.muscleGroup ?? '',
+    movementPattern: exercise.movementPattern ?? def?.movementPattern ?? ''
   }
 }
 
