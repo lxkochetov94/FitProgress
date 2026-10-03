@@ -101,8 +101,10 @@ const numeric = (value?: string) => {
 }
 
 const hasUsableReps = (set: AnalyticsSet) => {
-  const reps = numeric(set.reps)
-  return Number.isFinite(reps) && reps > 0
+  const raw = String(set.reps ?? '').trim()
+  if (!raw || raw === '—' || /не запис/i.test(raw)) return false
+  const reps = numeric(raw)
+  return (Number.isFinite(reps) && reps > 0) || /отказ/i.test(raw)
 }
 
 const isTrainingSet = (set: AnalyticsSet) => {
@@ -258,6 +260,9 @@ export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate 
         overdue: daysSince != null && daysSince > 3
       }
     })
+    // Only show patterns that are actually part of the recent training rotation.
+    // Old/abandoned movements should not remain "overdue" forever.
+    .filter((item) => item.daysSince != null && item.daysSince <= 30)
     .sort((a, b) => Number(b.overdue) - Number(a.overdue) ||
       (b.daysSince ?? -1) - (a.daysSince ?? -1) ||
       a.pattern.localeCompare(b.pattern, 'ru'))
