@@ -233,15 +233,20 @@ export function syncAnalyticsArchive(history: WorkoutSession[] = loadHistory()) 
   }
 }
 
-export function loadAnalyticsWorkouts(): AnalyticsWorkout[] {
+export function loadCompletedSessionHistory(): WorkoutSession[] {
   const current = loadHistory()
   syncAnalyticsArchive(current)
   const archive = readArchive()
   const sessions = new Map<string, WorkoutSession>()
-  for (const session of [...archive, ...current]) if (session.finishedAt) sessions.set(session.sessionId, session)
-
-  const local = [...sessions.values()]
+  for (const session of [...archive, ...current]) {
+    if (session.finishedAt) sessions.set(session.sessionId, session)
+  }
+  return [...sessions.values()]
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+}
+
+export function loadAnalyticsWorkouts(): AnalyticsWorkout[] {
+  const local = loadCompletedSessionHistory()
     .map((session, index) => localToAnalytics(session, 1000 + index))
 
   return [...RETRO.map(retroToAnalytics), ...local]
