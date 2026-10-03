@@ -191,12 +191,12 @@ export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate 
         if (!state || coefficient <= 0) continue
 
         state.lastAnyDate = laterDate(state.lastAnyDate, workout.date)
-        if (coefficient >= .75) state.lastDirectDate = laterDate(state.lastDirectDate, workout.date)
+        if (coefficient >= 1) state.lastDirectDate = laterDate(state.lastDirectDate, workout.date)
 
         if (daysAgo <= 7) {
           const contribution = trainingSets.length * coefficient
           state.effectiveSets7d += contribution
-          if (coefficient >= .75) state.directSets7d += contribution
+          if (coefficient >= 1) state.directSets7d += contribution
           else state.indirectSets7d += contribution
         }
       }
