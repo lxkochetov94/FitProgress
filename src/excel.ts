@@ -2,13 +2,13 @@ import * as XLSX from 'xlsx'
 import type { PerSide, WeightUnit, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { findDefinition } from './exerciseLibrary'
 import { DEMO_PLAN } from './demo'
-import { loadHistory } from './storage'
 import { RETRO_JUN } from './analyticsSeedJun'
 import { RETRO_JUL } from './analyticsSeedJul'
 import { RETRO_AUG } from './analyticsSeedAug'
 import { RETRO_SEP } from './analyticsSeedSep'
-import { loadAnalyticsWorkouts } from './analyticsModel'
+import { loadAnalyticsWorkouts, loadCompletedSessionHistory } from './analyticsModel'
 import { buildStimulusDashboard } from './trainingStimulus'
+import { localDateKey, sessionDateKey } from './dateUtils'
 
 const cleanKey = (key: string) => key.trim().toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '')
 const str = (value: unknown) => (value === undefined || value === null ? '' : String(value).trim())
@@ -159,6 +159,7 @@ function setTypeLabel(type: WorkoutSet['setType']) {
 export function exportSession(session: WorkoutSession) {
   const workoutRows = [{
     session_id: session.sessionId,
+    date: sessionDateKey(session.startedAt, session.startedLocalDate),
     workout_id: session.plan.workoutId,
     title: session.plan.title,
     priority: session.plan.priority,
@@ -232,7 +233,7 @@ export function exportSession(session: WorkoutSession) {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(setRows), 'Sets')
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary')
 
-  const date = new Date(session.startedAt).toISOString().slice(0, 10)
+  const date = sessionDateKey(session.startedAt, session.startedLocalDate)
   XLSX.writeFile(wb, `${session.plan.title.replace(/[^a-zа-я0-9]+/gi, '_')}_${date}_result.xlsx`)
 }
 
@@ -294,9 +295,7 @@ function registrySheet(rows: Record<string, unknown>[]) {
 }
 
 export function exportFullRegistry() {
-  const localHistory = loadHistory()
-    .filter((session) => Boolean(session.finishedAt))
-    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+  const localHistory = loadCompletedSessionHistory()
 
   const registryRows: Record<string, unknown>[] = []
   const workoutRows: Record<string, unknown>[] = []
@@ -369,7 +368,7 @@ export function exportFullRegistry() {
 
   localHistory.forEach((session, localIndex) => {
     const workoutNo = RETRO_REGISTRY.length + localIndex + 1
-    const date = session.startedAt.slice(0, 10)
+    const date = sessionDateKey(session.startedAt, session.startedLocalDate)
     const durationMin = session.finishedAt
       ? Math.round((new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) / 60000)
       : ''
@@ -444,7 +443,7 @@ export function exportFullRegistry() {
   const muscleStatusRows = stimulus.muscles.map((item) => ({
     as_of: stimulus.anchorDate,
     muscle_group: item.muscle,
-    effective_sets_7d: item.effectiveSets7d,
+    weighted_working_sets_7d: item.effectiveSets7d,
     direct_sets_7d: item.directSets7d,
     indirect_sets_7d: item.indirectSets7d,
     last_direct_stimulus: item.lastDirectDate ?? '',
@@ -469,7 +468,7 @@ export function exportFullRegistry() {
     days_since: item.daysSince ?? '',
     sessions_7d: item.sessions7d,
     working_sets_7d: item.workingSets7d,
-    over_72h: item.overdue ? 'yes' : 'no'
+    over_3_days: item.overdue ? 'yes' : 'no'
   }))
 
   const wb = XLSX.utils.book_new()
@@ -481,11 +480,11 @@ export function exportFullRegistry() {
     ['Состав', `${RETRO_REGISTRY.length} встроенных ретроспективных тренировок + ${localHistory.length} завершённых тренировок FitProgress.`],
     ['Registry', 'Одна строка = один подход. Это основной лист для машинного и ручного анализа.'],
     ['Workouts', 'Одна строка = одна тренировка с метаданными и количеством упражнений/подходов.'],
-    ['Muscle Status', 'Актуальная на момент экспорта свежесть мышечных групп: эффективные/прямые/косвенные сеты за 7 дней, последние стимулы и приоритет.'],
-    ['Movement Patterns', 'Актуальная на момент экспорта давность паттернов движения: последняя дата, дней с последнего стимула, рабочие сеты и сессии за 7 дней.'],
+    ['Muscle Status', 'Актуальная на момент экспорта свежесть мышечных групп: условно-взвешенные рабочие, прямые и косвенные сеты за 7 дней, последние стимулы и приоритет.'],
+    ['Movement Patterns', 'Актуальная на момент экспорта давность паттернов движения: последняя дата, календарных дней с последнего стимула, рабочие сеты и сессии за 7 дней, флаг >3 дней.'],
     ['Даты старой истории', 'Если точный день отсутствовал в исходной ревизии, приложение сохраняет период как есть и НЕ придумывает дату.'],
     ['Новые тренировки', 'После завершения тренировки FitProgress автоматически добавляет её в локальную историю; следующий полный экспорт уже включает её.'],
-    ['Статус мышц', 'Пересчитывается заново при каждом экспорте по всей доступной истории. Основной рабочий сет = 1,0; косвенный вклад = 0,25–0,75 по фиксированному паттерну движения. Разминка, калибровка и rehab не считаются рабочим стимулом.'],
+    ['Статус мышц', 'Пересчитывается заново при каждом экспорте по всей доступной истории. Прямой рабочий сет = 1,0; косвенный вклад = 0,25–0,75 по фиксированному паттерну движения. Это условно-взвешенные рабочие сеты, а не физиологическая оценка «эффективных повторений». Разминка, калибровка и rehab не считаются рабочим стимулом.'],
     ['Важно', 'Не удаляй этот файл из приложения вручную: это экспорт/резервная копия. Источник новых тренировок остаётся в локальном хранилище FitProgress.'],
     [],
     ['Экспортировано', new Date().toISOString()]
@@ -521,7 +520,8 @@ export function exportFullRegistry() {
   if (movementPatternSheet['!ref']) movementPatternSheet['!autofilter'] = { ref: movementPatternSheet['!ref'] }
   XLSX.utils.book_append_sheet(wb, movementPatternSheet, 'Movement Patterns')
 
-  const latestDate = localHistory.at(-1)?.startedAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+  const latestSession = localHistory.at(-1)
+  const latestDate = latestSession ? sessionDateKey(latestSession.startedAt, latestSession.startedLocalDate) : localDateKey()
   XLSX.writeFile(wb, `FitProgress_FULL_REGISTRY_${latestDate}.xlsx`)
 }
 

@@ -35,8 +35,13 @@ export function loadActiveSession(): WorkoutSession | null {
 }
 
 export function saveActiveSession(session: WorkoutSession | null) {
-  if (!session) localStorage.removeItem(ACTIVE_KEY)
-  else localStorage.setItem(ACTIVE_KEY, JSON.stringify(session))
+  try {
+    if (!session) localStorage.removeItem(ACTIVE_KEY)
+    else localStorage.setItem(ACTIVE_KEY, JSON.stringify(session))
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function loadExerciseProfiles(): ExerciseProfiles {
@@ -52,18 +57,24 @@ export function archiveSession(session: WorkoutSession) {
   try {
     const raw = localStorage.getItem(HISTORY_KEY)
     const history = raw ? (JSON.parse(raw) as WorkoutSession[]) : []
-    // Keep the complete completed-session registry. The home screen can still
-    // display only the latest few items, but exports must never silently lose
-    // an older real workout just because more sessions were completed later.
+    // HISTORY_KEY is the canonical completed-session registry.
     const nextHistory = [session, ...history.filter((x) => x.sessionId !== session.sessionId)]
     localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory))
+  } catch {
+    return false
+  }
 
+  // Exercise profiles are a derived convenience cache. A profile write failure
+  // must never invalidate a successfully archived workout.
+  try {
     const profiles = loadExerciseProfiles()
     const nextProfiles = updateExerciseProfilesFromSession(profiles, session)
     localStorage.setItem(EXERCISE_PROFILES_KEY, JSON.stringify(nextProfiles))
   } catch {
-    // The active session still remains exportable even if persistent storage fails.
+    // The canonical workout is already safe in HISTORY_KEY.
   }
+
+  return true
 }
 
 export function loadHistory(): WorkoutSession[] {

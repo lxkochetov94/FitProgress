@@ -292,7 +292,7 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
 
 const STIMULUS_LABELS: Record<StimulusStatus, string> = {
   fresh: 'Свежо',
-  within72: '≤72 ч',
+  within72: '≤3 дней',
   due: 'Пора вернуть',
   high: 'Высокий приоритет',
   none: 'Нет данных'
@@ -311,7 +311,7 @@ function MuscleStimulusRow({ item }: { item: MuscleStimulusSummary }) {
     <div className="stimulus-row">
       <div className="stimulus-row-main">
         <b>{item.muscle}</b>
-        <span>{formatMetric(item.effectiveSets7d, 2)} эфф. сетов / 7 дней</span>
+        <span>{formatMetric(item.effectiveSets7d, 2)} условных раб. сетов / 7 дней</span>
       </div>
       <div className="stimulus-row-recency">
         <span>прямой: {daysAgoLabel(item.daysSinceDirect)}</span>
@@ -331,7 +331,7 @@ function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
       <div className="stimulus-head">
         <span className="eyebrow">ПЛАНИРОВАНИЕ СЛЕДУЮЩЕЙ ТРЕНИРОВКИ</span>
         <h2>Свежесть мышечных групп</h2>
-        <p>Показывает, когда мышца последний раз получила рабочий прямой или косвенный стимул и сколько эффективных сетов накопилось за 7 дней.</p>
+        <p>Показывает, когда мышца последний раз получила прямой или косвенный рабочий стимул и сколько условно-взвешенных рабочих сетов накопилось за 7 дней.</p>
       </div>
 
       <div className="stimulus-list">
@@ -340,7 +340,7 @@ function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
 
       <div className="pattern-recency">
         <div className="pattern-recency-head">
-          <b>Паттерны движения старше 72 часов</b>
+          <b>Паттерны движения старше 3 дней</b>
           <span>{overduePatterns.length}</span>
         </div>
         {overduePatterns.length ? (
@@ -353,13 +353,13 @@ function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
             ))}
           </div>
         ) : (
-          <p className="pattern-all-fresh">Все рабочие паттерны текущей ротации получали стимул в пределах 72 часов.</p>
+          <p className="pattern-all-fresh">Все рабочие паттерны текущей ротации получали стимул в пределах 3 календарных дней.</p>
         )}
       </div>
 
       <div className="stimulus-rule-note">
         <b>Как считается</b>
-        <p>Рабочий сет даёт основной мышце 1,0 сета; вторичным мышцам — 0,25–0,75 в зависимости от паттерна движения. Разминка, калибровка и rehab-сеты не считаются. Более 72 часов без любого рабочего стимула = «пора вернуть», более 96 часов = высокий приоритет. Это правило планирования частоты, а не жёсткая физиологическая граница восстановления.</p>
+        <p>Рабочий сет даёт основной мышце 1,0 сета; вторичным мышцам — 0,25–0,75 в зависимости от паттерна движения. Разминка, калибровка и rehab-сеты не считаются. Более 3 календарных дней без любого рабочего стимула = «пора вернуть», более 4 дней = высокий приоритет. Это правило планирования частоты, а не жёсткая физиологическая граница восстановления.</p>
       </div>
     </section>
   )
@@ -396,7 +396,7 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
           <div>
             <span className="eyebrow">ОБЩАЯ ДИНАМИКА</span>
             <h2>Общий объём</h2>
-            <p>100% = объём первой тренировки в выбранном периоде. Объём = сумма вес × повторения по учтённым подходам.</p>
+            <p>100% = рабочий тоннаж первой тренировки в выбранном периоде. Тоннаж = сумма внешнего веса × повторения; lb переводятся в кг. Разминка, калибровка, rehab и BW без числового веса не входят.</p>
           </div>
           <strong className={volume.length > 1 && volume.at(-1)!.volumeKg >= volume[0].volumeKg ? 'positive' : ''}>{volumeDelta}</strong>
         </div>
@@ -435,7 +435,7 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
 
       <section className="analytics-note">
         <b>Источник данных</b>
-        <p>Встроены 31 ретроспективная тренировка из ревизии 29.06–29.09 плюс завершённые тренировки FitProgress. Для Т04–Т09 точные дни в исходнике отсутствуют: они остаются «Июль 2026», без выдуманных дат. Сегодняшний FULL BODY K учитывается после завершения тренировки и уже виден как 02.10.</p>
+        <p>Встроены 31 ретроспективная тренировка из ревизии 29.06–29.09 плюс все завершённые тренировки FitProgress. Для Т04–Т09 точные дни в исходнике отсутствуют: они остаются «Июль 2026», без выдуманных дат. Новая тренировка попадает в аналитику после её завершения.</p>
       </section>
     </main>
   )

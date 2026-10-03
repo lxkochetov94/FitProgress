@@ -1,5 +1,6 @@
 import type { AnalyticsExercise, AnalyticsSet, AnalyticsWorkout } from './analyticsModel'
 import { findDefinition } from './exerciseLibrary'
+import { localDateKey } from './dateUtils'
 
 export type StimulusStatus = 'fresh' | 'within72' | 'due' | 'high' | 'none'
 
@@ -112,7 +113,7 @@ const isTrainingSet = (set: AnalyticsSet) => {
 
   if (set.kind) {
     if (set.kind === 'warmup' || set.kind === 'calibration' || set.kind === 'rehab') return false
-    return set.kind === 'working' || set.kind === 'other' || /доп\.?s*сет/i.test(set.label)
+    return set.kind === 'working' || set.kind === 'other' || /доп\.?\s*сет/i.test(set.label)
   }
 
   const text = `${set.label} ${set.intensity}`.toLowerCase()
@@ -123,8 +124,8 @@ const isTrainingSet = (set: AnalyticsSet) => {
 const exerciseMeta = (exercise: AnalyticsExercise) => {
   const def = findDefinition(exercise.exerciseId, exercise.name)
   return {
-    muscleGroup: def?.muscleGroup ?? '',
-    movementPattern: def?.movementPattern ?? ''
+    muscleGroup: exercise.muscleGroup ?? def?.muscleGroup ?? '',
+    movementPattern: exercise.movementPattern ?? def?.movementPattern ?? ''
   }
 }
 
@@ -142,14 +143,6 @@ const exerciseLoads = (exercise: AnalyticsExercise) => {
   return result
 }
 
-const localDateIso = () => {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 const dayNumber = (iso: string) => {
   const [year, month, day] = iso.split('-').map(Number)
   return Date.UTC(year, month - 1, day) / 86400000
@@ -161,13 +154,13 @@ const laterDate = (a: string | null, b: string) => !a || b > a ? b : a
 
 function statusFor(daysSinceAny: number | null): Pick<MuscleStimulusSummary, 'status' | 'explanation'> {
   if (daysSinceAny == null) return { status: 'none', explanation: 'Нет точной датированной рабочей нагрузки.' }
-  if (daysSinceAny <= 1) return { status: 'fresh', explanation: 'Рабочий стимул был в последние 48 часов.' }
-  if (daysSinceAny <= 3) return { status: 'within72', explanation: 'Последний прямой или косвенный стимул укладывается в 72 часа.' }
-  if (daysSinceAny <= 4) return { status: 'due', explanation: 'По правилу 72 часов мышцу уже желательно вернуть в работу.' }
-  return { status: 'high', explanation: 'Более 4 дней без значимой рабочей нагрузки — высокий приоритет следующей тренировки.' }
+  if (daysSinceAny <= 1) return { status: 'fresh', explanation: 'Последний рабочий стимул был сегодня или вчера.' }
+  if (daysSinceAny <= 3) return { status: 'within72', explanation: 'Последний прямой или косвенный стимул был в пределах 3 календарных дней.' }
+  if (daysSinceAny <= 4) return { status: 'due', explanation: 'Прошло 4 календарных дня — мышцу уже желательно вернуть в работу.' }
+  return { status: 'high', explanation: 'Более 4 календарных дней без значимой рабочей нагрузки — высокий приоритет следующей тренировки.' }
 }
 
-export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate = localDateIso()): StimulusDashboard {
+export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate = localDateKey()): StimulusDashboard {
   const muscleState = new Map(TRACKED_MUSCLES.map((muscle) => [muscle, {
     effectiveSets7d: 0,
     directSets7d: 0,
@@ -198,12 +191,12 @@ export function buildStimulusDashboard(workouts: AnalyticsWorkout[], anchorDate 
         if (!state || coefficient <= 0) continue
 
         state.lastAnyDate = laterDate(state.lastAnyDate, workout.date)
-        if (coefficient >= .75) state.lastDirectDate = laterDate(state.lastDirectDate, workout.date)
+        if (coefficient >= 1) state.lastDirectDate = laterDate(state.lastDirectDate, workout.date)
 
         if (daysAgo <= 7) {
           const contribution = trainingSets.length * coefficient
           state.effectiveSets7d += contribution
-          if (coefficient >= .75) state.directSets7d += contribution
+          if (coefficient >= 1) state.directSets7d += contribution
           else state.indirectSets7d += contribution
         }
       }
