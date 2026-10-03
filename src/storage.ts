@@ -289,7 +289,7 @@ export async function initializeStorage() {
   const localActiveStamp = localActive ? sessionTime(localActive) : -Infinity
 
   let active: WorkoutSession | null
-  if (indexedActiveRecord && indexedActiveStamp >= localActiveStamp) {
+  if (indexedActiveRecord && (!localActive || indexedActiveStamp > localActiveStamp)) {
     // A null value is an intentional tombstone (for example after "Удалить").
     active = indexedActive ? clone(indexedActive) : null
   } else {
@@ -352,7 +352,7 @@ export function saveActiveSession(session: WorkoutSession | null) {
 
   // Keep UI writes synchronous while serializing the same state to IndexedDB.
   // Serial writes prevent an older keystroke from landing after a newer one.
-  void queueIndexedActiveWrite(session)
+  if (indexedDbReady) void queueIndexedActiveWrite(session)
   return indexedDbReady || localOk
 }
 
