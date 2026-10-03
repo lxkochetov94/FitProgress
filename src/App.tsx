@@ -9,6 +9,7 @@ import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgr
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { sessionWorkingVolumeKg, syncAnalyticsArchive } from './analyticsModel'
+import { localDateKey } from './dateUtils'
 
 clearTestWorkoutHistoryOnce()
 syncAnalyticsArchive()
@@ -21,7 +22,7 @@ const fmtDuration = (seconds: number) => `${String(Math.floor(seconds / 60)).pad
 
 function createSession(plan: WorkoutPlan): WorkoutSession {
   const now = new Date().toISOString()
-  return { sessionId: id(), plan: clone(plan), startedAt: now, updatedAt: now }
+  return { sessionId: id(), plan: clone(plan), startedAt: now, startedLocalDate: localDateKey(now), updatedAt: now }
 }
 
 function parseNumeric(value: string) {
