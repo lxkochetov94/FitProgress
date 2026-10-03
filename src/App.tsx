@@ -8,7 +8,7 @@ import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseIma
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
-import { syncAnalyticsArchive } from './analyticsModel'
+import { sessionWorkingVolumeKg, syncAnalyticsArchive } from './analyticsModel'
 
 clearTestWorkoutHistoryOnce()
 syncAnalyticsArchive()
@@ -376,12 +376,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   const totals = useMemo(() => {
     const sets = session.plan.exercises.flatMap((e) => e.sets)
     const done = sets.filter((s) => s.completed)
-    const volume = session.plan.exercises.flatMap((e) => e.sets).reduce((acc, s) => {
-      if (!s.completed) return acc
-      const w = parseNumeric(s.actualWeight)
-      const r = parseNumeric(s.actualReps)
-      return acc + (Number.isFinite(w) && Number.isFinite(r) ? w * r : 0)
-    }, 0)
+    const volume = sessionWorkingVolumeKg(session)
     return { totalSets: sets.length, doneSets: done.length, volume, replacements: session.plan.exercises.filter((e) => e.exerciseId !== e.originalExerciseId).length }
   }, [session])
 
@@ -957,7 +952,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
 
       <div className="finish-scroll-guard" style={{ height: finishGuardHeight }} aria-hidden="true" />
 
-      <section id="workout-summary" className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>объём*</span></div></div><small>* Тоннаж считается только там, где вес и повторы начинаются с числа.</small><button className="primary big" onClick={requestFinishWorkout}>{session.plan.exercises.every((exercise) => Boolean(exercise.finishedAt)) ? 'Завершить тренировку' : 'Завершить тренировку досрочно'}</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
+      <section id="workout-summary" className="finish-card"><h2>Итог тренировки</h2><div className="summary-grid"><div><b>{session.plan.exercises.length}</b><span>упражнений</span></div><div><b>{totals.doneSets}/{totals.totalSets}</b><span>подходов</span></div><div><b>{totals.replacements}</b><span>замен</span></div><div><b>{totals.volume ? Math.round(totals.volume).toLocaleString('ru-RU') : '—'}</b><span>тоннаж, кг*</span></div></div><small>* Только завершённые рабочие/дополнительные подходы с точным весом и повторами; lb переводятся в кг, односторонние упражнения и парные гантели учитываются по фактической работе. Разминка, калибровка, rehab и BW без числового веса не входят.</small><button className="primary big" onClick={requestFinishWorkout}>{session.plan.exercises.every((exercise) => Boolean(exercise.finishedAt)) ? 'Завершить тренировку' : 'Завершить тренировку досрочно'}</button><button className="secondary big" onClick={() => exportSession(session)}>Выгрузить Excel сейчас</button></section>
 
       {replacementFor !== null && <ReplacementSheet exercise={session.plan.exercises[replacementFor]} onClose={() => setReplacementFor(null)} onReplace={(def, reason) => replaceExercise(replacementFor, def, reason)} onCustom={(reason) => replaceCustom(replacementFor, reason)} />}
       {exerciseEnd && <EndReasonSheet
