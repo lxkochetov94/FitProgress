@@ -311,7 +311,7 @@ function MuscleStimulusRow({ item }: { item: MuscleStimulusSummary }) {
     <div className="stimulus-row">
       <div className="stimulus-row-main">
         <b>{item.muscle}</b>
-        <span>{formatMetric(item.effectiveSets7d, 2)} эфф. сетов / 7 дней</span>
+        <span>{formatMetric(item.effectiveSets7d, 2)} условных раб. сетов / 7 дней</span>
       </div>
       <div className="stimulus-row-recency">
         <span>прямой: {daysAgoLabel(item.daysSinceDirect)}</span>
@@ -331,7 +331,7 @@ function StimulusPanel({ dashboard }: { dashboard: StimulusDashboard }) {
       <div className="stimulus-head">
         <span className="eyebrow">ПЛАНИРОВАНИЕ СЛЕДУЮЩЕЙ ТРЕНИРОВКИ</span>
         <h2>Свежесть мышечных групп</h2>
-        <p>Показывает, когда мышца последний раз получила рабочий прямой или косвенный стимул и сколько эффективных сетов накопилось за 7 дней.</p>
+        <p>Показывает, когда мышца последний раз получила прямой или косвенный рабочий стимул и сколько условно-взвешенных рабочих сетов накопилось за 7 дней.</p>
       </div>
 
       <div className="stimulus-list">
