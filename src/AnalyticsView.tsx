@@ -221,8 +221,20 @@ function ExerciseChart({ points, name }: { points: ExercisePoint[]; name: string
             </linearGradient>
           </defs>
           <ChartGrid />
-          {coords.length > 1 && <path d={areaPath(coords)} fill={`url(#${uid}-fill)`} className="chart-area" />}
-          <path d={linePath(coords)} stroke={`url(#${uid}-stroke)`} className="chart-line" />
+          {(() => {
+          const segments: typeof coords[] = []
+          for (const item of coords) {
+            const current = segments[segments.length - 1]
+            if (!current?.length || current[current.length - 1].point.comparisonKey !== item.point.comparisonKey) segments.push([item])
+            else current.push(item)
+          }
+          return segments.map((segment, segmentIndex) => (
+            <g key={`segment-${segmentIndex}`}>
+              {segment.length > 1 && <path d={areaPath(segment)} fill={`url(#${uid}-fill)`} className="chart-area" />}
+              {segment.length > 1 && <path d={linePath(segment)} stroke={`url(#${uid}-stroke)`} className="chart-line" />}
+            </g>
+          ))
+        })()}
           {coords.map((item) => (
             <ChartPoint key={item.point.workoutId} x={item.x} y={item.y} active={item.index === selectedIndex} onSelect={() => setSelected(item.index)} />
           ))}
@@ -254,12 +266,15 @@ function MetricRow({ label, values, unit, absolute = false }: { label: string; v
 
 function ExerciseCard({ name, points, totalCount }: { name: string; points: ExercisePoint[]; totalCount: number }) {
   if (!points.length) return null
-  const weighted = points.some((point) => point.workWeight != null)
-  const chartValues = points
+  const latestComparisonKey = points.at(-1)!.comparisonKey
+  const comparablePoints = points.filter((point) => point.comparisonKey === latestComparisonKey)
+  const hasHistoricalVariants = new Set(points.map((point) => point.comparisonKey)).size > 1
+  const weighted = comparablePoints.some((point) => point.workWeight != null)
+  const chartValues = comparablePoints
     .map((point) => point.workWeight ?? maxExactReps(point))
     .filter((value): value is number => value != null)
   const chartTrend = trend(chartValues[0], chartValues.at(-1), weighted ? 'percent' : 'absolute')
-  const maxSets = Math.max(...points.map((point) => point.setReps.length))
+  const maxSets = Math.max(...comparablePoints.map((point) => point.setReps.length))
 
   return (
     <article className="analytics-exercise-card">
@@ -268,6 +283,7 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
           <span className="eyebrow">
             {points.length} {points.length === 1 ? 'ТРЕНИРОВКА' : 'ТРЕНИРОВОК'} В ПЕРИОДЕ
             {totalCount > points.length ? ` · ${totalCount} ВСЕГО` : ''}
+            {hasHistoricalVariants ? ' · % ТОЛЬКО ПО ТЕКУЩЕМУ ВАРИАНТУ' : ''}
           </span>
           <h2>{name}</h2>
         </div>
@@ -279,12 +295,12 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
       <ExerciseChart points={points} name={name} />
 
       <div className="analytics-distribution">
-        {weighted && <MetricRow label="Рабочий вес" values={points.map((point) => point.workWeight)} unit={points.at(-1)?.weightUnit ?? ''} />}
-        {weighted && <MetricRow label="Пиковый вес" values={points.map((point) => point.peakWeight)} unit={points.at(-1)?.weightUnit ?? ''} />}
+        {weighted && <MetricRow label="Рабочий вес" values={comparablePoints.map((point) => point.workWeight)} unit={comparablePoints.at(-1)?.weightUnit ?? ''} />}
+        {weighted && <MetricRow label="Пиковый вес" values={comparablePoints.map((point) => point.peakWeight)} unit={comparablePoints.at(-1)?.weightUnit ?? ''} />}
         {Array.from({ length: maxSets }).map((_, index) => (
-          <MetricRow key={index} label={`${index + 1}-й подход`} values={points.map((point) => point.setReps[index] ?? null)} unit="повт." absolute />
+          <MetricRow key={index} label={`${index + 1}-й подход`} values={comparablePoints.map((point) => point.setReps[index] ?? null)} unit="повт." absolute />
         ))}
-        <MetricRow label="Всего повторений" values={points.map((point) => point.totalReps)} unit="повт." absolute />
+        <MetricRow label="Всего повторений" values={comparablePoints.map((point) => point.totalReps)} unit="повт." absolute />
       </div>
     </article>
   )
