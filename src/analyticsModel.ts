@@ -65,7 +65,6 @@ export interface ExercisePoint {
   bodyweight: boolean
 }
 
-const ARCHIVE_KEY = 'fitprogress.analytics-history.v1'
 const RETRO = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
 
 /**
@@ -89,7 +88,6 @@ const comparisonKeyFor = (requestedExerciseId: string, matchedExerciseId: string
   }
   return requestedExerciseId
 }
-const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const numeric = (value?: string) => {
   const match = String(value ?? '').replace(',', '.').match(/\d+(?:\.\d+)?/)
@@ -224,39 +222,9 @@ function retroToAnalytics(tuple: RetroWorkoutTuple): AnalyticsWorkout {
   }
 }
 
-function readArchive(): WorkoutSession[] {
-  try {
-    const raw = localStorage.getItem(ARCHIVE_KEY)
-    return raw ? JSON.parse(raw) as WorkoutSession[] : []
-  } catch {
-    return []
-  }
-}
-
-export function syncAnalyticsArchive(history: WorkoutSession[] = loadHistory()) {
-  try {
-    const existing = readArchive()
-    const map = new Map(existing.map((session) => [session.sessionId, session]))
-    for (const session of history) map.set(session.sessionId, clone(session))
-    const merged = [...map.values()]
-      .filter((session) => Boolean(session.finishedAt))
-      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
-      .slice(0, 260)
-    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(merged))
-  } catch {
-    // Analytics is read-only relative to the workout core.
-  }
-}
-
 export function loadCompletedSessionHistory(): WorkoutSession[] {
-  const current = loadHistory()
-  syncAnalyticsArchive(current)
-  const archive = readArchive()
-  const sessions = new Map<string, WorkoutSession>()
-  for (const session of [...archive, ...current]) {
-    if (session.finishedAt) sessions.set(session.sessionId, session)
-  }
-  return [...sessions.values()]
+  return loadHistory()
+    .filter((session) => Boolean(session.finishedAt))
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
 }
 

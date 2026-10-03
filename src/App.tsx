@@ -3,16 +3,14 @@ import AnalyticsView from './AnalyticsView'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
-import { archiveSession, clearTestWorkoutHistoryOnce, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession } from './storage'
+import { archiveSession, clearTestWorkoutHistoryOnce, initializeStorage, isIndexedDbStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
 import { EXERCISE_IMAGE_CREDIT, exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
-import { sessionWorkingVolumeKg, syncAnalyticsArchive } from './analyticsModel'
+import { sessionWorkingVolumeKg } from './analyticsModel'
 import { localDateKey } from './dateUtils'
 
-clearTestWorkoutHistoryOnce()
-syncAnalyticsArchive()
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 const id = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
@@ -755,7 +753,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     })
   }
 
-  const finalizeWorkout = (mode: 'completed' | 'early', reason = '') => {
+  const finalizeWorkout = async (mode: 'completed' | 'early', reason = '') => {
     const next = clone(session)
     next.finishedAt = next.finishedAt ?? new Date().toISOString()
     next.finishMode = mode
@@ -763,7 +761,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     next.updatedAt = new Date().toISOString()
     delete next.activeRest
     setSession(next)
-    const archived = archiveSession(next)
+    const archived = await archiveSession(next)
     if (!archived) {
       window.alert('FitProgress не смог записать завершённую тренировку в локальный реестр. Не закрывай приложение: выгрузи эту тренировку в Excel как резервную копию.')
     }
@@ -1135,7 +1133,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
         <button className="secondary huge" onClick={exportFullRegistry}><span>↓</span><div><b>Выгрузить полный реестр</b><small>вся ретроспектива + все завершённые тренировки FitProgress</small></div></button><button className="ghost huge" onClick={downloadTemplate}><span>↓</span><div><b>Скачать Excel-шаблон</b><small>этот формат я буду готовить тебе дальше</small></div></button>
       </section>
       {error && <div className="error-box">{error}</div>}
-      <section className="offline-card"><b>Без интернета</b><p>После первого полного открытия установленная PWA хранит интерфейс локально. Текущая тренировка — в памяти Safari на устройстве.</p></section>
+      <section className="offline-card"><b>Без интернета · {isIndexedDbStorage() ? 'IndexedDB' : 'localStorage fallback'}</b><p>{isIndexedDbStorage() ? 'Основная база тренировок — встроенная IndexedDB; localStorage используется только как ограниченное совместимое зеркало.' : 'IndexedDB недоступна в этом режиме браузера, поэтому FitProgress временно использует localStorage как резервное хранилище.'} Сервер, аккаунт и VPN не нужны.</p></section>
       {history.length > 0 && <section className="history"><span className="eyebrow">ПОСЛЕДНИЕ ТРЕНИРОВКИ</span>{history.map((x) => <div className="history-row" key={x.sessionId}><div><b>{x.plan.title}</b><small>{fmtDate(x.startedAt)} · {x.finishedAt ? 'завершена' : 'не завершена'}</small></div><button onClick={() => exportSession(x)}>Excel</button></div>)}</section>}
       <footer>FitProgress v0.4 · данные тренировки не отправляются на сервер<br /><span className="asset-credit">{EXERCISE_IMAGE_CREDIT}</span></footer>
     </main>
@@ -1143,23 +1141,37 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
 }
 
 export default function App() {
-  const [session, setSessionState] = useState<WorkoutSession | null>(() => loadActiveSession())
+  const [storageReady, setStorageReady] = useState(false)
+  const [session, setSessionState] = useState<WorkoutSession | null>(null)
   const [pendingPlan, setPendingPlan] = useState<WorkoutPlan | null>(null)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
-  const [inWorkout, setInWorkout] = useState(() => {
-    const active = loadActiveSession()
-    return Boolean(active && !active.finishedAt)
-  })
+  const [inWorkout, setInWorkout] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const bootstrap = async () => {
+      clearTestWorkoutHistoryOnce()
+      await initializeStorage()
+      if (cancelled) return
+
+      const active = loadActiveSession()
+      setSessionState(active)
+      setInWorkout(Boolean(active && !active.finishedAt))
+      setStorageReady(true)
+    }
+
+    void bootstrap()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const setSession = (next: WorkoutSession) => {
     setSessionState(next)
     saveActiveSession(next)
   }
-
-  useEffect(() => {
-    if (session) saveActiveSession(session)
-  }, [session])
 
   const loadPlan = (plan: WorkoutPlan) => {
     setPendingPlan(clone(plan))
@@ -1177,15 +1189,31 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
-  const discard = () => {
+  const discard = async () => {
     if (!window.confirm('Удалить незавершённую тренировку с этого устройства?')) return
-    saveActiveSession(null)
+    const saved = await saveActiveSessionDurable(null)
+    if (!saved) {
+      window.alert('FitProgress не смог подтвердить удаление в локальном хранилище. Попробуй ещё раз перед закрытием приложения.')
+      return
+    }
     setSessionState(null)
   }
 
   const exit = () => {
     setInWorkout(false)
     window.scrollTo(0, 0)
+  }
+
+  if (!storageReady) {
+    return (
+      <main className="app-shell home-page">
+        <section className="summary-card">
+          <span className="pill">FitProgress</span>
+          <h1>Загружаю локальную историю…</h1>
+          <p>При первом запуске после обновления старые тренировки автоматически переносятся в IndexedDB.</p>
+        </section>
+      </main>
+    )
   }
 
   if (session && inWorkout) return <WorkoutView session={session} setSession={setSession} onExit={exit} />
