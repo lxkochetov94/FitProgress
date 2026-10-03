@@ -379,6 +379,20 @@ const volumeEligibleSets = (exercise: AnalyticsExercise) =>
     return true
   })
 
+export function sessionWorkingVolumeKg(session: WorkoutSession) {
+  const workout = localToAnalytics(session, 0)
+  let volumeKg = 0
+
+  for (const exercise of workout.exercises) {
+    for (const set of volumeEligibleSets(exercise)) {
+      const volume = setVolumeKg(exercise, set)
+      if (volume != null) volumeKg += volume
+    }
+  }
+
+  return volumeKg
+}
+
 export function workoutVolumeSeries(workouts: AnalyticsWorkout[]): VolumePoint[] {
   const raw = workouts
     .map((workout) => {
