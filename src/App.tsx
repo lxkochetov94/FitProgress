@@ -1004,7 +1004,7 @@ function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: ()
             </div>
           ))}
         </div>
-        <button className="primary big" onClick={onBegin}>Начать тренировку</button>
+        <button className="primary big brand-cta" onClick={onBegin}>Начать тренировку</button>
         <button className="ghost big" onClick={onBack}>Назад</button>
       </section>
     </main>
