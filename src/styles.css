@@ -2767,7 +2767,7 @@ html, body {
 }
 
 /* Liquid Glass v2: one Figma coordinate plane, exact original SVG slots. */
-.credit-set:not(.completed), .brand-cta, .home-resume-primary, .home-import-card {
+.liquid-glass-surface, .credit-set:not(.completed), .brand-cta, .home-resume-primary, .home-import-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;

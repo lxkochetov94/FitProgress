@@ -317,18 +317,18 @@
   box-shadow: 0 8px 18px rgba(20,22,21,.14);
 }
 
-.analytics-chart-value b,
-.analytics-chart-value span {
+.analytics-chart-value-copy b,
+.analytics-chart-value-copy > span {
   display: block;
 }
 
-.analytics-chart-value b {
+.analytics-chart-value-copy b {
   font-size: 15px;
   line-height: 1.05;
   letter-spacing: -.015em;
 }
 
-.analytics-chart-value span {
+.analytics-chart-value-copy > span {
   margin-top: 4px;
   color: #b9c1bc;
   font-size: 9px;
@@ -581,7 +581,7 @@
     padding: 8px 10px;
   }
 
-  .analytics-chart-value b {
+  .analytics-chart-value-copy b {
     font-size: 14px;
   }
 
@@ -865,4 +865,49 @@
     padding-left: 14px;
     padding-right: 14px;
   }
+}
+
+/* Shared approved emerald material for analytics controls and chart readouts. */
+.analytics-periods {
+  border-color: rgba(93, 180, 143, .24);
+  background: rgba(235, 247, 241, .78);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 8px 24px rgba(1,59,27,.06);
+}
+.analytics-periods button:not(.active) {
+  background: linear-gradient(135deg, rgba(255,255,255,.62), rgba(210,241,225,.32));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+  color: #436451;
+}
+.analytics-periods button.active {
+  background: transparent;
+  color: #fff;
+  transform: none;
+  border-radius: var(--glass-radius-x, 13px) / var(--glass-radius-y, 13px);
+  box-shadow: 0 2px 6px rgba(38,203,129,.16), 0 6px 12px rgba(1,59,27,.34);
+}
+.analytics-period-label, .analytics-glass-label, .analytics-chart-value-copy {
+  position: relative;
+  z-index: 1;
+}
+.analytics-periods button:focus-visible {
+  outline: 2px solid #168246;
+  outline-offset: 2px;
+}
+.analytics-periods button:active { transform: scale(.98); }
+.analytics-chart-value-copy > span { color: #d4f3e3; }
+.analytics-chart-value-copy b, .analytics-period-label, .analytics-glass-label {
+  text-shadow: 0 1px 3px rgba(0,26,13,.6);
+}
+.analytics-periods button:not(.active) .analytics-period-label { text-shadow: none; }
+.analytics-index-head > strong.liquid-glass-surface,
+.analytics-delta.liquid-glass-surface,
+.analytics-chart-value.liquid-glass-surface { background: transparent; color: #fff; }
+.analytics-chart-caption span {
+  border: 1px solid rgba(93,180,143,.24);
+  background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(219,244,231,.7));
+  color: #436451;
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgba(1,59,27,.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .analytics-periods button { transition: none; }
 }

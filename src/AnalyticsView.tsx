@@ -1,5 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import './analytics.css'
+import LiquidGlassArt from './LiquidGlassArt'
 import { exerciseSeries, filterByPeriod, formatMetric, latestWorkout, loadAnalyticsWorkouts, primarySets, workoutVolumeSeries } from './analyticsModel'
 import type { AnalyticsPeriod, ExercisePoint, VolumePoint } from './analyticsModel'
 import { buildStimulusDashboard } from './trainingStimulus'
@@ -49,9 +50,9 @@ function ChartGrid() {
 
 function ChartValue({ primary, secondary }: { primary: string; secondary: string }) {
   return (
-    <div className="analytics-chart-value" aria-live="polite">
-      <b>{primary}</b>
-      <span>{secondary}</span>
+    <div className="analytics-chart-value liquid-glass-surface" aria-live="polite">
+      <LiquidGlassArt />
+      <div className="analytics-chart-value-copy"><b>{primary}</b><span>{secondary}</span></div>
     </div>
   )
 }
@@ -282,8 +283,8 @@ function ExerciseCard({ name, points, totalCount }: { name: string; points: Exer
           </span>
           <h2>{name}</h2>
         </div>
-        <span className={`analytics-delta ${chartValues.length > 1 && chartValues.at(-1)! >= chartValues[0] ? 'positive' : ''}`}>
-          {chartTrend}
+        <span className={`analytics-delta liquid-glass-surface ${chartValues.length > 1 && chartValues.at(-1)! >= chartValues[0] ? 'positive' : ''}`}>
+          <LiquidGlassArt /><span className="analytics-glass-label">{chartTrend}</span>
         </span>
       </div>
 
@@ -396,8 +397,9 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
 
       <div className="analytics-periods" role="tablist" aria-label="Период аналитики">
         {PERIODS.map((item) => (
-          <button key={item.id} className={period === item.id ? 'active' : ''} onClick={() => setPeriod(item.id)}>
-            {item.label}
+          <button key={item.id} role="tab" aria-selected={period === item.id} className={period === item.id ? 'active liquid-glass-surface' : ''} onClick={() => setPeriod(item.id)}>
+            {period === item.id && <LiquidGlassArt />}
+            <span className="analytics-period-label">{item.label}</span>
           </button>
         ))}
       </div>
@@ -409,7 +411,7 @@ export default function AnalyticsView({ onBack }: { onBack: () => void }) {
             <h2>Общий объём</h2>
             <p>100% = рабочий тоннаж первой тренировки в выбранном периоде. Тоннаж = сумма внешнего веса × повторения; lb переводятся в кг. Разминка, калибровка, rehab и BW без числового веса не входят.</p>
           </div>
-          <strong className={volume.length > 1 && volume.at(-1)!.volumeKg >= volume[0].volumeKg ? 'positive' : ''}>{volumeDelta}</strong>
+          <strong className={`liquid-glass-surface ${volume.length > 1 && volume.at(-1)!.volumeKg >= volume[0].volumeKg ? 'positive' : ''}`}><LiquidGlassArt /><span className="analytics-glass-label">{volumeDelta}</span></strong>
         </div>
         <VolumeChart points={volume} />
       </section>
