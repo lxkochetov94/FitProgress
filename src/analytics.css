@@ -901,7 +901,11 @@
 .analytics-periods button:not(.active) .analytics-period-label { text-shadow: none; }
 .analytics-index-head > strong.liquid-glass-surface,
 .analytics-delta.liquid-glass-surface,
-.analytics-chart-value.liquid-glass-surface { background: transparent; color: #fff; }
+.analytics-chart-value.liquid-glass-surface {
+  background: transparent;
+  color: #fff;
+  border-radius: var(--glass-radius-x, 12px) / var(--glass-radius-y, 12px);
+}
 .analytics-chart-caption span {
   border: 1px solid rgba(93,180,143,.24);
   background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(219,244,231,.7));
