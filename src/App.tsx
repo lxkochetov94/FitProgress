@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import AnalyticsView from './AnalyticsView'
 import LiquidGlassArt from './LiquidGlassArt'
+import { RestGlassRing, GlassGo } from './RestGlass'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
@@ -142,7 +143,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
   const elapsed = Math.max(0, durationSec - restLeft)
   const progress = durationSec > 0 ? Math.min(1, elapsed / durationSec) : 1
   const ready = restLeft <= 0
-  const hue = Math.round(progress * 120)
+  const hue = Math.round(progress < .5 ? progress * 120 : 60 + (progress - .5) * 176)
   const visualProgress = ready ? 100 : Math.round(progress * 1000) / 10
   const restAngle = ready ? 360 : progress * 360
   const nextEyebrow = kind === 'between_sets' ? 'Следующий подход' : 'Следующее упражнение'
@@ -165,9 +166,10 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
           disabled={!ready}
           onClick={ready ? onAdvance : undefined}
         >
+          <RestGlassRing progress={progress} />
           <span className="rest-ring-marker" aria-hidden="true" />
           <div className="rest-ring-inner">
-            <strong>{ready ? 'GO!' : fmtDuration(restLeft)}</strong>
+            <strong className={ready ? 'rest-go' : undefined}>{ready ? <GlassGo /> : fmtDuration(restLeft)}</strong>
           </div>
         </button>
 
