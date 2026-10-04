@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/fitprogress-logo-unframed.png', 'apple-touch-icon.png'],
+      includeAssets: ['brand/fitprogress-logo-unframed.png', 'apple-touch-icon.png', 'apple-touch-icon-fullbleed.png'],
       manifest: {
         name: 'FitProgress',
         short_name: 'FitProgress',
