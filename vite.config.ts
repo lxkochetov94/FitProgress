@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['app-icon.svg'],
+      includeAssets: ['brand/fitprogress-logo-master.png', 'brand/fitprogress-logo-ui.png'],
       manifest: {
         name: 'FitProgress',
         short_name: 'FitProgress',
@@ -20,7 +20,8 @@ export default defineConfig({
         start_url: './',
         scope: './',
         icons: [
-          { src: 'app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
+          { src: 'brand/fitprogress-logo-master.png', sizes: '320x320', type: 'image/png', purpose: 'any' },
+          { src: 'brand/fitprogress-logo-master.png', sizes: '320x320', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {

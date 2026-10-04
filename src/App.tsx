@@ -17,6 +17,7 @@ const id = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Mat
 const fmtDate = (iso: string) => new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso))
 const fmtTime = (iso: string) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 const fmtDuration = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+const brandAsset = (path: string) => `${import.meta.env.BASE_URL}brand/${path}`
 
 function createSession(plan: WorkoutPlan): WorkoutSession {
   const now = new Date().toISOString()
@@ -88,6 +89,24 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
   )
 }
 
+function LiquidGlassArt({ variant = 'standard' }: { variant?: 'standard' | 'import' }) {
+  const prefix = variant === 'import' ? 'import-' : ''
+  return (
+    <span className={`liquid-glass-art is-${variant}`} aria-hidden="true">
+      <img className="liquid-glass-glow right" src={brandAsset(`liquid-glass/${prefix}glow-right.png`)} alt="" />
+      <img className="liquid-glass-glow left" src={brandAsset(`liquid-glass/${prefix}glow-left.png`)} alt="" />
+      <img className="liquid-glass-reflection lens" src={brandAsset(`liquid-glass/${prefix}reflection-lens.png`)} alt="" />
+      <img className="liquid-glass-reflection lower" src={brandAsset(`liquid-glass/${prefix}reflection-lower.png`)} alt="" />
+      <img className="liquid-glass-hotspot left" src={brandAsset('liquid-glass/hotspot-left.png')} alt="" />
+      <img className="liquid-glass-hotspot right" src={brandAsset('liquid-glass/hotspot-right.png')} alt="" />
+      {variant === 'import' && <img className="liquid-glass-chevron-disc" src={brandAsset('liquid-glass/chevron-glass.png')} alt="" />}
+      <span className="liquid-glass-rim" />
+      <span className="liquid-glass-chrome top" />
+      <span className="liquid-glass-chrome bottom" />
+    </span>
+  )
+}
+
 function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: WorkoutSet; rehab: boolean; weightUnit?: 'kg' | 'lb'; onChange: (patch: Partial<WorkoutSet>) => void; onCredit: () => void }) {
   const setLabel = set.isExtra ? `Дополнительный ${set.setNo}` : set.setType === 'working' ? `Рабочий ${set.setNo}` : set.setType === 'warmup' ? 'Разминка' : set.setType === 'calibration' ? 'Калибровка' : `Подход ${set.setNo}`
   const unit = weightUnit === 'lb' ? 'lbs' : 'кг'
@@ -120,7 +139,8 @@ function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: Wo
       </div>
       <textarea className="comment compact-comment" rows={1} value={set.comment} onChange={(e) => onChange({ comment: e.target.value })} placeholder="Комментарий к подходу — необязательно" />
       <button type="button" className={set.completed ? 'credit-set completed' : 'credit-set'} onClick={onCredit}>
-        {set.completed ? 'Засчитан ✓' : 'Засчитать подход'}
+        {!set.completed && <LiquidGlassArt />}
+        <span className="liquid-glass-content">{set.completed ? 'Засчитан ✓' : 'Засчитать подход'}</span>
       </button>
     </div>
   )
@@ -1004,7 +1024,10 @@ function PlanPreview({ plan, onBegin, onBack }: { plan: WorkoutPlan; onBegin: ()
             </div>
           ))}
         </div>
-        <button className="primary big brand-cta" onClick={onBegin}>Начать тренировку</button>
+        <button className="primary big brand-cta" onClick={onBegin}>
+          <LiquidGlassArt />
+          <span className="liquid-glass-content">Начать тренировку</span>
+        </button>
         <button className="ghost big" onClick={onBack}>Назад</button>
       </section>
     </main>
@@ -1143,7 +1166,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
   return (
     <main className="app-shell home-page home-page-v2">
       <header className="home-brand-v2">
-        <div className="brand-mark home-brand-mark"><span /><i /><span /></div>
+        <img className="home-brand-logo" src={brandAsset('fitprogress-logo-ui.png')} alt="" />
         <div className="home-brand-copy"><b>FitProgress</b><small>тренировочный дневник</small></div>
       </header>
 
@@ -1155,13 +1178,17 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
             <p>{fmtDate(active.startedAt)} · начало {fmtTime(active.startedAt)}</p>
           </div>
           <div className="home-resume-actions">
-            <button className="home-resume-primary" onClick={onResume}>Продолжить</button>
+            <button className="home-resume-primary" onClick={onResume}>
+              <LiquidGlassArt />
+              <span className="liquid-glass-content">Продолжить</span>
+            </button>
             <button className="home-resume-delete" onClick={onDiscard}>Удалить</button>
           </div>
         </section>
       )}
 
       <button className="home-import-card" onClick={() => fileRef.current?.click()}>
+        <LiquidGlassArt variant="import" />
         <span className="home-import-icon"><HomeGlyph name="upload" /></span>
         <span className="home-import-copy">
           <b>Импортировать тренировку</b>
