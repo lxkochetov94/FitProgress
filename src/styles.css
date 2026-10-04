@@ -440,15 +440,14 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   box-shadow: 0 10px 22px rgba(1, 59, 27, .16), inset 0 1px 0 rgba(255,255,255,.16);
   transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
 }
-.credit-set:not(.completed):active {
+.credit-set:active {
   transform: scale(.988);
   filter: saturate(1.06) brightness(.96);
   box-shadow: 0 6px 14px rgba(1, 59, 27, .14), inset 0 1px 0 rgba(255,255,255,.12);
 }
 .credit-set.completed {
-  background: var(--fp-emerald-600);
+  background: transparent;
   color: white;
-  box-shadow: none;
 }
 .exercise-close-actions {
   display: grid;
@@ -475,7 +474,7 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 }
 .compact-sheet { max-height: 72vh; }
 .danger-primary {
-  background: #8b2f2f !important;
+  background: transparent !important;
   color: white !important;
 }
 .rest-timer {
@@ -2767,7 +2766,7 @@ html, body {
 }
 
 /* Liquid Glass v2: one Figma coordinate plane, exact original SVG slots. */
-.liquid-glass-surface, .credit-set:not(.completed), .brand-cta, .home-resume-primary, .home-import-card {
+.liquid-glass-surface, .credit-set, .brand-cta, .home-resume-primary, .home-import-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -2778,7 +2777,7 @@ html, body {
     0 calc(5px * var(--glass-shadow-scale, .5)) calc(16px * var(--glass-shadow-scale, .5)) calc(-7px * var(--glass-shadow-scale, .5)) rgba(38,203,129,.16),
     0 calc(18px * var(--glass-shadow-scale, .5)) calc(34px * var(--glass-shadow-scale, .5)) calc(-6px * var(--glass-shadow-scale, .5)) rgba(1,59,27,.34);
 }
-.credit-set:not(.completed)::after, .brand-cta::after,
+.credit-set::after, .brand-cta::after,
 .home-resume-primary::after, .home-import-card::after { content: none; }
 
 .liquid-glass-art {
@@ -2860,11 +2859,11 @@ html, body {
 .home-import-chevron {
   background: url('../public/brand/liquid-glass/chevron-glass.svg') center / contain no-repeat;
 }
-.credit-set:not(.completed):active, .brand-cta:active, .home-resume-primary:active, .home-import-card:active {
+.credit-set:active, .brand-cta:active, .home-resume-primary:active, .home-import-card:active {
   transform: scale(.988);
   filter: brightness(.96);
 }
-.credit-set:not(.completed):focus-visible, .brand-cta:focus-visible,
+.credit-set:focus-visible, .brand-cta:focus-visible,
 .home-resume-primary:focus-visible, .home-import-card:focus-visible {
   outline: 3px solid rgba(93,234,178,.7); outline-offset: 3px;
 }
@@ -2908,3 +2907,13 @@ html, body {
   .rest-glass-arc { transition: none; }
   .inline-rest.is-ready .rest-glass-go { animation: none; }
 }
+
+/* Ruby glass uses the exact emerald geometry and reflection layers. */
+.liquid-glass-art.tone-red .liquid-glass-canvas { filter: hue-rotate(-148deg); }
+.danger-primary.liquid-glass-surface {
+  border: 0;
+  border-radius: var(--glass-radius-x, 16px) / var(--glass-radius-y, 16px);
+  box-shadow: 0 3px 8px rgba(203,38,60,.16), 0 8px 16px rgba(89,5,20,.3);
+}
+.danger-primary.liquid-glass-surface:active { transform: scale(.988); filter: brightness(.96); }
+.danger-primary.liquid-glass-surface:focus-visible { outline: 3px solid rgba(234,93,125,.7); outline-offset: 3px; }

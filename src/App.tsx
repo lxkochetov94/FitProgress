@@ -123,7 +123,7 @@ function SetRow({ set, rehab, weightUnit = 'kg', onChange, onCredit }: { set: Wo
       </div>
       <textarea className="comment compact-comment" rows={1} value={set.comment} onChange={(e) => onChange({ comment: e.target.value })} placeholder="Комментарий к подходу — необязательно" />
       <button type="button" className={set.completed ? 'credit-set completed' : 'credit-set'} onClick={onCredit}>
-        {!set.completed && <LiquidGlassArt />}
+        <LiquidGlassArt />
         <span className="liquid-glass-content">{set.completed ? 'Засчитан ✓' : 'Засчитать подход'}</span>
       </button>
     </div>
@@ -200,7 +200,7 @@ function EndReasonSheet({ title, description, confirmLabel, onClose, onConfirm, 
         <div className="reason-grid">
           {reasons.map((item) => <button key={item} className={reason === item ? 'reason active' : 'reason'} onClick={() => setReason(item)}>{item}</button>)}
         </div>
-        <button className="primary big danger-primary" onClick={() => onConfirm(reason)}>{confirmLabel}</button>
+        <button className="primary big danger-primary liquid-glass-surface" onClick={() => onConfirm(reason)}><LiquidGlassArt tone="red" /><span className="liquid-glass-content">{confirmLabel}</span></button>
         <button className="ghost big" onClick={onClose}>Отмена</button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 const brandAsset = (path: string) => `${import.meta.env.BASE_URL}brand/${path}`
 
-export default function LiquidGlassArt({ variant = 'standard' }: { variant?: 'standard' | 'import' }) {
+export default function LiquidGlassArt({ variant = 'standard', tone = 'green' }: { variant?: 'standard' | 'import'; tone?: 'green' | 'red' }) {
   const ref = useRef<HTMLSpanElement>(null)
   const designHeight = variant === 'import' ? 206 : 112
   const [scale, setScale] = useState({ x: 1, y: 1 })
@@ -37,7 +37,7 @@ export default function LiquidGlassArt({ variant = 'standard' }: { variant?: 'st
         ['hotspot-left', 16.08, 0], ['hotspot-right', 853.8, 0],
       ] as const
   return (
-    <span ref={ref} className={`liquid-glass-art is-${variant}`} aria-hidden="true">
+    <span ref={ref} className={`liquid-glass-art is-${variant} tone-${tone}`} aria-hidden="true">
       <span className="liquid-glass-canvas" style={{ height: designHeight, transform: `scale(${scale.x}, ${scale.y})` }}>
         {layers.map(([name, left, top]) => (
           <img key={name} src={brandAsset(`liquid-glass/${prefix}${name}.svg`)} alt="" style={{ left, top }} />
