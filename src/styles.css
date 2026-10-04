@@ -830,196 +830,7 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   .between_exercises .rest-ring-inner strong { font-size: 24px; }
 }
 
-/* FitProgress Liquid Glass — production implementation of approved Figma CTA v1 */
-.credit-set:not(.completed),
-.brand-cta,
-.home-resume-primary,
-.home-import-card {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border: 1.5px solid rgba(255, 255, 255, .82);
-  background: linear-gradient(147deg, #001a0d 7%, var(--fp-emerald-950) 40%, var(--fp-emerald-800) 70%, var(--fp-emerald-600) 95%);
-  box-shadow:
-    0 5px 16px -7px rgba(38, 203, 129, .16),
-    0 18px 34px -6px rgba(1, 59, 27, .34),
-    inset 0 -6px 15px rgba(0, 0, 0, .72),
-    inset 0 -2px 8px rgba(164, 247, 219, .32),
-    inset 0 2px 4px rgba(255, 255, 255, .54);
-}
-
-.home-import-card {
-  background: linear-gradient(130deg, #001a0d 7%, var(--fp-emerald-950) 40%, var(--fp-emerald-800) 70%, var(--fp-emerald-600) 95%);
-}
-
-.credit-set:not(.completed)::after,
-.brand-cta::after,
-.home-resume-primary::after,
-.home-import-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: auto;
-  height: auto;
-  border: 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255,255,255,.12), transparent 24%, transparent 70%, rgba(0,0,0,.18));
-  transform: none;
-  pointer-events: none;
-}
-
-.liquid-glass-art {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.liquid-glass-art img,
-.liquid-glass-art span {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-  user-select: none;
-}
-
-.liquid-glass-glow,
-.liquid-glass-reflection,
-.liquid-glass-hotspot {
-  max-width: none;
-}
-
-.liquid-glass-art.is-standard .liquid-glass-glow.right {
-  right: -1%;
-  top: 0;
-  width: 43%;
-  height: 100%;
-}
-
-.liquid-glass-art.is-standard .liquid-glass-glow.left {
-  left: 0;
-  top: 0;
-  width: 40%;
-  height: 100%;
-}
-
-.liquid-glass-art.is-standard .liquid-glass-reflection.lens {
-  right: 6%;
-  top: 0;
-  width: 56%;
-  height: 100%;
-}
-
-.liquid-glass-art.is-standard .liquid-glass-reflection.lower {
-  right: 0;
-  bottom: 0;
-  width: 33%;
-  height: 94%;
-}
-
-.liquid-glass-art.is-import .liquid-glass-glow.right {
-  right: 0;
-  top: 0;
-  width: 44%;
-  height: 100%;
-}
-
-.liquid-glass-art.is-import .liquid-glass-glow.left {
-  left: 0;
-  top: 0;
-  width: 41%;
-  height: 100%;
-}
-
-.liquid-glass-art.is-import .liquid-glass-reflection.lens {
-  right: 4%;
-  top: 0;
-  width: 57%;
-  height: 78%;
-}
-
-.liquid-glass-art.is-import .liquid-glass-reflection.lower {
-  right: 0;
-  bottom: 0;
-  width: 31%;
-  height: 100%;
-}
-
-.liquid-glass-hotspot.left {
-  left: 2.1%;
-  top: 0;
-  width: 8.1%;
-  height: 22%;
-}
-
-.liquid-glass-hotspot.right {
-  right: 1.9%;
-  top: 0;
-  width: 9.4%;
-  height: 24%;
-}
-
-.liquid-glass-rim {
-  inset: 2px;
-  z-index: 2;
-  border: 1.5px solid rgba(255, 255, 255, .88);
-  border-radius: calc(100% / 3.25);
-  box-shadow: 0 0 8px rgba(164, 247, 219, .34), inset 0 0 5px rgba(164, 247, 219, .18);
-}
-
-.liquid-glass-art.is-import .liquid-glass-rim {
-  inset: 3px;
-  border-width: 2px;
-  border-radius: 25px;
-}
-
-.liquid-glass-chrome {
-  z-index: 3;
-  filter: blur(.7px);
-}
-
-.liquid-glass-chrome.top {
-  left: 7%;
-  top: 1px;
-  width: 34%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(164,247,219,.72), rgba(255,255,255,.98), rgba(164,247,219,.58), transparent);
-}
-
-.liquid-glass-chrome.bottom {
-  right: 7%;
-  bottom: 2px;
-  width: 28%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(93,234,178,.48), rgba(255,255,255,.86), transparent);
-}
-
-.liquid-glass-chevron-disc {
-  right: 20px;
-  top: 50%;
-  z-index: 2;
-  width: 38px;
-  height: 38px;
-  transform: translateY(-50%);
-}
-
-.liquid-glass-content,
-.home-import-icon,
-.home-import-copy,
-.home-import-chevron {
-  position: relative;
-  z-index: 4;
-}
-
-.liquid-glass-content {
-  display: inline-block;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 26, 13, .72);
-}
-
+/* Approved UI logo — exact Figma asset. */
 .home-brand-logo {
   display: block;
   width: 64px;
@@ -1027,59 +838,10 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   flex: none;
   object-fit: contain;
   border-radius: 20px;
-  filter: drop-shadow(0 10px 18px rgba(1, 59, 27, .16));
+  filter: drop-shadow(0 10px 18px rgba(1,59,27,.16));
 }
-
-.home-import-icon {
-  border-color: rgba(255,255,255,.3);
-  background: rgba(255,255,255,.08);
-  backdrop-filter: blur(12px);
-  box-shadow: inset 0 1px 3px rgba(255,255,255,.34), 0 8px 24px rgba(0,26,13,.16);
-}
-
-.home-import-copy small { color: rgba(164,247,219,.82); }
-.home-import-chevron { background: transparent; }
-
-.credit-set:not(.completed):active,
-.brand-cta:active,
-.home-resume-primary:active,
-.home-import-card:active {
-  transform: scale(.988);
-  filter: saturate(1.04) brightness(.96);
-  box-shadow:
-    0 4px 12px -6px rgba(38,203,129,.14),
-    0 10px 20px -6px rgba(1,59,27,.28),
-    inset 0 -5px 13px rgba(0,0,0,.74),
-    inset 0 2px 4px rgba(255,255,255,.45);
-}
-
-.credit-set:not(.completed):focus-visible,
-.brand-cta:focus-visible,
-.home-resume-primary:focus-visible,
-.home-import-card:focus-visible {
-  outline: 3px solid rgba(93, 234, 178, .7);
-  outline-offset: 3px;
-}
-
 @media (max-width: 520px) {
-  .home-brand-logo {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-  }
-
-  .liquid-glass-chevron-disc {
-    right: 16px;
-    width: 34px;
-    height: 34px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .credit-set,
-  .brand-cta,
-  .home-resume-primary,
-  .home-import-card { transition: none; }
+  .home-brand-logo { width: 58px; height: 58px; border-radius: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3004,43 +2766,108 @@ html, body {
   }
 }
 
-/* Final cascade guard: keep the approved glass treatment above legacy CTA rules. */
-.credit-set:not(.completed),
-.brand-cta,
-.home-resume-primary,
-.home-import-card {
+/* Liquid Glass v2: one Figma coordinate plane, exact original SVG slots. */
+.credit-set:not(.completed), .brand-cta, .home-resume-primary, .home-import-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1.5px solid rgba(255,255,255,.82);
-  background: linear-gradient(147deg, #001a0d 7%, #013b1b 40%, #046935 70%, #0c9c57 95%);
-  box-shadow: 0 5px 16px -7px rgba(38,203,129,.16), 0 18px 34px -6px rgba(1,59,27,.34), inset 0 -6px 15px rgba(0,0,0,.72), inset 0 -2px 8px rgba(164,247,219,.32), inset 0 2px 4px rgba(255,255,255,.54);
+  border: 0;
+  border-radius: var(--glass-radius-x, 16px) / var(--glass-radius-y, 16px);
+  background: transparent;
+  box-shadow:
+    0 calc(5px * var(--glass-shadow-scale, .5)) calc(16px * var(--glass-shadow-scale, .5)) calc(-7px * var(--glass-shadow-scale, .5)) rgba(38,203,129,.16),
+    0 calc(18px * var(--glass-shadow-scale, .5)) calc(34px * var(--glass-shadow-scale, .5)) calc(-6px * var(--glass-shadow-scale, .5)) rgba(1,59,27,.34);
 }
+.credit-set:not(.completed)::after, .brand-cta::after,
+.home-resume-primary::after, .home-import-card::after { content: none; }
 
-.home-import-card {
-  background: linear-gradient(130deg, #001a0d 7%, #013b1b 40%, #046935 70%, #0c9c57 95%);
-}
-
-.credit-set:not(.completed)::after,
-.brand-cta::after,
-.home-resume-primary::after,
-.home-import-card::after {
-  content: "";
+.liquid-glass-art {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  width: auto;
-  height: auto;
-  border: 0;
+  z-index: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255,255,255,.12), transparent 24%, transparent 70%, rgba(0,0,0,.18));
-  transform: none;
+  overflow: hidden;
   pointer-events: none;
 }
-
-.liquid-glass-content,
-.home-import-icon,
-.home-import-copy,
-.home-import-chevron { position: relative; z-index: 4; }
-
-.home-import-chevron { background: transparent; }
+.liquid-glass-canvas {
+  position: absolute;
+  display: block;
+  left: 0;
+  top: 0;
+  width: 920px;
+  transform-origin: 0 0;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,.82);
+  border-radius: 34px;
+  background: linear-gradient(147.00533085585755deg, #001a0d 7.0175%, #013b1b 40.351%, #046935 70.175%, #0c9c57 94.737%);
+}
+.is-import .liquid-glass-canvas {
+  border-radius: 48px;
+  background: linear-gradient(129.94208861907822deg, #001a0d 7.0175%, #013b1b 40.351%, #046935 70.175%, #0c9c57 94.737%);
+}
+.liquid-glass-canvas > img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  /* Intrinsic SVG width/height are preserved; only the entire canvas is scaled. */
+}
+.liquid-glass-canvas > span { position: absolute; display: block; }
+.liquid-glass-top-edge {
+  left: 22.3px; top: .5px; width: 872.4px; height: 3px;
+  border-radius: 2px; filter: blur(.6px);
+  background: linear-gradient(90deg, transparent, rgba(164,247,219,.78) 16%, rgba(255,255,255,.92) 48%, rgba(164,247,219,.48) 82%, transparent);
+}
+.is-import .liquid-glass-top-edge { left: 32.1px; width: 852.8px; }
+.liquid-glass-rim {
+  left: 3.5px; top: 3.5px; width: 910px; height: 102px;
+  border: 2.4px solid rgba(255,255,255,.88);
+  border-radius: 29px;
+  filter: drop-shadow(0 0 2.5px rgba(164,247,219,.34));
+}
+.is-import .liquid-glass-rim { height: 196px; border-radius: 43px; }
+.liquid-glass-chrome.top {
+  left: 62.9px; top: 2.5px; width: 312.8px; height: 5px;
+  border-radius: 3px; filter: blur(.9px);
+  background: linear-gradient(90deg, transparent, rgba(164,247,219,.72) 22%, rgba(255,255,255,.98) 48%, rgba(164,247,219,.58) 76%, transparent);
+}
+.liquid-glass-chrome.bottom {
+  left: 596.5px; top: 103.5px; width: 257.6px; height: 4px;
+  border-radius: 3px; filter: blur(.75px);
+  background: linear-gradient(90deg, transparent, rgba(93,234,178,.48) 34%, rgba(255,255,255,.86) 64%, transparent);
+}
+.is-import .liquid-glass-chrome.bottom { top: 197.5px; }
+.liquid-glass-depth {
+  inset: 0; border-radius: inherit;
+  box-shadow: inset 0 -6px 15px rgba(0,0,0,.72), inset 0 -2px 8px rgba(164,247,219,.32), inset 0 2px 4px rgba(255,255,255,.54);
+}
+.liquid-glass-content, .home-import-icon, .home-import-copy, .home-import-chevron {
+  position: relative; z-index: 1;
+}
+.home-resume-primary .liquid-glass-content, .liquid-glass-content {
+  display: inline-block;
+  color: #fff;
+  font-size: inherit;
+  font-weight: inherit;
+  text-shadow: 0 2px 4px rgba(0,26,13,.72);
+}
+.home-import-icon {
+  border: 1.5px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 4px rgba(255,255,255,.42), 0 7px 16px -4px rgba(0,26,13,.28);
+}
+.home-import-copy small { color: rgba(164,247,219,.82); }
+.home-import-chevron {
+  background: url('../public/brand/liquid-glass/chevron-glass.svg') center / contain no-repeat;
+}
+.credit-set:not(.completed):active, .brand-cta:active, .home-resume-primary:active, .home-import-card:active {
+  transform: scale(.988);
+  filter: brightness(.96);
+}
+.credit-set:not(.completed):focus-visible, .brand-cta:focus-visible,
+.home-resume-primary:focus-visible, .home-import-card:focus-visible {
+  outline: 3px solid rgba(93,234,178,.7); outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .credit-set, .brand-cta, .home-resume-primary, .home-import-card { transition: none; }
+}
