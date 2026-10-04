@@ -1151,7 +1151,7 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
   return (
     <main className="app-shell home-page home-page-v2">
       <header className="home-brand-v2">
-        <img className="home-brand-logo" src={brandAsset('fitprogress-logo-ui.png')} alt="" />
+        <img className="home-brand-logo" src={brandAsset('fitprogress-logo-unframed.png')} alt="" />
         <div className="home-brand-copy"><b>FitProgress</b><small>тренировочный дневник</small></div>
       </header>
 

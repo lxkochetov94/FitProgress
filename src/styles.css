@@ -836,11 +836,11 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
   height: 64px;
   flex: none;
   object-fit: contain;
-  border-radius: 20px;
+  border-radius: 0;
   filter: drop-shadow(0 10px 18px rgba(1,59,27,.16));
 }
 @media (max-width: 520px) {
-  .home-brand-logo { width: 58px; height: 58px; border-radius: 18px; }
+  .home-brand-logo { width: 58px; height: 58px; border-radius: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
