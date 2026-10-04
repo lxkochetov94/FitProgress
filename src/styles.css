@@ -2893,9 +2893,9 @@ html, body {
   background: radial-gradient(circle at 30% 20%, #edfff5, hsl(var(--rest-hue) 70% 45%) 35%, hsl(var(--rest-hue) 85% 17%) 85%) !important;
   box-shadow: 0 1px 4px hsl(var(--rest-hue) 65% 16% / .4), inset 0 1px 2px #fff !important;
 }
-.rest-ring-inner strong.rest-go,
-.between_exercises .rest-ring-inner strong.rest-go,
-.inline-rest.is-ready .rest-ring-inner strong.rest-go {
+.rest-ring-inner strong.rest-go-logo,
+.between_exercises .rest-ring-inner strong.rest-go-logo,
+.inline-rest.is-ready .rest-ring-inner strong.rest-go-logo {
   display: block;
   width: 78% !important;
   transform: none !important;

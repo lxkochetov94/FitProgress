@@ -169,7 +169,7 @@ function RestBlock({ kind, durationSec, restLeft, exerciseName, nextSetNo, nextE
           <RestGlassRing progress={progress} />
           <span className="rest-ring-marker" aria-hidden="true" />
           <div className="rest-ring-inner">
-            <strong className={ready ? 'rest-go' : undefined}>{ready ? <GlassGo /> : fmtDuration(restLeft)}</strong>
+            <strong className={ready ? 'rest-go-logo' : undefined}>{ready ? <GlassGo /> : fmtDuration(restLeft)}</strong>
           </div>
         </button>
 
