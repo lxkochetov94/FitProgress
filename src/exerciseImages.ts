@@ -17,6 +17,86 @@ const WORKOUT_IMAGE_ALIASES: Record<string, string> = {
   one_arm_cable_triceps_pushdown: 'one_arm_cable_triceps_pushdown', one_arm_cable_pushdown: 'one_arm_cable_triceps_pushdown'
 }
 
+const exerciseDb = 'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@main/'
+const gymPlannerDb = 'https://cdn.jsdelivr.net/gh/H-Ossama/GYM_planner@main/app/src/main/assets/exercices-gifs/'
+const gymWikiDb = 'https://cdn.jsdelivr.net/gh/maistrenko-roman/Gym_Wiki@main/public/exercises/'
+
+// Internet illustrations selected for the complete 2026-10-11 registry.
+// Existing curated local WebP aliases above keep priority; these URLs cover the remaining registry IDs.
+const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
+  old_hammer_shoulder_press: `${exerciseDb}delts/lever-shoulder-press.gif`,
+  old_leg_press: `${exerciseDb}glutes/sled-45-leg-press.gif`,
+  old_db_lateral_raise_standing: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
+  old_leg_extension: `${exerciseDb}quads/lever-leg-extension.gif`,
+  old_reverse_pec_deck: `${exerciseDb}delts/lever-seated-reverse-fly.gif`,
+  old_leg_curl: `${exerciseDb}hamstrings/lever-lying-leg-curl.gif`,
+  old_cable_pushdown: `${exerciseDb}triceps/cable-pushdown.gif`,
+  old_reverse_ez_curl: `${exerciseDb}biceps/ez-barbell-reverse-grip-curl.gif`,
+  old_db_shrug: `${exerciseDb}traps/dumbbell-shrug.gif`,
+  old_dips: `${exerciseDb}pectorals/chest-dip.gif`,
+  old_db_pullover: `${exerciseDb}pectorals/dumbbell-pullover.gif`,
+  old_lat_pulldown: `${exerciseDb}lats/cable-pulldown.gif`,
+  old_incline_db_press: `${exerciseDb}pectorals/dumbbell-incline-bench-press.gif`,
+  old_straight_bar_curl: `${exerciseDb}biceps/barbell-curl.gif`,
+  old_db_skullcrusher: `${exerciseDb}triceps/dumbbell-lying-triceps-extension.gif`,
+  old_hammer_curl: `${exerciseDb}biceps/dumbbell-hammer-curl.gif`,
+  old_ez_curl: `${exerciseDb}biceps/ez-barbell-curl.gif`,
+  old_hammer_chest_press: `${exerciseDb}pectorals/lever-chest-press.gif`,
+  old_overhead_cable_extension: `${exerciseDb}triceps/cable-overhead-triceps-extension-rope-attachment.gif`,
+  old_seated_row: `${exerciseDb}upper-back/lever-seated-row.gif`,
+  old_pec_deck: `${exerciseDb}pectorals/lever-seated-fly.gif`,
+  old_close_grip_pushup: `${exerciseDb}triceps/close-grip-push-up.gif`,
+  old_bench_dips: `${exerciseDb}triceps/bench-dip-knees-bent.gif`,
+
+  matrix_leg_extension: `${exerciseDb}quads/lever-leg-extension.gif`,
+  standing_db_curl: `${exerciseDb}biceps/dumbbell-standing-biceps-curl.gif`,
+  db_hammer_curl: `${exerciseDb}biceps/dumbbell-hammer-curl.gif`,
+  matrix_triceps_pressdown_v: `${exerciseDb}triceps/cable-triceps-pushdown-v-bar.gif`,
+  seated_db_shoulder_press: `${exerciseDb}delts/dumbbell-seated-shoulder-press.gif`,
+  seated_db_lateral_raise: `${exerciseDb}delts/dumbbell-seated-lateral-raise.gif`,
+  lat_pulldown_medium: `${exerciseDb}lats/twin-handle-parallel-grip-lat-pulldown.gif`,
+  seated_row_generic: `${exerciseDb}upper-back/lever-seated-row.gif`,
+  one_arm_row_generic: `${exerciseDb}upper-back/dumbbell-one-arm-bent-over-row.gif`,
+  face_pull: `${gymPlannerDb}shoulder_gifs/face_pull.gif`,
+  db_pullover: `${exerciseDb}pectorals/dumbbell-pullover.gif`,
+  matrix_chest_press: `${exerciseDb}pectorals/lever-chest-press.gif`,
+  retro_new_incline_machine_press: `${exerciseDb}pectorals/lever-incline-chest-press.gif`,
+  pec_deck: `${exerciseDb}pectorals/lever-seated-fly.gif`,
+  rope_pushdown: `${exerciseDb}triceps/cable-pushdown-with-rope-attachment.gif`,
+  reverse_grip_pushdown: `${exerciseDb}triceps/cable-reverse-grip-pushdown.gif`,
+  ez_preacher_curl: `${exerciseDb}biceps/ez-barbell-close-grip-preacher-curl.gif`,
+  bulgarian_split_squat: `${exerciseDb}quads/dumbbell-single-leg-split-squat.gif`,
+  lateral_raise_machine: `${exerciseDb}delts/lever-lateral-raise.gif`,
+  lat_pulldown_wide: `${exerciseDb}lats/cable-pulldown-pro-lat-bar.gif`,
+  matrix_seated_row: `${exerciseDb}upper-back/lever-seated-row.gif`,
+  reverse_pec_deck: `${exerciseDb}delts/lever-seated-reverse-fly.gif`,
+  hip_adductor: `${exerciseDb}adductors/lever-seated-hip-adduction.gif`,
+  hip_abductor: `${exerciseDb}abductors/lever-seated-hip-abduction.gif`,
+  matrix_biceps_curl: `${exerciseDb}biceps/lever-bicep-curl.gif`,
+  matrix_seated_row_unilateral: `${exerciseDb}upper-back/lever-unilateral-row.gif`,
+  cable_rear_delt_fly: `${gymPlannerDb}shoulder_gifs/cable_rear_delt_fly.gif`,
+
+  er_isometric: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
+  ir_isometric: `${exerciseDb}delts/cable-seated-shoulder-internal-rotation.gif`,
+  abduction_isometric: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
+  scaption: `${exerciseDb}delts/dumbbell-full-can-lateral-raise.gif`,
+  cable_er_elbow_tucked: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
+  db_lateral_raise: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
+  db_sumo_squat: `${gymPlannerDb}leg_gifs/plie_dumbbell_squat.gif`,
+  one_arm_cable_lateral_raise: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
+  incline_db_press_legacy: `${exerciseDb}pectorals/dumbbell-incline-bench-press.gif`,
+  wide_grip_pullup: `${exerciseDb}lats/wide-grip-pull-up.gif`,
+  retro_new_cable_seated_row_unilateral: `${exerciseDb}upper-back/cable-seated-one-arm-alternate-row.gif`,
+  one_arm_cable_rear_delt: `${exerciseDb}delts/cable-cross-over-revers-fly.gif`,
+  cable_er_30_45: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
+  cable_er_45_60: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
+  cable_er_60_75: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
+  one_arm_bayesian_curl: `${gymWikiDb}Cable-Single-Arm-Bayesian-Curl.gif`,
+  matrix_triceps_extension: `${exerciseDb}triceps/lever-triceps-extension.gif`,
+  walking_lunges: `${exerciseDb}glutes/dumbbell-lunge.gif`,
+  short_lever_cable_fly: `${exerciseDb}pectorals/cable-one-arm-decline-chest-fly.gif`
+}
+
 export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
   barbell_rdl: `${base}barbell_rdl.png`,
   bulgarian_split_squat: `${base}bulgarian_split_squat.png`,
@@ -170,10 +250,13 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
 }
 
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
-  const illustration = WORKOUT_IMAGE_ALIASES[exerciseId || def?.id || '']
+  const id = exerciseId || def?.id || ''
+  const illustration = WORKOUT_IMAGE_ALIASES[id]
   if (illustration) return `${online}${illustration}.webp`
+  const external = EXTERNAL_EXERCISE_IMAGES[id]
+  if (external) return external
   if (!def) return undefined
   return BUILTIN_EXERCISE_IMAGES[def.id] || generatedExerciseIllustration(def)
 }
 
-export const EXERCISE_IMAGE_CREDIT = 'Иллюстрации: FitnessProgramer, Lift Manual. Доступны офлайн; специальные варианты выполняйте по инструкции тренировки.'
+export const EXERCISE_IMAGE_CREDIT = 'Иллюстрации упражнений: внешние учебные источники; полный список источников — SOURCES.md. Интернет-GIF кэшируются после первого открытия. Специальные rehab-варианты выполняйте по инструкции тренировки.'
