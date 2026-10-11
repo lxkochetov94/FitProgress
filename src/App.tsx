@@ -1230,6 +1230,27 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                 </details>
               </div>
             )}
+            {exercise.id === 'db_pullover' && (
+              <div className="incline-family-history">
+                <h3>Пуловер с гантелью · общая история</h3>
+                <p>История старого и нового залов объединена без изменения исходных записей. Для плеча сохраняется ограничение комфортной амплитуды.</p>
+                <div className="library-values">
+                  <div><span>Старый зал · лучший результат</span><b>{getDefinition('old_db_pullover')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Новый зал · лучший результат</span><b>{getDefinition('db_pullover')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Сессий в FitProgress</span><b>{pulloverSessions}</b></div>
+                </div>
+                <details>
+                  <summary>История обоих залов ({pulloverHistory.length})</summary>
+                  {pulloverHistory.length ? pulloverHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  )) : <p>Записи завершённых тренировок появятся после сохранения сессий.</p>}
+                </details>
+              </div>
+            )}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}
           </article>
         ))}
