@@ -36,6 +36,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   old_cable_pushdown: `${exerciseDb}triceps/cable-pushdown.gif`,
   old_reverse_ez_curl: `${exerciseDb}biceps/ez-barbell-reverse-grip-curl.gif`,
   old_db_shrug: `${exerciseDb}traps/dumbbell-shrug.gif`,
+  db_shrug: `${exerciseDb}traps/dumbbell-shrug.gif`,
   old_dips: `${exerciseDb}pectorals/chest-dip.gif`,
   old_db_pullover: `${exerciseDb}pectorals/dumbbell-pullover.gif`,
   old_lat_pulldown: `${exerciseDb}lats/cable-pulldown.gif`,
