@@ -29,7 +29,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 
 | Exercise ID | Source collection | Source asset |
 | --- | --- | --- |
-| `old_hammer_shoulder_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/lever-shoulder-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/lever-shoulder-press.gif) |
+| `old_hammer_shoulder_press` | [Fitness Programmer — Plate Loaded Shoulder Press](https://fitnessprogramer.com/exercise/plate-loaded-shoulder-press/) | [Original animated GIF](https://fitnessprogramer.com/wp-content/uploads/2022/04/Plate-Loaded-Shoulder-Press.gif) — seated plate-loaded shoulder press lever machine |
 | `old_leg_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`glutes/sled-45-leg-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/glutes/sled-45-leg-press.gif) |
 | `old_db_lateral_raise_standing` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/dumbbell-lateral-raise.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/dumbbell-lateral-raise.gif) |
 | `old_leg_extension` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`quads/lever-leg-extension.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/quads/lever-leg-extension.gif) |
