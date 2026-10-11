@@ -196,7 +196,7 @@ function writeLocalHistoryMirror(history: WorkoutSession[], fullFallback = false
 function rebuildProfiles(history: WorkoutSession[]) {
   let profiles: ExerciseProfiles = {}
   const chronological = [...history]
-    .filter((session) => Boolean(session.finishedAt))
+    .filter((session) => session.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed)))
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
 
   for (const session of chronological) {
@@ -227,7 +227,7 @@ export async function initializeStorage() {
       const previous = merged.get(session.sessionId)
       merged.set(session.sessionId, clone(newestSession(previous, session) ?? session))
     }
-    memoryHistory = sortHistory([...merged.values()].filter((session) => Boolean(session.finishedAt)))
+    memoryHistory = sortHistory([...merged.values()].filter((session) => session.finishedAt || session.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed))))
     memoryActive = localActive
     rebuildProfiles(memoryHistory)
     writeLocalHistoryMirror(memoryHistory, true)
@@ -247,7 +247,7 @@ export async function initializeStorage() {
     indexedDbReady = false
     const fallback = new Map<string, WorkoutSession>()
     for (const session of [...legacyAnalytics, ...localHistory]) {
-      if (!session?.sessionId || !session.finishedAt) continue
+      if (!session?.sessionId || (!session.finishedAt && !session.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed)))) continue
       const previous = fallback.get(session.sessionId)
       fallback.set(session.sessionId, clone(newestSession(previous, session) ?? session))
     }
