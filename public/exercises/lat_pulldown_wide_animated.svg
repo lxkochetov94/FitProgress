@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720" role="img" aria-label="Lat Pulldown LivePro WIDE: animated rear view with LivePro Power Grip angled handle and vertical end grips">
+<defs>
+<linearGradient id="bg" x2="0" y2="1"><stop stop-color="#f9fbfa"/><stop offset="1" stop-color="#e8efeb"/></linearGradient>
+<linearGradient id="skin" x2="1" y2="1"><stop stop-color="#d3d9d6"/><stop offset=".5" stop-color="#9ea9a3"/><stop offset="1" stop-color="#77857d"/></linearGradient>
+<linearGradient id="muscle" x2="1" y2="1"><stop stop-color="#ff8a75"/><stop offset="1" stop-color="#ca4c40"/></linearGradient>
+<filter id="sh"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#1e2c27" flood-opacity=".16"/></filter>
+</defs>
+<rect width="720" height="720" fill="url(#bg)"/>
+<rect x="299" y="35" width="122" height="560" rx="17" fill="#d5deda"/>
+<rect x="325" y="38" width="14" height="553" fill="#b3c0ba"/><rect x="381" y="38" width="14" height="553" fill="#b3c0ba"/>
+<rect x="290" y="43" width="140" height="19" rx="8" fill="#798b82"/>
+<circle cx="360" cy="76" r="19" fill="#4a5b52"/><circle cx="360" cy="76" r="9" fill="#bac7bf"/>
+<rect x="301" y="575" width="118" height="92" rx="8" fill="#75847b"/>
+<rect x="211" y="560" width="298" height="26" rx="11" fill="#34453c" filter="url(#sh)"/>
+<g>
+<path d="M319 478 L297 575 Q298 594 318 594 L337 505 Z" fill="#77867e"/>
+<path d="M401 478 L423 575 Q422 594 402 594 L383 505 Z" fill="#77867e"/>
+<path d="M305 446 Q360 432 415 446 L409 520 Q360 538 311 520 Z" fill="#303d37"/>
+<path d="M327 283 Q291 291 283 343 Q291 401 325 457 L395 457 Q429 401 437 343 Q428 291 393 283 Q359 303 327 283Z" fill="url(#skin)" stroke="#728079" stroke-width="2"/>
+<path d="M322 301 Q294 318 306 371 L330 438 L351 448 L355 336 Z" fill="url(#muscle)" opacity=".94"/>
+<path d="M398 301 Q426 318 414 371 L390 438 L369 448 L365 336 Z" fill="url(#muscle)" opacity=".94"/>
+<path d="M351 302 L360 429 L369 302 Q360 309 351 302Z" fill="#e5e8e5"/>
+<path d="M321 303 Q331 324 347 334 L345 358 Q325 348 311 332Z" fill="#c96155"/>
+<path d="M399 303 Q389 324 373 334 L375 358 Q395 348 409 332Z" fill="#c96155"/>
+<path d="M330 283 Q338 265 338 240 L382 240 Q382 265 390 283Z" fill="url(#skin)"/>
+<ellipse cx="360" cy="216" rx="42" ry="51" fill="url(#skin)"/>
+<path d="M322 208 Q340 151 380 171 Q399 183 398 208 Q375 187 349 189Z" fill="#3b4741"/>
+<path d="M360 271 L360 441" stroke="#e6e9e7" stroke-width="8" stroke-linecap="round"/>
+<path d="M329 310 Q335 325 349 338 M391 310 Q385 325 371 338" fill="none" stroke="#f4ab9c" stroke-width="3" opacity=".8"/>
+</g>
+<!-- Animated pair of upper/lower arms, hands and the rigid LivePro Power Grip handle, with two vertical end-grips. -->
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M321 298 L263 306 L206 164" stroke="#65756d" stroke-width="34">
+<animate attributeName="d" values="M321 298 L263 306 L206 164;M321 298 L263 340 L206 290;M321 298 L263 340 L206 290;M321 298 L263 306 L206 164" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/>
+</path>
+<path d="M399 298 L457 306 L514 164" stroke="#65756d" stroke-width="34">
+<animate attributeName="d" values="M399 298 L457 306 L514 164;M399 298 L457 340 L514 290;M399 298 L457 340 L514 290;M399 298 L457 306 L514 164" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/>
+</path>
+<path d="M321 298 L263 306 L206 164" stroke="url(#skin)" stroke-width="26">
+<animate attributeName="d" values="M321 298 L263 306 L206 164;M321 298 L263 340 L206 290;M321 298 L263 340 L206 290;M321 298 L263 306 L206 164" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/>
+</path>
+<path d="M399 298 L457 306 L514 164" stroke="url(#skin)" stroke-width="26">
+<animate attributeName="d" values="M399 298 L457 306 L514 164;M399 298 L457 340 L514 290;M399 298 L457 340 L514 290;M399 298 L457 306 L514 164" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/>
+</path>
+</g>
+<g filter="url(#sh)">
+<animateTransform attributeName="transform" type="translate" values="0 0;0 126;0 126;0 0" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/>
+<path d="M360 76 V119" stroke="#7b8981" stroke-width="7" stroke-linecap="round"/>
+<path d="M360 119 L360 143" stroke="#333e38" stroke-width="5"/>
+<circle cx="360" cy="144" r="8" fill="none" stroke="#56665e" stroke-width="4"/>
+<!-- Real LivePro handle silhouette: center apex, sloping wings, flattened outer ends, vertical terminal hooks -->
+<path d="M360 155 L320 187 L265 212 Q256 217 244 211 L207 190" stroke="#222c28" stroke-width="21" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M360 155 L400 187 L455 212 Q464 217 476 211 L513 190" stroke="#222c28" stroke-width="21" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M206 188 L206 155 M514 188 L514 155" stroke="#171f1b" stroke-width="22" stroke-linecap="round"/>
+<path d="M360 157 L327 183 L272 209 M360 157 L393 183 L448 209" stroke="#525e57" stroke-width="4" opacity=".7" fill="none"/>
+<circle cx="360" cy="155" r="9" fill="#aab6af"/>
+<path d="M206 151 v33 M514 151 v33" stroke="#75827b" stroke-width="3" opacity=".6"/>
+</g>
+<!-- hands tracked to end grips -->
+<g fill="url(#skin)" stroke="#6a7770" stroke-width="2">
+<rect x="192" y="163" width="28" height="39" rx="13"><animate attributeName="y" values="163;289;289;163" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/></rect>
+<rect x="500" y="163" width="28" height="39" rx="13"><animate attributeName="y" values="163;289;289;163" dur="3.2s" repeatCount="indefinite" keyTimes="0;.4;.6;1"/></rect>
+</g>
+<rect x="42" y="628" width="636" height="65" rx="19" fill="#f5f8f6" stroke="#d8e2dc"/>
+<circle cx="73" cy="660" r="9" fill="#e8715c"/>
+<text x="92" y="655" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#27352d">LAT PULLDOWN · LIVEPRO WIDE</text>
+<text x="92" y="677" font-family="Arial,sans-serif" font-size="13" fill="#64746c">POWER GRIP · vertical end grips · rear view</text>
+</svg>
