@@ -76,7 +76,8 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
     const lower = image.toLowerCase()
     const generated = lower.includes('/exercises-generated/')
     const vector = lower.includes('/exercises-hq/') || lower.endsWith('.svg') || lower.startsWith('data:image/svg+xml')
-    const mediaClass = lower.includes('/exercises-online/') ? ' exercise-online' : generated ? ' exercise-generated' : vector ? ' exercise-vector' : ''
+    const internetImage = /^https?:\/\//.test(lower)
+    const mediaClass = (lower.includes('/exercises-online/') || internetImage) ? ' exercise-online' : generated ? ' exercise-generated' : vector ? ' exercise-vector' : ''
     const className = compact
       ? `exercise-thumb${mediaClass}`
       : `exercise-image${mediaClass}`
