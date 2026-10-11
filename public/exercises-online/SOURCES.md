@@ -95,6 +95,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `matrix_triceps_extension` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/lever-triceps-extension.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/lever-triceps-extension.gif) |
 | `walking_lunges` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`glutes/dumbbell-lunge.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/glutes/dumbbell-lunge.gif) |
 | `short_lever_cable_fly` | [Kovo — Cable Standing Single Arm Fly](https://www.kovofitness.com/exercises/cable-standing-single-arm-fly) | [Animated GIF](https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif) — standing unilateral cable fly; rehab-specific short lever must follow exercise instructions |
+| `wall_pushup` | [Fitness Programmer — Wall Push-up](https://fitnessprogramer.com/exercise/wall-push-up/) | [Animated original GIF](https://fitnessprogramer.com/wp-content/uploads/2021/04/Wall-Push-ups.gif) |
 
 ## Technique notes
 
