@@ -94,7 +94,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   one_arm_bayesian_curl: `${gymWikiDb}Cable-Single-Arm-Bayesian-Curl.gif`,
   matrix_triceps_extension: `${exerciseDb}triceps/lever-triceps-extension.gif`,
   walking_lunges: `${exerciseDb}glutes/dumbbell-lunge.gif`,
-  short_lever_cable_fly: `${exerciseDb}pectorals/cable-one-arm-decline-chest-fly.gif`
+  short_lever_cable_fly: 'https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif'
 }
 
 export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
