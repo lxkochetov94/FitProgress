@@ -34,7 +34,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'fitprogress-images',
-              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              expiration: { maxEntries: 240, maxAgeSeconds: 60 * 60 * 24 * 90 },
               cacheableResponse: { statuses: [0, 200] }
             }
           }
