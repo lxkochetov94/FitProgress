@@ -76,6 +76,7 @@ const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
   reverse_pec_deck: ['reverse_pec_deck', 'old_reverse_pec_deck'],
   matrix_leg_extension: ['matrix_leg_extension', 'old_leg_extension'],
   seated_leg_curl: ['seated_leg_curl', 'old_leg_curl'],
+  db_lateral_raise: ['db_lateral_raise', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing'],
   incline_db_press: ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press'],
   medium_lever_cable_fly: ['medium_lever_cable_fly', 'short_lever_cable_fly'],
   db_pullover: ['db_pullover', 'old_db_pullover'],
@@ -86,7 +87,7 @@ const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] 
 const comparisonKeyFor = (requestedExerciseId: string, matchedExerciseId: string) => {
   // These histories are useful context but the mechanics/lever changed enough
   // that a percentage trend must not compare them as one continuous variant.
-  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly' || requestedExerciseId === 'reverse_pec_deck' || requestedExerciseId === 'matrix_leg_extension' || requestedExerciseId === 'seated_leg_curl') {
+  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly' || requestedExerciseId === 'reverse_pec_deck' || requestedExerciseId === 'matrix_leg_extension' || requestedExerciseId === 'seated_leg_curl' || requestedExerciseId === 'db_lateral_raise') {
     return matchedExerciseId
   }
   return requestedExerciseId
