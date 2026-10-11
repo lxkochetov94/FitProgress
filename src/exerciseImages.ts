@@ -94,7 +94,8 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   one_arm_bayesian_curl: `${gymWikiDb}Cable-Single-Arm-Bayesian-Curl.gif`,
   matrix_triceps_extension: `${exerciseDb}triceps/lever-triceps-extension.gif`,
   walking_lunges: `${exerciseDb}glutes/dumbbell-lunge.gif`,
-  short_lever_cable_fly: 'https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif'
+  short_lever_cable_fly: 'https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif',
+  wall_pushup: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Wall-Push-ups.gif'
 }
 
 export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
