@@ -1024,7 +1024,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
   const profiles = loadExerciseProfiles()
-  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug'].includes(exercise.id))
+  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug', 'cable_ir'].includes(exercise.id))
   // One visible incline-press family; historical exercise IDs remain untouched in storage/exports.
   const inclineIds = ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press']
   const inclineHistory = inclineIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
@@ -1068,6 +1068,11 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
     ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
   }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
   const shrugSessions = new Set(shrugHistory.map((entry) => entry.sessionId)).size
+  const internalRotationIds = ['cable_internal_rotation', 'cable_ir']
+  const internalRotationHistory = internalRotationIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
+    ...entry, variantId: id, variantName: getDefinition(id)?.name ?? profiles[id]?.name ?? id
+  }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const internalRotationSessions = new Set(internalRotationHistory.map((entry) => entry.sessionId)).size
   const inclineSessions = new Set(inclineHistory.map((entry) => entry.sessionId)).size
   const inclineLatest = inclineHistory[0]
   const needle = query.trim().toLowerCase()
