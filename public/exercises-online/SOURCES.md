@@ -21,6 +21,7 @@ These files are stored inside FitProgress and work offline immediately.
 | `longer_lever_cable_fly` | `longer_lever_cable_fly.webp` | https://fitnessprogramer.com/exercise/single-arm-cable-crossover/ |
 
 | `lat_pulldown_medium` | `lat_pulldown_medium.gif` | https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/lats/cable-bar-lateral-pulldown.gif |
+| `matrix_seated_row_unilateral` | `matrix_seated_row_unilateral.gif` | https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/cable-seated-one-arm-alternate-row.gif |
 
 ## External Internet GIF mappings
 
@@ -74,7 +75,6 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `hip_adductor` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`adductors/lever-seated-hip-adduction.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/adductors/lever-seated-hip-adduction.gif) |
 | `hip_abductor` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`abductors/lever-seated-hip-abduction.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/abductors/lever-seated-hip-abduction.gif) |
 | `matrix_biceps_curl` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`biceps/lever-bicep-curl.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/biceps/lever-bicep-curl.gif) |
-| `matrix_seated_row_unilateral` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`upper-back/lever-unilateral-row.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/lever-unilateral-row.gif) |
 | `cable_rear_delt_fly` | [GYM_planner](https://github.com/H-Ossama/GYM_planner) | [`app/src/main/assets/exercices-gifs/shoulder_gifs/cable_rear_delt_fly.gif`](https://github.com/H-Ossama/GYM_planner/blob/main/app/src/main/assets/exercices-gifs/shoulder_gifs/cable_rear_delt_fly.gif) |
 | `er_isometric` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/cable-standing-shoulder-external-rotation.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/cable-standing-shoulder-external-rotation.gif) |
 | `ir_isometric` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/cable-seated-shoulder-internal-rotation.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/cable-seated-shoulder-internal-rotation.gif) |
@@ -97,6 +97,8 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `short_lever_cable_fly` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/cable-one-arm-decline-chest-fly.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/cable-one-arm-decline-chest-fly.gif) |
 
 ## Technique notes
+
+- `matrix_seated_row_unilateral` now uses a unilateral seated cable-row animation matching the user's actual setup: seated facing a low cable, single handle, one arm pulling toward the torso, no lever arm/chest-pad machine.
 
 - `lat_pulldown_medium` now uses a single medium-width pulldown bar on a central high cable, matching the user's actual LivePro MEDIUM setup instead of the previous two-independent-handle variation.
 

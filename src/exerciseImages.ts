@@ -10,6 +10,7 @@ const WORKOUT_IMAGE_ALIASES: Record<string, string> = {
   neutral_grip_pullup: 'neutral_grip_pullup', neutral_pullup: 'neutral_grip_pullup',
   machine_shoulder_press: 'machine_shoulder_press',
   lat_pulldown_medium: 'lat_pulldown_medium.gif',
+  matrix_seated_row_unilateral: 'matrix_seated_row_unilateral.gif',
   matrix_chest_press: 'matrix_chest_press.gif',
   cable_ir: 'cable_ir', cable_internal_rotation: 'cable_ir',
   incline_db_bottom_start: 'incline_db_bottom_start', incline_db_press: 'incline_db_bottom_start',
@@ -73,7 +74,6 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   hip_adductor: `${exerciseDb}adductors/lever-seated-hip-adduction.gif`,
   hip_abductor: `${exerciseDb}abductors/lever-seated-hip-abduction.gif`,
   matrix_biceps_curl: `${exerciseDb}biceps/lever-bicep-curl.gif`,
-  matrix_seated_row_unilateral: `${exerciseDb}upper-back/lever-unilateral-row.gif`,
   cable_rear_delt_fly: `${gymPlannerDb}shoulder_gifs/cable_rear_delt_fly.gif`,
 
   er_isometric: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
