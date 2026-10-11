@@ -1059,7 +1059,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : []), ...(exercise.id === 'db_lateral_raise' ? ['Махи гантелями в стороны сидя', 'Махи гантелями в стороны стоя', 'Lateral Raise'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
@@ -1201,6 +1201,27 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                       {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
                     </div>
                   ))}
+                </details>
+              </div>
+            )}
+            {exercise.id === 'db_lateral_raise' && (
+              <div className="incline-family-history">
+                <h3>Махи гантелями в стороны · общая история</h3>
+                <p>Все три варианта собраны в одну хронологию: стоя (старый зал), сидя и rehab-тест (новый зал). Прогрессия сидя и стоя оценивается отдельно.</p>
+                <div className="library-values">
+                  <div><span>Стоя · старый зал</span><b>{getDefinition('old_db_lateral_raise_standing')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Сидя · новый зал</span><b>{getDefinition('seated_db_lateral_raise')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Записанных сессий</span><b>{lateralRaiseSessions}</b></div>
+                </div>
+                <details>
+                  <summary>История трёх вариантов ({lateralRaiseHistory.length})</summary>
+                  {lateralRaiseHistory.length ? lateralRaiseHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  )) : <p>Записи завершённых тренировок появятся после сохранения сессий.</p>}
                 </details>
               </div>
             )}
