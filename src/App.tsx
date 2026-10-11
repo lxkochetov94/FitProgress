@@ -10,7 +10,7 @@ import { exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
-import { sessionWorkingVolumeKg } from './analyticsModel'
+import { loadAnalyticsWorkouts, sessionWorkingVolumeKg } from './analyticsModel'
 import { localDateKey } from './dateUtils'
 
 
@@ -61,12 +61,40 @@ const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|
 
 function personalExerciseLibrary() {
   const profiles = loadExerciseProfiles()
-  const merged = EXERCISE_LIBRARY.map((definition) => mergeDefinitionWithProfile(definition, profiles[definition.id]))
+  // Include all locally completed sessions AND the built-in retrospective workouts.
+  // A new exercise needs no hard-coded entry in the bundled library to appear here.
+  const performed = new Map<string, ReturnType<typeof loadAnalyticsWorkouts>[number]['exercises'][number] & { gym: string }>()
+  for (const workout of loadAnalyticsWorkouts()) {
+    for (const exercise of workout.exercises) {
+      if (exercise.exerciseId && exercise.sets.length) {
+        performed.set(exercise.exerciseId, { ...exercise, gym: workout.gym })
+      }
+    }
+  }
+  const merged = EXERCISE_LIBRARY.map((definition) => {
+    const profile = profiles[definition.id]
+    const observed = performed.get(definition.id)
+    const base = mergeDefinitionWithProfile(definition, profile)
+    return observed ? { ...base, known: true, gym: profile ? 'Новый зал' : (definition.gym ?? observed.gym) } : base
+  })
   const staticIds = new Set(merged.map((definition) => definition.id))
   const learnedOnly = Object.values(profiles)
     .filter((profile) => !staticIds.has(profile.exerciseId))
     .map(profileToDefinition)
-  return [...merged, ...learnedOnly]
+  const knownIds = new Set([...staticIds, ...learnedOnly.map((item) => item.id)])
+  const retroOnly = [...performed.values()]
+    .filter((exercise) => !knownIds.has(exercise.exerciseId))
+    .map((exercise) => ({
+      id: exercise.exerciseId, name: exercise.name,
+      category: 'ИСТОРИЯ ТРЕНИРОВОК', muscleGroup: exercise.muscleGroup || 'Другое',
+      movementPattern: exercise.movementPattern || 'Не указано',
+      equipment: exercise.equipment || 'Не указано',
+      weightUnit: exercise.weightUnit ?? 'kg' as const,
+      perSide: exercise.perSide,
+      gym: exercise.gym, known: true, suitability: 'known' as const,
+      historyNote: 'Упражнение автоматически восстановлено из истории тренировок.'
+    }))
+  return [...merged, ...learnedOnly, ...retroOnly]
 }
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
