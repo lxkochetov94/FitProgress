@@ -1079,7 +1079,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : []), ...(exercise.id === 'db_lateral_raise' ? ['Махи гантелями в стороны сидя', 'Махи гантелями в стороны стоя', 'Lateral Raise'] : []), ...(exercise.id === 'seated_row_generic' ? ['Горизонтальная тяга', 'Горизонтальная тяга к груди'] : [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : []), ...(exercise.id === 'db_lateral_raise' ? ['Махи гантелями в стороны сидя', 'Махи гантелями в стороны стоя', 'Lateral Raise'] : []), ...(exercise.id === 'seated_row_generic' ? ['Горизонтальная тяга', 'Горизонтальная тяга к груди'] : []), ...(exercise.id === 'cable_internal_rotation' ? ['Cable IR', 'Внутренняя ротация на блоке'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
@@ -1304,6 +1304,23 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                       {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
                     </div>
                   )) : <p>Записи завершённых тренировок появятся после сохранения сессий.</p>}
+                </details>
+              </div>
+            )}
+            {exercise.id === 'cable_internal_rotation' && (
+              <div className="incline-family-history">
+                <h3>Внутренняя ротация на блоке · общая история</h3>
+                <p>Динамическая ротация стоя. Записи cable_ir и cable_internal_rotation объединены для просмотра; изометрическая ротация остаётся отдельным упражнением.</p>
+                <p>Сессий в FitProgress: {internalRotationSessions}</p>
+                <details>
+                  <summary>История динамической внутренней ротации ({internalRotationHistory.length})</summary>
+                  {internalRotationHistory.length ? internalRotationHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  )) : <p>Данные завершённых тренировок появятся здесь после сохранения сессий.</p>}
                 </details>
               </div>
             )}
