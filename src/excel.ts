@@ -152,6 +152,62 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
   }
 }
 
+// Restore an exported result without turning it into a new workout plan.
+// Idempotent storage uses the original session_id, not a new identifier.
+export async function restoreSessionExport(file: File): Promise<WorkoutSession> {
+  const plan = await importWorkout(file)
+  const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' })
+  const sheet = (name: string) => normalizedRows(workbook.Sheets[workbook.SheetNames.find((x) => cleanKey(x) === cleanKey(name)) ?? ''])
+  const meta = sheet('Workout')[0] ?? {}
+  const exerciseRows = sheet('Exercises')
+  const setRows = sheet('Sets')
+  const sessionId = str(rowValue(meta, 'session_id'))
+  const startedAt = str(rowValue(meta, 'started_at'))
+  if (!sessionId || !Number.isFinite(Date.parse(startedAt)) || !exerciseRows.length || !setRows.length) {
+    throw new Error('Это не экспорт результатов FitProgress с session_id и started_at. Нужен файл *_result.xlsx.')
+  }
+  const finishedAt = str(rowValue(meta, 'finished_at')) || undefined
+  const mappedExercises = plan.exercises.map((exercise, index) => {
+    const info = exerciseRows[index] ?? {}
+    const exerciseId = str(rowValue(info, 'actual_exercise_id')) || exercise.exerciseId
+    const originalId = str(rowValue(info, 'original_exercise_id')) || exerciseId
+    const relatedSets = setRows.filter((row) => str(rowValue(row, 'actual_exercise_id')) === exerciseId
+      && Number(rowValue(row, 'order')) === Number(rowValue(info, 'order')))
+    const sets = exercise.sets.map((set) => {
+      const row = relatedSets.find((item) => Number(rowValue(item, 'set_no')) === set.setNo)
+      if (!row) return set
+      const rawType = str(rowValue(row, 'set_type'))
+      const type: WorkoutSet['setType'] = /размин/i.test(rawType) ? 'warmup' : /калибр/i.test(rawType)
+        ? 'calibration' : /rehab/i.test(rawType) ? 'rehab' : /рабоч/i.test(rawType) ? 'working' : 'other'
+      return {
+        ...set, setType: type,
+        actualWeight: str(rowValue(row, 'actual_weight')),
+        actualReps: str(rowValue(row, 'actual_reps')),
+        actualRir: str(rowValue(row, 'actual_rir')),
+        pain: str(rowValue(row, 'pain_0_10')),
+        comment: str(rowValue(row, 'comment')),
+        completed: bool(rowValue(row, 'completed')),
+        completedAt: str(rowValue(row, 'completed_at')) || undefined,
+        isExtra: bool(rowValue(row, 'is_extra'))
+      }
+    })
+    return { ...exercise, exerciseId, originalExerciseId: originalId,
+      name: str(rowValue(info, 'actual_name')) || exercise.name,
+      originalName: str(rowValue(info, 'original_name')) || exercise.originalName,
+      finishMode: str(rowValue(info, 'exercise_status')) === 'completed' ? 'completed' as const : exercise.finishMode,
+      finishedAt: str(rowValue(info, 'finished_at')) || undefined, sets }
+  })
+  if (!mappedExercises.some((exercise) => exercise.sets.some((set) => set.completed))) {
+    throw new Error('В этом результате нет выполненных подходов.')
+  }
+  return {
+    sessionId, startedAt, startedLocalDate: str(rowValue(meta, 'date')) || undefined,
+    finishedAt, updatedAt: finishedAt || startedAt,
+    finishMode: finishedAt ? (str(rowValue(meta, 'finish_mode')) === 'early' ? 'early' : 'completed') : undefined,
+    plan: { ...plan, exercises: mappedExercises }
+  }
+}
+
 function setTypeLabel(type: WorkoutSet['setType']) {
   return ({ warmup: 'Разминка', calibration: 'Калибровка', working: 'Рабочий', rehab: 'Rehab', other: 'Подход' } as Record<string, string>)[type] || type
 }
