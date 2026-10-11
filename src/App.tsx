@@ -1024,7 +1024,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
   const profiles = loadExerciseProfiles()
-  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl'].includes(exercise.id))
+  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing'].includes(exercise.id))
   // One visible incline-press family; historical exercise IDs remain untouched in storage/exports.
   const inclineIds = ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press']
   const inclineHistory = inclineIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
@@ -1048,6 +1048,11 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
     ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
   }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
   const legCurlSessions = new Set(legCurlHistory.map((entry) => entry.sessionId)).size
+  const lateralRaiseIds = ['db_lateral_raise', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing']
+  const lateralRaiseHistory = lateralRaiseIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
+    ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
+  }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const lateralRaiseSessions = new Set(lateralRaiseHistory.map((entry) => entry.sessionId)).size
   const inclineSessions = new Set(inclineHistory.map((entry) => entry.sessionId)).size
   const inclineLatest = inclineHistory[0]
   const needle = query.trim().toLowerCase()
