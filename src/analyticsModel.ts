@@ -73,6 +73,7 @@ const RETRO = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
  */
 const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
   db_shrug: ['db_shrug', 'old_db_shrug'],
+  cable_internal_rotation: ['cable_internal_rotation', 'cable_ir'],
   reverse_pec_deck: ['reverse_pec_deck', 'old_reverse_pec_deck'],
   matrix_leg_extension: ['matrix_leg_extension', 'old_leg_extension'],
   seated_leg_curl: ['seated_leg_curl', 'old_leg_curl'],
