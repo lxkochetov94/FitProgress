@@ -7,7 +7,7 @@ import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerci
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
 import { archiveSession, initializeStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
 import { exerciseImageForDefinition } from './exerciseImages'
-import { mergeDefinitionWithProfile, profileToDefinition } from './exerciseProgress'
+import { mergeDefinitionWithProfile, profileToDefinition, updateExerciseProfilesFromSession } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
 import { loadAnalyticsWorkouts, sessionWorkingVolumeKg } from './analyticsModel'
@@ -60,7 +60,12 @@ const isLegacyNewBadge = (badge?: string) => Boolean(badge && /нов(ая|ое|
 
 
 function personalExerciseLibrary() {
-  const profiles = loadExerciseProfiles()
+  // Combine durable profiles with completed sets from an in-progress session.
+  // Do not wait for the final Finish button to expose an exercise in the library.
+  const active = loadActiveSession()
+  const profiles = active && active.plan.exercises.some((e) => e.sets.some((set) => set.completed))
+    ? updateExerciseProfilesFromSession(loadExerciseProfiles(), active)
+    : loadExerciseProfiles()
   // Include all locally completed sessions AND the built-in retrospective workouts.
   // A new exercise needs no hard-coded entry in the bundled library to appear here.
   const performed = new Map<string, ReturnType<typeof loadAnalyticsWorkouts>[number]['exercises'][number] & { gym: string }>()
@@ -1531,9 +1536,18 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
-  const beginPendingPlan = () => {
+  const beginPendingPlan = async () => {
     if (!pendingPlan) return
-    if (session && !session.finishedAt && !window.confirm('Текущая незавершённая тренировка будет заменена новой. Продолжить?')) return
+    if (session && !session.finishedAt) {
+      const hasProgress = session.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed))
+      if (!window.confirm(hasProgress
+        ? 'Выполненные подходы текущей тренировки будут сохранены в историю как незавершённая тренировка. Начать новую?'
+        : 'Заменить текущую тренировку новой?')) return
+      if (hasProgress && !(await archiveSession(session))) {
+        window.alert('Не удалось сохранить выполненные подходы. Новая тренировка не будет начата, чтобы не потерять данные.')
+        return
+      }
+    }
     const next = createSession(pendingPlan)
     setSession(next)
     setPendingPlan(null)
