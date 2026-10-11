@@ -68,7 +68,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   ez_preacher_curl: `${exerciseDb}biceps/ez-barbell-close-grip-preacher-curl.gif`,
   bulgarian_split_squat: `${exerciseDb}quads/dumbbell-single-leg-split-squat.gif`,
   lateral_raise_machine: `${exerciseDb}delts/lever-lateral-raise.gif`,
-  lat_pulldown_wide: `${exerciseDb}lats/cable-pulldown-pro-lat-bar.gif`,
+  lat_pulldown_wide: `${import.meta.env.BASE_URL}exercises/lat_pulldown_wide_animated.svg`,
   matrix_seated_row: `${exerciseDb}upper-back/lever-seated-row.gif`,
   reverse_pec_deck: `${exerciseDb}delts/lever-seated-reverse-fly.gif`,
   hip_adductor: `${exerciseDb}adductors/lever-seated-hip-adduction.gif`,
