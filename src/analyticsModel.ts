@@ -87,7 +87,7 @@ const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] 
 const comparisonKeyFor = (requestedExerciseId: string, matchedExerciseId: string) => {
   // These histories are useful context but the mechanics/lever changed enough
   // that a percentage trend must not compare them as one continuous variant.
-  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly' || requestedExerciseId === 'reverse_pec_deck' || requestedExerciseId === 'matrix_leg_extension' || requestedExerciseId === 'seated_leg_curl' || requestedExerciseId === 'db_lateral_raise') {
+  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly' || requestedExerciseId === 'reverse_pec_deck' || requestedExerciseId === 'matrix_leg_extension' || requestedExerciseId === 'seated_leg_curl' || requestedExerciseId === 'db_lateral_raise' || requestedExerciseId === 'db_pullover') {
     return matchedExerciseId
   }
   return requestedExerciseId
