@@ -27,7 +27,7 @@ const gymWikiDb = 'https://cdn.jsdelivr.net/gh/maistrenko-roman/Gym_Wiki@main/pu
 // Internet illustrations selected for the complete 2026-10-11 registry.
 // Existing curated local WebP aliases above keep priority; these URLs cover the remaining registry IDs.
 const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
-  old_hammer_shoulder_press: `${exerciseDb}delts/lever-shoulder-press.gif`,
+  old_hammer_shoulder_press: 'https://fitnessprogramer.com/wp-content/uploads/2022/04/Plate-Loaded-Shoulder-Press.gif',
   old_leg_press: `${exerciseDb}glutes/sled-45-leg-press.gif`,
   old_db_lateral_raise_standing: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
   old_leg_extension: `${exerciseDb}quads/lever-leg-extension.gif`,
