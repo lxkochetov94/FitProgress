@@ -4,7 +4,7 @@ import LiquidGlassArt from './LiquidGlassArt'
 import { RestGlassRing, GlassGo } from './RestGlass'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
-import { downloadTemplate, exportFullRegistry, exportSession, importWorkout } from './excel'
+import { downloadTemplate, exportFullRegistry, exportSession, importWorkout, restoreSessionExport } from './excel'
 import { archiveSession, initializeStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
 import { exerciseImageForDefinition } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition, updateExerciseProfilesFromSession } from './exerciseProgress'
@@ -1381,8 +1381,9 @@ function HomeGlyph({ name }: { name: HomeGlyphName }) {
   return <svg {...common}><path d="m9 5 7 7-7 7" /></svg>
 }
 
-function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAnalytics }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void; onOpenAnalytics: () => void }) {
+function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrary, onOpenAnalytics }: { active: WorkoutSession | null; onLoadPlan: (plan: WorkoutPlan) => void; onRestore: (file: File) => Promise<void>; onResume: () => void; onDiscard: () => void; onOpenLibrary: () => void; onOpenAnalytics: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const restoreRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const history = loadHistory()
   const latest = history[0] ?? null
@@ -1439,6 +1440,16 @@ function Home({ active, onLoadPlan, onResume, onDiscard, onOpenLibrary, onOpenAn
         <span className="home-import-chevron"><HomeGlyph name="chevron" /></span>
       </button>
       <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
+      <button className="home-import-card" onClick={() => restoreRef.current?.click()}>
+        <span className="home-import-copy"><b>Восстановить результаты тренировки</b><small>Импортировать сохранённый *_result.xlsx в историю и статистику без повторения тренировки</small></span>
+      </button>
+      <input ref={restoreRef} className="hidden" type="file" accept=".xlsx" onChange={async (event) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+        try { setError(''); await onRestore(file) }
+        catch (e) { setError(e instanceof Error ? e.message : 'Не удалось восстановить результаты.') }
+        finally { event.target.value = '' }
+      }} />
 
       {error && <div className="error-box home-error-v2">{error}</div>}
 
@@ -1555,6 +1566,19 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
+  const restoreResults = async (file: File) => {
+    const restored = await restoreSessionExport(file)
+    const existing = [...loadHistory(), ...(session ? [session] : [])].find((item) => item.sessionId === restored.sessionId)
+    if (existing) {
+      window.alert('Эта тренировка уже есть на устройстве (совпадает session_id). Повторное добавление не требуется.')
+      return
+    }
+    if (!window.confirm(`Восстановить «${restored.plan.title}» от ${fmtDate(restored.startedAt)} в историю? Выполненные подходы будут учтены, даже если кнопка «Завершить» не была нажата.`)) return
+    if (!(await archiveSession(restored))) throw new Error('Не удалось надёжно сохранить восстановленную тренировку. XLSX оставлен без изменений.')
+    window.alert('Результаты восстановлены в историю и статистику. Экспортируй полный реестр повторно.')
+    setSessionState((current) => current ? { ...current } : null)
+  }
+
   const discard = async () => {
     if (!window.confirm('Удалить незавершённую тренировку с этого устройства?')) return
     const saved = await saveActiveSessionDurable(null)
@@ -1593,5 +1617,5 @@ export default function App() {
   if (pendingPlan) return <PlanPreview plan={pendingPlan} onBegin={beginPendingPlan} onBack={() => setPendingPlan(null)} />
   if (analyticsOpen) return <AnalyticsView onBack={() => setAnalyticsOpen(false)} />
   if (libraryOpen) return <ExerciseLibraryView onBack={() => setLibraryOpen(false)} />
-  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onResume={() => setInWorkout(true)} onDiscard={discard} onOpenLibrary={() => setLibraryOpen(true)} onOpenAnalytics={() => setAnalyticsOpen(true)} />
+  return <Home active={session && !session.finishedAt ? session : null} onLoadPlan={loadPlan} onRestore={restoreResults} onResume={() => setInWorkout(true)} onDiscard={discard} onOpenLibrary={() => setLibraryOpen(true)} onOpenAnalytics={() => setAnalyticsOpen(true)} />
 }
