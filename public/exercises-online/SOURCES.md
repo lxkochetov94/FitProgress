@@ -2,7 +2,7 @@
 
 Registry coverage updated 2026-10-11 from `FitProgress_FULL_REGISTRY_2026-10-11.xlsx`: **80 / 80 exercise IDs have an illustration mapping**.
 
-## Bundled local WebP
+## Bundled local animations
 
 These files are stored inside FitProgress and work offline immediately.
 
@@ -60,7 +60,6 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `one_arm_row_generic` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`upper-back/dumbbell-one-arm-bent-over-row.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/dumbbell-one-arm-bent-over-row.gif) |
 | `face_pull` | [GYM_planner](https://github.com/H-Ossama/GYM_planner) | [`app/src/main/assets/exercices-gifs/shoulder_gifs/face_pull.gif`](https://github.com/H-Ossama/GYM_planner/blob/main/app/src/main/assets/exercices-gifs/shoulder_gifs/face_pull.gif) |
 | `db_pullover` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/dumbbell-pullover.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/dumbbell-pullover.gif) |
-| `matrix_chest_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/lever-chest-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/lever-chest-press.gif) |
 | `retro_new_incline_machine_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/lever-incline-chest-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/lever-incline-chest-press.gif) |
 | `pec_deck` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/lever-seated-fly.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/lever-seated-fly.gif) |
 | `rope_pushdown` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/cable-pushdown-with-rope-attachment.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/cable-pushdown-with-rope-attachment.gif) |
@@ -97,6 +96,8 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `short_lever_cable_fly` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/cable-one-arm-decline-chest-fly.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/cable-one-arm-decline-chest-fly.gif) |
 
 ## Technique notes
+
+- `matrix_chest_press` now uses the selectorized chest-press lever geometry matching the user's actual machine: long upright press arms pivoting from the lower machine, with handles moving from beside the chest to forward extension.
 
 - The registry/workout instructions are authoritative for exact setup, range of motion, bench angle, grip and rehab constraints.
 - Matrix/LivePro/Hammer entries can use a biomechanically equivalent machine illustration when an exact model-specific asset is unavailable.
