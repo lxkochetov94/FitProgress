@@ -94,7 +94,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `one_arm_bayesian_curl` | [Gym_Wiki](https://github.com/maistrenko-roman/Gym_Wiki) | [`public/exercises/Cable-Single-Arm-Bayesian-Curl.gif`](https://github.com/maistrenko-roman/Gym_Wiki/blob/main/public/exercises/Cable-Single-Arm-Bayesian-Curl.gif) |
 | `matrix_triceps_extension` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/lever-triceps-extension.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/lever-triceps-extension.gif) |
 | `walking_lunges` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`glutes/dumbbell-lunge.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/glutes/dumbbell-lunge.gif) |
-| `short_lever_cable_fly` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/cable-one-arm-decline-chest-fly.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/cable-one-arm-decline-chest-fly.gif) |
+| `short_lever_cable_fly` | [Kovo — Cable Standing Single Arm Fly](https://www.kovofitness.com/exercises/cable-standing-single-arm-fly) | [Animated GIF](https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif) — standing unilateral cable fly; rehab-specific short lever must follow exercise instructions |
 
 ## Technique notes
 
@@ -109,7 +109,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 - The registry/workout instructions are authoritative for exact setup, range of motion, bench angle, grip and rehab constraints.
 - Matrix/LivePro/Hammer entries can use a biomechanically equivalent machine illustration when an exact model-specific asset is unavailable.
 - Angle-specific shoulder-rehab variants can share the closest external-rotation movement-family illustration; the prescribed abduction angle in the workout remains authoritative.
-- `short_lever_cable_fly` and other rehab variants use the closest movement-family visual when no exact public illustration was found.
+- `short_lever_cable_fly` uses a standing one-arm cable fly demo. Visual is movement-family guidance only: keep a short lever / bent elbow and restricted pain-free ROM according to the rehab prescription.
 
 ## Rights and attribution
 
