@@ -1024,12 +1024,21 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
   const profiles = loadExerciseProfiles()
-  const library = personalExerciseLibrary()
+  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press'].includes(exercise.id))
+  // One visible incline-press family; historical exercise IDs remain untouched in storage/exports.
+  const inclineIds = ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press']
+  const inclineHistory = inclineIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
+    ...entry,
+    variantId: id,
+    variantName: getDefinition(id)?.name ?? profiles[id]?.name ?? id
+  }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const inclineSessions = new Set(inclineHistory.map((entry) => entry.sessionId)).size
+  const inclineLatest = inclineHistory[0]
   const needle = query.trim().toLowerCase()
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
@@ -1101,6 +1110,28 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
               <div><span>Сессий в FitProgress</span><b>{profiles[exercise.id].sessions}</b></div>
               {profiles[exercise.id].lastComment && <p>«{profiles[exercise.id].lastComment}»</p>}
             </div>}
+            {exercise.id === 'incline_db_press' && (
+              <div className="incline-family-history">
+                <h3>Единая история наклонного жима</h3>
+                <p>Старый зал · классический жим · реабилитационный bottom-start. Записи сохранены под исходными ID; проценты силы между разными вариантами не смешиваются.</p>
+                <div className="library-values">
+                  <div><span>Старый зал · исторический ориентир</span><b>{getDefinition('old_incline_db_press')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Текущий этап</span><b>Graded bottom-start</b></div>
+                  <div><span>Сессий в FitProgress · все варианты</span><b>{inclineSessions}</b></div>
+                </div>
+                {inclineLatest && <p>Последняя сессия: {fmtDate(inclineLatest.performedAt)} · {inclineLatest.variantName}</p>}
+                <details>
+                  <summary>История всех вариантов ({inclineHistory.length} записей)</summary>
+                  {inclineHistory.length ? inclineHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.some((set) => set.pain || set.rir || set.comment) && <small>{entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).join(' | ')}</small>}
+                    </div>
+                  )) : <p>Завершённые тренировки появятся здесь после сохранения первой сессии.</p>}
+                </details>
+              </div>
+            )}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}
           </article>
         ))}
