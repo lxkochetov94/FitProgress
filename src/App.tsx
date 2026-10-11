@@ -1160,6 +1160,23 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                 </details>
               </div>
             )}
+            {exercise.id === 'matrix_leg_extension' && (
+              <div className="incline-family-history">
+                <h3>Разгибание ног · общая история</h3>
+                <p>Старый зал: {getDefinition('old_leg_extension')?.bestKnown ?? '—'} · Matrix: {getDefinition('matrix_leg_extension')?.bestKnown ?? '—'}. Сохраняем исходные кг и lb, без прямого сравнения весов разных тренажёров.</p>
+                <p>Сессий в FitProgress: {legExtensionSessions}</p>
+                <details>
+                  <summary>Открыть историю обоих залов ({legExtensionHistory.length})</summary>
+                  {legExtensionHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, entry.unit, set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  ))}
+                </details>
+              </div>
+            )}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}
           </article>
         ))}
