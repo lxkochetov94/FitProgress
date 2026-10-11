@@ -1032,6 +1032,11 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
     variantId: id,
     variantName: getDefinition(id)?.name ?? profiles[id]?.name ?? id
   }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const reverseIds = ['reverse_pec_deck', 'old_reverse_pec_deck']
+  const reverseHistory = reverseIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
+    ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
+  }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const reverseSessions = new Set(reverseHistory.map((entry) => entry.sessionId)).size
   const inclineSessions = new Set(inclineHistory.map((entry) => entry.sessionId)).size
   const inclineLatest = inclineHistory[0]
   const needle = query.trim().toLowerCase()
