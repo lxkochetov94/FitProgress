@@ -1054,7 +1054,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
@@ -1176,6 +1176,23 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                     <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
                       <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
                       <span>{entry.sets.map((set) => [set.weight, entry.unit, set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  ))}
+                </details>
+              </div>
+            )}
+            {exercise.id === 'seated_leg_curl' && (
+              <div className="incline-family-history">
+                <h3>Сгибание ног · общая история</h3>
+                <p>Старый зал: {getDefinition('old_leg_curl')?.bestKnown ?? '—'} · Matrix: {getDefinition('seated_leg_curl')?.bestKnown ?? '—'}. Старые результаты разных тренажёров сохраняются раздельно; прямое сравнение рабочих весов некорректно.</p>
+                <p>Сессий в FitProgress: {legCurlSessions}</p>
+                <details>
+                  <summary>Открыть историю обоих залов ({legCurlHistory.length})</summary>
+                  {legCurlHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
                       {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
                     </div>
                   ))}
