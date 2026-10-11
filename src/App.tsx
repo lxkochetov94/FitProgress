@@ -1069,7 +1069,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : []), ...(exercise.id === 'db_lateral_raise' ? ['Махи гантелями в стороны сидя', 'Махи гантелями в стороны стоя', 'Lateral Raise'] : [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : []), ...(exercise.id === 'matrix_leg_extension' ? ['Разгибание ног', 'Leg Extension'] : []), ...(exercise.id === 'seated_leg_curl' ? ['Сгибание ног', 'Leg Curl'] : []), ...(exercise.id === 'db_lateral_raise' ? ['Махи гантелями в стороны сидя', 'Махи гантелями в стороны стоя', 'Lateral Raise'] : []), ...(exercise.id === 'seated_row_generic' ? ['Горизонтальная тяга', 'Горизонтальная тяга к груди'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
@@ -1247,6 +1247,27 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                 <details>
                   <summary>История обоих залов ({pulloverHistory.length})</summary>
                   {pulloverHistory.length ? pulloverHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  )) : <p>Записи завершённых тренировок появятся после сохранения сессий.</p>}
+                </details>
+              </div>
+            )}
+            {exercise.id === 'seated_row_generic' && (
+              <div className="incline-family-history">
+                <h3>Горизонтальная тяга · общая история</h3>
+                <p>Старый и новый зал объединены в одну хронологию. Разные тренажёры и техника не считаются непрерывным приростом силы.</p>
+                <div className="library-values">
+                  <div><span>Старый зал · лучший результат</span><b>{getDefinition('old_seated_row')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Новый зал · лучший результат</span><b>{getDefinition('seated_row_generic')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Сессий в FitProgress</span><b>{seatedRowSessions}</b></div>
+                </div>
+                <details>
+                  <summary>История двух вариантов ({seatedRowHistory.length})</summary>
+                  {seatedRowHistory.length ? seatedRowHistory.map((entry) => (
                     <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
                       <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
                       <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
