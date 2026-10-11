@@ -4,7 +4,7 @@ import { OLD_GYM_EXERCISES } from './userExercisesOld'
 import { REHAB_AND_AUX_EXERCISES } from './userExercisesRehab'
 
 const FUTURE_OR_UNTESTED_EXERCISES: ExerciseDefinition[] = [
-  { id:'barbell_rdl', name:'Румынская тяга со штангой', category:'ЗАДНЯЯ ЦЕПЬ', muscleGroup:'Задняя цепь', movementPattern:'Hip hinge', equipment:'Штанга', weightUnit:'kg', known:false, suitability:'known', defaultSets:2, defaultReps:'8–10', icon:'RDL' },
+  { id:'barbell_rdl', name:'Румынская тяга со штангой', category:'ЗАДНЯЯ ЦЕПЬ', muscleGroup:'Бицепс бедра / ягодицы', movementPattern:'Hip hinge', equipment:'Штанга', weightUnit:'kg', gym:'Новый зал', known:true, suitability:'known', defaultSets:2, defaultReps:'8–10', aliases:['Romanian Deadlift','Barbell RDL','Румынская становая тяга'], historyNote:'Добавлено в известные упражнения. Исторические веса именно румынской тяги не подтверждены; не путать с классической становой тягой. Таз отводить назад, колени слегка согнуты, гриф вести близко к ногам.', icon:'RDL' },
   { id:'db_rdl', name:'Румынская тяга с гантелями', category:'ЗАДНЯЯ ЦЕПЬ', muscleGroup:'Задняя цепь', movementPattern:'Hip hinge', equipment:'Гантели', weightUnit:'kg', known:false, suitability:'known', defaultSets:2, defaultReps:'8–12', icon:'RDL' },
   { id:'cable_pull_through', name:'Cable Pull Through', category:'ЗАДНЯЯ ЦЕПЬ', muscleGroup:'Задняя цепь', movementPattern:'Hip hinge', equipment:'Кроссовер', weightUnit:'kg', known:false, suitability:'known', defaultSets:2, defaultReps:'10–15', icon:'HIP' },
   { id:'back_extension_45', name:'Гиперэкстензия 45°', category:'ЗАДНЯЯ ЦЕПЬ', muscleGroup:'Задняя цепь', movementPattern:'Hip hinge', equipment:'Скамья', known:false, suitability:'known', defaultSets:2, defaultReps:'10–15', icon:'45°' },
