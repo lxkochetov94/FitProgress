@@ -78,7 +78,7 @@ const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
   matrix_leg_extension: ['matrix_leg_extension', 'old_leg_extension'],
   seated_leg_curl: ['seated_leg_curl', 'old_leg_curl'],
   db_lateral_raise: ['db_lateral_raise', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing'],
-  incline_db_press: ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press'],
+  incline_db_press: ['incline_db_press', 'incline_db_bottom_start', 'incline_db_press_legacy', 'old_incline_db_press'],
   medium_lever_cable_fly: ['medium_lever_cable_fly', 'short_lever_cable_fly'],
   db_pullover: ['db_pullover', 'old_db_pullover'],
   seated_row_generic: ['seated_row_generic', 'old_seated_row'],
