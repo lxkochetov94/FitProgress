@@ -91,13 +91,13 @@ export async function importWorkout(file: File): Promise<WorkoutPlan> {
   const meta = workoutRows[0] ?? {}
   const exercises: WorkoutExercise[] = exerciseRows
     .map((row, index) => {
-      const sourceExerciseId = str(rowValue(row, 'exercise_id', 'id')) || `exercise_${index + 1}`
-      const importedName = str(rowValue(row, 'name', 'exercise_name', 'упражнение'))
+      const sourceExerciseId = str(rowValue(row, 'exercise_id', 'actual_exercise_id', 'id')) || `exercise_${index + 1}`
+      const importedName = str(rowValue(row, 'name', 'actual_name', 'exercise_name', 'упражнение'))
       const def = findDefinition(sourceExerciseId, importedName)
       const exerciseId = def?.id || sourceExerciseId
       const name = importedName || def?.name || sourceExerciseId
       const rawSets = setRows
-        .filter((setRow) => str(rowValue(setRow, 'exercise_id', 'id')) === sourceExerciseId)
+        .filter((setRow) => str(rowValue(setRow, 'exercise_id', 'actual_exercise_id', 'id')) === sourceExerciseId)
         .map((setRow, setIndex) => newSet(exerciseId, setRow, setIndex))
         .sort((a, b) => a.setNo - b.setNo)
       const perSide =
