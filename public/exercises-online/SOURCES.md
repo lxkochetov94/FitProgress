@@ -97,6 +97,8 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 
 ## Technique notes
 
+- `matrix_leg_curl` now uses a prone lying leg-curl animation matching the user's actual machine: torso face-down on the bench, hips supported, roller behind the lower legs, knee flexion bringing the roller upward toward the glutes.
+
 - `matrix_chest_press` now uses the selectorized chest-press lever geometry matching the user's actual machine: long upright press arms pivoting from the lower machine, with handles moving from beside the chest to forward extension.
 
 - The registry/workout instructions are authoritative for exact setup, range of motion, bench angle, grip and rehab constraints.

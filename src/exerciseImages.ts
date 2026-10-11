@@ -13,7 +13,7 @@ const WORKOUT_IMAGE_ALIASES: Record<string, string> = {
   cable_ir: 'cable_ir', cable_internal_rotation: 'cable_ir',
   incline_db_bottom_start: 'incline_db_bottom_start', incline_db_press: 'incline_db_bottom_start',
   longer_lever_cable_fly: 'longer_lever_cable_fly',
-  matrix_leg_curl: 'matrix_leg_curl', seated_leg_curl: 'matrix_leg_curl',
+  matrix_leg_curl: 'matrix_leg_curl.gif', seated_leg_curl: 'matrix_leg_curl.gif',
   one_arm_db_preacher: 'one_arm_db_preacher',
   one_arm_cable_triceps_pushdown: 'one_arm_cable_triceps_pushdown', one_arm_cable_pushdown: 'one_arm_cable_triceps_pushdown'
 }
