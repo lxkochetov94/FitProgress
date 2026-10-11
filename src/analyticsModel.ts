@@ -1,4 +1,4 @@
-import { loadHistory } from './storage'
+import { loadActiveSession, loadHistory } from './storage'
 import type { PerSide, WeightUnit, WorkoutSession, WorkoutSet } from './types'
 import type { RetroWorkoutTuple } from './analyticsSeedTypes'
 import { RETRO_JUN } from './analyticsSeedJun'
@@ -228,14 +228,24 @@ function retroToAnalytics(tuple: RetroWorkoutTuple): AnalyticsWorkout {
   }
 }
 
+export function loadRecordedSessionHistory(): WorkoutSession[] {
+  // A workout with completed sets is real training data even when the user forgot
+  // the final "Finish" button. Keep its unfinished status, never fake finishedAt.
+  const byId = new Map<string, WorkoutSession>()
+  for (const session of [...loadHistory(), loadActiveSession()].filter((x): x is WorkoutSession => Boolean(x))) {
+    if (!session.sessionId || !session.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed))) continue
+    const prev = byId.get(session.sessionId)
+    if (!prev || new Date(session.updatedAt).getTime() >= new Date(prev.updatedAt).getTime()) byId.set(session.sessionId, session)
+  }
+  return [...byId.values()].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+}
+
 export function loadCompletedSessionHistory(): WorkoutSession[] {
-  return loadHistory()
-    .filter((session) => Boolean(session.finishedAt))
-    .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
+  return loadRecordedSessionHistory().filter((session) => Boolean(session.finishedAt))
 }
 
 export function loadAnalyticsWorkouts(): AnalyticsWorkout[] {
-  const local = loadCompletedSessionHistory()
+  const local = loadRecordedSessionHistory()
     .map((session, index) => localToAnalytics(session, 1000 + index))
 
   return [...RETRO.map(retroToAnalytics), ...local]
