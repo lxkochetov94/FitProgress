@@ -46,6 +46,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   old_hammer_curl: `${exerciseDb}biceps/dumbbell-hammer-curl.gif`,
   old_ez_curl: `${exerciseDb}biceps/ez-barbell-curl.gif`,
   old_hammer_chest_press: `${exerciseDb}pectorals/lever-chest-press.gif`,
+  overhead_cable_extension: 'https://fitnessprogramer.com/wp-content/uploads/2021/06/High-Pulley-Overhead-Tricep-Extension.gif',
   old_overhead_cable_extension: `${exerciseDb}triceps/cable-overhead-triceps-extension-rope-attachment.gif`,
   old_seated_row: `${exerciseDb}upper-back/lever-seated-row.gif`,
   old_pec_deck: `${exerciseDb}pectorals/lever-seated-fly.gif`,
