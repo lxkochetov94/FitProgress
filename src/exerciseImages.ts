@@ -73,7 +73,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   reverse_pec_deck: `${exerciseDb}delts/lever-seated-reverse-fly.gif`,
   hip_adductor: `${exerciseDb}adductors/lever-seated-hip-adduction.gif`,
   hip_abductor: `${exerciseDb}abductors/lever-seated-hip-abduction.gif`,
-  matrix_biceps_curl: `${exerciseDb}biceps/lever-bicep-curl.gif`,
+  matrix_biceps_curl: 'https://fitnessprogramer.com/wp-content/uploads/2021/06/Lever-Biceps-Curl.gif',
   cable_rear_delt_fly: `${gymPlannerDb}shoulder_gifs/cable_rear_delt_fly.gif`,
 
   er_isometric: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
