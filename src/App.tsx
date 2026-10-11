@@ -1057,7 +1057,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
   const profiles = loadExerciseProfiles()
-  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug', 'cable_ir', 'incline_db_bottom_start'].includes(exercise.id))
+  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug', 'cable_ir', 'incline_db_bottom_start', 'old_hammer_curl'].includes(exercise.id))
   // One visible incline-press family; historical exercise IDs remain untouched in storage/exports.
   const inclineIds = ['incline_db_press', 'incline_db_bottom_start', 'incline_db_press_legacy', 'old_incline_db_press']
   const inclineHistory = inclineIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
@@ -1101,6 +1101,11 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
     ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
   }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
   const shrugSessions = new Set(shrugHistory.map((entry) => entry.sessionId)).size
+  const hammerIds = ['db_hammer_curl', 'old_hammer_curl']
+  const hammerHistory = hammerIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
+    ...entry, variantId: id, variantName: getDefinition(id)?.name ?? id
+  }))).sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt))
+  const hammerSessions = new Set(hammerHistory.map((entry) => entry.sessionId)).size
   const internalRotationIds = ['cable_internal_rotation', 'cable_ir']
   const internalRotationHistory = internalRotationIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
     ...entry, variantId: id, variantName: getDefinition(id)?.name ?? profiles[id]?.name ?? id
@@ -1356,6 +1361,27 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                       {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
                     </div>
                   )) : <p>Данные завершённых тренировок появятся здесь после сохранения сессий.</p>}
+                </details>
+              </div>
+            )}
+            {exercise.id === 'db_hammer_curl' && (
+              <div className="incline-family-history">
+                <h3>Молотки с гантелями · общая история</h3>
+                <p>Молотки стоя из старого зала и молотки с гантелями из нового зала показаны в одной карточке. Исходные ID и результаты сохранены.</p>
+                <div className="library-values">
+                  <div><span>Старый зал · исторический ориентир</span><b>{getDefinition('old_hammer_curl')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Новый зал · исторический ориентир</span><b>{getDefinition('db_hammer_curl')?.bestKnown ?? '—'}</b></div>
+                  <div><span>Сессий в FitProgress</span><b>{hammerSessions}</b></div>
+                </div>
+                <details>
+                  <summary>История обоих вариантов ({hammerHistory.length})</summary>
+                  {hammerHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, 'кг', set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  ))}
                 </details>
               </div>
             )}
