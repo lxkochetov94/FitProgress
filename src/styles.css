@@ -582,6 +582,12 @@ footer { text-align: center; color: #8c928e; font-size: 12px; margin: 38px 0 0; 
 
 
 /* generated exercise artwork */
+.exercise-image.exercise-online, .exercise-thumb.exercise-online {
+  object-fit: contain !important;
+  object-position: center !important;
+  background: white;
+  padding: 0 !important;
+}
 .exercise-image.exercise-generated {
   object-fit: contain !important;
   object-position: center !important;

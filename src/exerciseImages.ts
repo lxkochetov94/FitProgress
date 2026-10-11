@@ -1,6 +1,21 @@
 import type { ExerciseDefinition } from './types'
 
 const base = `${import.meta.env.BASE_URL}exercises-generated/`
+const online = `${import.meta.env.BASE_URL}exercises-online/`
+
+// Workbook identifiers are preserved: images must also resolve without a library definition.
+const WORKOUT_IMAGE_ALIASES: Record<string, string> = {
+  cable_er_75_90: 'cable_er_75_90',
+  matrix_leg_press: 'matrix_leg_press', leg_press: 'matrix_leg_press',
+  neutral_grip_pullup: 'neutral_grip_pullup', neutral_pullup: 'neutral_grip_pullup',
+  machine_shoulder_press: 'machine_shoulder_press',
+  cable_ir: 'cable_ir', cable_internal_rotation: 'cable_ir',
+  incline_db_bottom_start: 'incline_db_bottom_start', incline_db_press: 'incline_db_bottom_start',
+  longer_lever_cable_fly: 'longer_lever_cable_fly',
+  matrix_leg_curl: 'matrix_leg_curl', seated_leg_curl: 'matrix_leg_curl',
+  one_arm_db_preacher: 'one_arm_db_preacher',
+  one_arm_cable_triceps_pushdown: 'one_arm_cable_triceps_pushdown', one_arm_cable_pushdown: 'one_arm_cable_triceps_pushdown'
+}
 
 export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
   barbell_rdl: `${base}barbell_rdl.png`,
@@ -154,9 +169,11 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
   return uri
 }
 
-export function exerciseImageForDefinition(def?: ExerciseDefinition) {
+export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
+  const illustration = WORKOUT_IMAGE_ALIASES[exerciseId || def?.id || '']
+  if (illustration) return `${online}${illustration}.webp`
   if (!def) return undefined
   return BUILTIN_EXERCISE_IMAGES[def.id] || generatedExerciseIllustration(def)
 }
 
-export const EXERCISE_IMAGE_CREDIT = 'Иллюстрации упражнений встроены в FitProgress и доступны офлайн'
+export const EXERCISE_IMAGE_CREDIT = 'Иллюстрации: FitnessProgramer, Lift Manual. Доступны офлайн; специальные варианты выполняйте по инструкции тренировки.'
