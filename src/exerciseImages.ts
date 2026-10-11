@@ -116,7 +116,7 @@ export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
   medium_lever_cable_fly: `${base}medium_lever_cable_fly.webp`,
   one_arm_cable_pushdown: `${base}one_arm_cable_pushdown.webp`,
   one_arm_db_preacher: `${base}one_arm_db_preacher.webp`,
-  reverse_grip_barbell_row: `${base}reverse_grip_barbell_row.webp`,
+  reverse_grip_barbell_row: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Reverse-Grip-Barbell-Row.gif',
   rope_pushdown: `${base}rope_pushdown.png`
 }
 const esc = (value: string) =>
