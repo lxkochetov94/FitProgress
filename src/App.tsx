@@ -1108,6 +1108,8 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const internalRotationSessions = new Set(internalRotationHistory.map((entry) => entry.sessionId)).size
   const inclineSessions = new Set(inclineHistory.map((entry) => entry.sessionId)).size
   const inclineLatest = inclineHistory[0]
+  const latestInclineProfile = inclineIds.map((id) => profiles[id]).filter((profile) => profile?.lastPerformedAt)
+    .sort((a, b) => Date.parse(b.lastPerformedAt) - Date.parse(a.lastPerformedAt))[0]
   const needle = query.trim().toLowerCase()
   const items = library
     .filter((exercise) => exercise.known)
@@ -1173,7 +1175,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
               </div>
             </div>
             <div className="library-values">
-              {exercise.lastKnown && <div><span>Последняя база</span><b>{exercise.lastKnown}</b></div>}
+              {(exercise.id === 'incline_db_press' ? (latestInclineProfile?.lastKnown ?? exercise.lastKnown) : exercise.lastKnown) && <div><span>Последняя база</span><b>{exercise.id === 'incline_db_press' ? (latestInclineProfile?.lastKnown ?? exercise.lastKnown) : exercise.lastKnown}</b></div>}
               {getDefinition(exercise.id)?.bestKnown && <div><span>Исторический ориентир</span><b>{getDefinition(exercise.id)!.bestKnown}</b></div>}
               {profiles[exercise.id]?.bestKnown && !exercise.rehab && <div><span>Лучший в FitProgress</span><b>{profiles[exercise.id].bestKnown}</b></div>}
               {profiles[exercise.id]?.lastRir && <div><span>Последний RIR</span><b>{profiles[exercise.id].lastRir}</b></div>}
