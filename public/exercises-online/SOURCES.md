@@ -20,6 +20,8 @@ These files are stored inside FitProgress and work offline immediately.
 | `incline_db_bottom_start` | `incline_db_bottom_start.webp` | https://fitnessprogramer.com/exercise/incline-dumbbell-press/ |
 | `longer_lever_cable_fly` | `longer_lever_cable_fly.webp` | https://fitnessprogramer.com/exercise/single-arm-cable-crossover/ |
 
+| `lat_pulldown_medium` | `lat_pulldown_medium.gif` | https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/lats/cable-bar-lateral-pulldown.gif |
+
 ## External Internet GIF mappings
 
 These illustrations are loaded from public GitHub/CDN sources and cached by the FitProgress service worker after first successful display.
@@ -55,7 +57,6 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `matrix_triceps_pressdown_v` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/cable-triceps-pushdown-v-bar.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/cable-triceps-pushdown-v-bar.gif) |
 | `seated_db_shoulder_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/dumbbell-seated-shoulder-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/dumbbell-seated-shoulder-press.gif) |
 | `seated_db_lateral_raise` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`delts/dumbbell-seated-lateral-raise.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/delts/dumbbell-seated-lateral-raise.gif) |
-| `lat_pulldown_medium` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`lats/twin-handle-parallel-grip-lat-pulldown.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/lats/twin-handle-parallel-grip-lat-pulldown.gif) |
 | `seated_row_generic` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`upper-back/lever-seated-row.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/lever-seated-row.gif) |
 | `one_arm_row_generic` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`upper-back/dumbbell-one-arm-bent-over-row.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/dumbbell-one-arm-bent-over-row.gif) |
 | `face_pull` | [GYM_planner](https://github.com/H-Ossama/GYM_planner) | [`app/src/main/assets/exercices-gifs/shoulder_gifs/face_pull.gif`](https://github.com/H-Ossama/GYM_planner/blob/main/app/src/main/assets/exercices-gifs/shoulder_gifs/face_pull.gif) |
@@ -96,6 +97,8 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `short_lever_cable_fly` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/cable-one-arm-decline-chest-fly.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/cable-one-arm-decline-chest-fly.gif) |
 
 ## Technique notes
+
+- `lat_pulldown_medium` now uses a single medium-width pulldown bar on a central high cable, matching the user's actual LivePro MEDIUM setup instead of the previous two-independent-handle variation.
 
 - `matrix_leg_curl` now uses a prone lying leg-curl animation matching the user's actual machine: torso face-down on the bench, hips supported, roller behind the lower legs, knee flexion bringing the roller upward toward the glutes.
 
