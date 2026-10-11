@@ -1057,9 +1057,9 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'rehab'>('current')
   const profiles = loadExerciseProfiles()
-  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug', 'cable_ir'].includes(exercise.id))
+  const library = personalExerciseLibrary().filter((exercise) => !['incline_db_press_legacy', 'old_incline_db_press', 'old_reverse_pec_deck', 'old_leg_extension', 'old_leg_curl', 'seated_db_lateral_raise', 'old_db_lateral_raise_standing', 'old_db_pullover', 'old_seated_row', 'old_db_shrug', 'cable_ir', 'incline_db_bottom_start'].includes(exercise.id))
   // One visible incline-press family; historical exercise IDs remain untouched in storage/exports.
-  const inclineIds = ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press']
+  const inclineIds = ['incline_db_press', 'incline_db_bottom_start', 'incline_db_press_legacy', 'old_incline_db_press']
   const inclineHistory = inclineIds.flatMap((id) => (profiles[id]?.history ?? []).map((entry) => ({
     ...entry,
     variantId: id,
