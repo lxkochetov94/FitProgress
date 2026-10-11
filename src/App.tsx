@@ -82,7 +82,7 @@ function personalExerciseLibrary() {
     .filter((profile) => !staticIds.has(profile.exerciseId))
     .map(profileToDefinition)
   const knownIds = new Set([...staticIds, ...learnedOnly.map((item) => item.id)])
-  const retroOnly = [...performed.values()]
+  const retroOnly: ExerciseDefinition[] = [...performed.values()]
     .filter((exercise) => !knownIds.has(exercise.exerciseId))
     .map((exercise) => ({
       id: exercise.exerciseId, name: exercise.name,
