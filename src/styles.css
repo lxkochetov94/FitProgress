@@ -2923,3 +2923,14 @@ html, body {
 }
 .danger-primary.liquid-glass-surface:active { transform: scale(.988); filter: brightness(.96); }
 .danger-primary.liquid-glass-surface:focus-visible { outline: 3px solid rgba(234,93,125,.7); outline-offset: 3px; }
+
+
+/* Shared history for the three historical incline dumbbell press variants. */
+.incline-family-history { margin-top: 16px; padding: 16px; border: 1px solid #d5e7db; border-radius: 18px; background: #f4faf6; color: #344e3d; }
+.incline-family-history h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.incline-family-history p { margin: 8px 0 12px; line-height: 1.5; }
+.incline-family-history details { margin-top: 14px; }
+.incline-family-history summary { cursor: pointer; font-weight: 700; }
+.incline-family-entry { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-bottom: 1px solid #d7e4db; overflow-wrap: anywhere; }
+.incline-family-entry strong { font-size: .92rem; }
+.incline-family-entry span, .incline-family-entry small { line-height: 1.45; font-size: .85rem; }
