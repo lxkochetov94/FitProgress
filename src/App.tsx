@@ -1137,6 +1137,23 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
                 </details>
               </div>
             )}
+            {exercise.id === 'reverse_pec_deck' && (
+              <div className="incline-family-history">
+                <h3>Обратная бабочка · общая история</h3>
+                <p>Старый зал: {getDefinition('old_reverse_pec_deck')?.bestKnown ?? '—'} · Новый зал: {getDefinition('reverse_pec_deck')?.bestKnown ?? '—'}. Вес разных тренажёров напрямую не сравнивается.</p>
+                <p>Сессий в FitProgress: {reverseSessions}</p>
+                <details>
+                  <summary>Открыть историю обоих залов ({reverseHistory.length})</summary>
+                  {reverseHistory.map((entry) => (
+                    <div className="incline-family-entry" key={`${entry.variantId}:${entry.sessionId}`}>
+                      <strong>{fmtDate(entry.performedAt)} · {entry.variantName}</strong>
+                      <span>{entry.sets.map((set) => [set.weight, set.reps ? `×${set.reps}` : ''].filter(Boolean).join(' ')).join(' · ')}</span>
+                      {entry.sets.map((set) => [set.rir ? `RIR ${set.rir}` : '', set.pain ? `Боль ${set.pain}` : '', set.comment].filter(Boolean).join(' · ')).filter(Boolean).map((line, index) => <small key={index}>{line}</small>)}
+                    </div>
+                  ))}
+                </details>
+              </div>
+            )}
             {exercise.historyNote && <p>{exercise.historyNote}</p>}
           </article>
         ))}
