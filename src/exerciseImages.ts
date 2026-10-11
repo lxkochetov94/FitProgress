@@ -9,7 +9,7 @@ const WORKOUT_IMAGE_ALIASES: Record<string, string> = {
   matrix_leg_press: 'matrix_leg_press', leg_press: 'matrix_leg_press',
   neutral_grip_pullup: 'neutral_grip_pullup', neutral_pullup: 'neutral_grip_pullup',
   machine_shoulder_press: 'machine_shoulder_press',
-  matrix_chest_press: 'matrix_chest_press',
+  matrix_chest_press: 'matrix_chest_press.gif',
   cable_ir: 'cable_ir', cable_internal_rotation: 'cable_ir',
   incline_db_bottom_start: 'incline_db_bottom_start', incline_db_press: 'incline_db_bottom_start',
   longer_lever_cable_fly: 'longer_lever_cable_fly',
@@ -252,7 +252,7 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
   const id = exerciseId || def?.id || ''
   const illustration = WORKOUT_IMAGE_ALIASES[id]
-  if (illustration) return `${online}${illustration}.webp`
+  if (illustration) return `${online}${illustration.includes('.') ? illustration : `${illustration}.webp`}`
   const external = EXTERNAL_EXERCISE_IMAGES[id]
   if (external) return external
   if (!def) return undefined
