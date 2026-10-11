@@ -1043,7 +1043,7 @@ function ExerciseLibraryView({ onBack }: { onBack: () => void }) {
   const items = library
     .filter((exercise) => exercise.known)
     .filter((exercise) => scope === 'all' ? true : scope === 'rehab' ? Boolean(exercise.rehab) : exercise.gym !== 'Старый зал')
-    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : [])].some((value) => value.toLowerCase().includes(needle)))
+    .filter((exercise) => !needle || [exercise.name, exercise.muscleGroup, exercise.equipment, ...(exercise.aliases ?? []), ...(exercise.id === 'incline_db_press' ? ['Жим гантелей на наклонной скамье', 'Наклонный жим гантелей на скамье', 'Bottom-start'] : []), ...(exercise.id === 'reverse_pec_deck' ? ['Обратная бабочка'] : [])].some((value) => value.toLowerCase().includes(needle)))
     .sort((a, b) => {
       if (a.suitability === 'avoid' && b.suitability !== 'avoid') return 1
       if (b.suitability === 'avoid' && a.suitability !== 'avoid') return -1
