@@ -1580,7 +1580,14 @@ export default function App() {
   }
 
   const discard = async () => {
-    if (!window.confirm('Удалить незавершённую тренировку с этого устройства?')) return
+    const hasProgress = Boolean(session?.plan.exercises.some((exercise) => exercise.sets.some((set) => set.completed)))
+    if (!window.confirm(hasProgress
+      ? 'Закрыть черновик? Выполненные подходы останутся в истории и статистике как незавершённая тренировка.'
+      : 'Удалить пустую незавершённую тренировку с этого устройства?')) return
+    if (session && hasProgress && !(await archiveSession(session))) {
+      window.alert('Не удалось архивировать выполненные подходы. Черновик сохранён, удаление отменено.')
+      return
+    }
     const saved = await saveActiveSessionDurable(null)
     if (!saved) {
       window.alert('FitProgress не смог подтвердить удаление в локальном хранилище. Попробуй ещё раз перед закрытием приложения.')
