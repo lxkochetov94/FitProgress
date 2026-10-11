@@ -73,6 +73,7 @@ const RETRO = [...RETRO_JUN, ...RETRO_JUL, ...RETRO_AUG, ...RETRO_SEP]
  */
 const ANALYTICS_EQUIVALENTS: Record<string, string[]> = {
   db_shrug: ['db_shrug', 'old_db_shrug'],
+  reverse_pec_deck: ['reverse_pec_deck', 'old_reverse_pec_deck'],
   incline_db_press: ['incline_db_press', 'incline_db_press_legacy', 'old_incline_db_press'],
   medium_lever_cable_fly: ['medium_lever_cable_fly', 'short_lever_cable_fly'],
   db_pullover: ['db_pullover', 'old_db_pullover'],
@@ -83,7 +84,7 @@ const equivalentIds = (exerciseId: string) => ANALYTICS_EQUIVALENTS[exerciseId] 
 const comparisonKeyFor = (requestedExerciseId: string, matchedExerciseId: string) => {
   // These histories are useful context but the mechanics/lever changed enough
   // that a percentage trend must not compare them as one continuous variant.
-  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly') {
+  if (requestedExerciseId === 'incline_db_press' || requestedExerciseId === 'medium_lever_cable_fly' || requestedExerciseId === 'reverse_pec_deck') {
     return matchedExerciseId
   }
   return requestedExerciseId
