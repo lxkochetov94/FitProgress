@@ -1469,7 +1469,7 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
       </button>
       <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
       <button className="home-restore-card" onClick={() => restoreRef.current?.click()}>
-        <span className="home-import-copy"><b>Восстановить результаты тренировки</b><small>Импортировать сохранённый *_result.xlsx в историю и статистику без повторения тренировки</small></span>
+        <span className="home-import-copy"><b>Восстановить результаты тренировки</b></span>
       </button>
       <input ref={restoreRef} className="hidden" type="file" accept=".xlsx" onChange={async (event) => {
         const file = event.target.files?.[0]
@@ -1486,22 +1486,22 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
         <div className="home-quick-grid">
           <button className="home-quick-card" onClick={onOpenAnalytics}>
             <span className="home-quick-icon"><HomeGlyph name="analytics" /></span>
-            <span className="home-quick-copy"><b>Аналитика прогресса</b><small>Объём, веса и повторы</small></span>
+            <span className="home-quick-copy"><b>Аналитика прогресса</b></span>
             <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
           </button>
           <button className="home-quick-card" onClick={onOpenLibrary}>
             <span className="home-quick-icon"><HomeGlyph name="database" /></span>
-            <span className="home-quick-copy"><b>База упражнений</b><small>Упражнения и рабочие веса</small></span>
+            <span className="home-quick-copy"><b>База упражнений</b></span>
             <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
           </button>
           <button className="home-quick-card" onClick={exportFullRegistry}>
             <span className="home-quick-icon"><HomeGlyph name="registry" /></span>
-            <span className="home-quick-copy"><b>Полный реестр</b><small>Все завершённые тренировки</small></span>
+            <span className="home-quick-copy"><b>Все тренировки</b></span>
             <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
           </button>
           <button className="home-quick-card" onClick={downloadTemplate}>
             <span className="home-quick-icon"><HomeGlyph name="excel" /></span>
-            <span className="home-quick-copy"><b>Excel-шаблон</b><small>Скачать файл для импорта</small></span>
+            <span className="home-quick-copy"><b>Excel-шаблон</b></span>
             <span className="home-quick-chevron"><HomeGlyph name="chevron" /></span>
           </button>
         </div>
