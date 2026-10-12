@@ -3089,3 +3089,96 @@ html, body {
   .home-quick-card { min-height: 108px; padding: 14px; }
   .home-quick-copy b { font-size: 15px; }
 }
+
+
+/* Approved FitProgress quick-access design: three single-layer mint glass pills. */
+.home-quick-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.home-quick-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 76px;
+  padding: 5px 16px 5px 5px;
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 9% 46%,rgba(101,246,177,.34),transparent 39%),
+    linear-gradient(110deg,rgba(202,251,232,.83) 0%,rgba(230,251,250,.92) 52%,rgba(214,254,236,.84) 100%);
+  box-shadow: 0 8px 22px rgba(12,95,66,.12),inset 0 2px 2px rgba(255,255,255,.98),inset 0 -2px 4px rgba(63,188,138,.22);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  color: #111b17;
+  text-align: left;
+}
+.home-quick-card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: auto -8% -80% 67%;
+  height: 135%;
+  border-radius: 50%;
+  transform: rotate(-24deg);
+  background: linear-gradient(150deg,rgba(134,244,191,.32),rgba(169,248,219,.05));
+}
+.home-quick-card:active { transform: scale(.987); filter: brightness(.985); }
+.home-quick-icon {
+  flex: 0 0 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  border: 1px solid rgba(255,255,255,.94);
+  border-radius: 999px;
+  color: #057d50;
+  background: linear-gradient(135deg,rgba(195,255,226,.89),rgba(234,255,248,.58));
+  box-shadow: 2px 1px 8px rgba(5,143,91,.1),inset 1px 2px 3px rgba(255,255,255,.95),inset -2px -3px 5px rgba(69,177,131,.16);
+}
+.home-quick-icon svg { width: 33px; height: 33px; stroke-width: 2.3; }
+.home-quick-copy { flex: 1; width: auto; min-width: 0; align-self: center; }
+.home-quick-copy b {
+  display: block;
+  font-size: clamp(17px, 4.5vw, 20px);
+  font-weight: 650;
+  line-height: 1.17;
+  letter-spacing: -.023em;
+  text-wrap: pretty;
+}
+.home-template-utility {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #64746d;
+  font-size: 13px;
+  font-weight: 500;
+}
+.home-template-utility svg { width: 17px; height: 17px; }
+.home-template-utility:active { background: rgba(18,105,67,.07); }
+@media (max-width: 360px) {
+  .home-quick-card { min-height: 70px; gap: 12px; padding: 4px 12px 4px 4px; }
+  .home-quick-icon { flex-basis: 60px; width: 60px; height: 60px; }
+  .home-quick-icon svg { width: 29px; height: 29px; }
+  .home-quick-copy b { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-quick-card { transition: none; }
+}
