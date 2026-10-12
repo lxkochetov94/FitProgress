@@ -915,3 +915,65 @@
 @media (prefers-reduced-motion: reduce) {
   .analytics-periods button { transition: none; }
 }
+
+
+/* FitProgress quick-access mint glass language for analytics highlights.
+   Scoped strictly to the period selector, overall trend and chart callout. */
+.analytics-periods button.active.analytics-mint-glass,
+.analytics-index-head > strong.analytics-mint-glass,
+.analytics-chart-value.analytics-mint-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #124c39;
+  border: 1px solid rgba(255,255,255,.91);
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 12% 24%, rgba(99,244,169,.28), transparent 66%),
+    linear-gradient(115deg, rgba(196,250,225,.96), rgba(231,251,249,.95) 58%, rgba(197,250,222,.94));
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.95),
+    inset 0 -2px 3px rgba(59,176,123,.18),
+    0 5px 14px rgba(18,113,76,.12);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  text-shadow: none;
+}
+.analytics-periods button.active.analytics-mint-glass::after,
+.analytics-index-head > strong.analytics-mint-glass::after,
+.analytics-chart-value.analytics-mint-glass::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  right: -16%;
+  bottom: -82%;
+  width: 55%;
+  height: 135%;
+  border-radius: 50%;
+  transform: rotate(-24deg);
+  background: rgba(117,233,186,.22);
+}
+.analytics-periods button.active.analytics-mint-glass {
+  color: #145d43;
+  border-radius: 14px;
+  transform: none;
+}
+.analytics-periods button.active.analytics-mint-glass .analytics-period-label,
+.analytics-index-head > strong.analytics-mint-glass .analytics-glass-label,
+.analytics-chart-value.analytics-mint-glass .analytics-chart-value-copy b {
+  color: #124c39;
+  text-shadow: none;
+}
+.analytics-chart-value.analytics-mint-glass {
+  border-radius: 15px;
+  min-width: 104px;
+  max-width: 154px;
+}
+.analytics-chart-value.analytics-mint-glass .analytics-chart-value-copy > span {
+  color: #427b66;
+  text-shadow: none;
+}
+.analytics-index-head > strong.analytics-mint-glass.positive {
+  color: #087c48;
+}
