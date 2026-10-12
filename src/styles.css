@@ -2934,3 +2934,40 @@ html, body {
 .incline-family-entry { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-bottom: 1px solid #d7e4db; overflow-wrap: anywhere; }
 .incline-family-entry strong { font-size: .92rem; }
 .incline-family-entry span, .incline-family-entry small { line-height: 1.45; font-size: .85rem; }
+
+
+/* Secondary action: restore previously exported results without repeating a session. */
+.home-restore-card {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 18px 20px;
+  border: 1px solid #d7e5dd;
+  border-radius: 22px;
+  background: #f5faf7;
+  color: #193b2d;
+  text-align: left;
+  box-shadow: 0 5px 16px rgba(22, 82, 50, .07);
+  cursor: pointer;
+}
+.home-restore-card:active { transform: scale(.995); }
+.home-restore-card .home-import-copy {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.home-restore-card .home-import-copy b {
+  color: #153c2b;
+  font-size: clamp(17px, 4.4vw, 21px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.home-restore-card .home-import-copy small {
+  color: #537164;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
