@@ -1484,7 +1484,7 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
         <div className="home-quick-grid">
           <button className="home-quick-card" onClick={onOpenAnalytics}>
             <span className="home-quick-icon"><HomeGlyph name="analytics" /></span>
-            <span className="home-quick-copy"><b>Аналитика прогресса</b></span>
+            <span className="home-quick-copy"><b>Аналитика</b></span>
           </button>
           <button className="home-quick-card" onClick={onOpenLibrary}>
             <span className="home-quick-icon"><HomeGlyph name="database" /></span>
@@ -1493,10 +1493,6 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
           <button className="home-quick-card" onClick={exportFullRegistry}>
             <span className="home-quick-icon"><HomeGlyph name="registry" /></span>
             <span className="home-quick-copy"><b>Все тренировки</b></span>
-          </button>
-          <button className="home-quick-card" onClick={downloadTemplate}>
-            <span className="home-quick-icon"><HomeGlyph name="excel" /></span>
-            <span className="home-quick-copy"><b>Excel-шаблон</b></span>
           </button>
         </div>
       </section>
@@ -1526,6 +1522,10 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
         <span className="home-storage-icon"><HomeGlyph name="phone" /></span>
         <span>Данные хранятся на этом устройстве</span>
       </section>
+      <button className="home-template-utility" onClick={downloadTemplate}>
+        <HomeGlyph name="excel" />
+        <span>Скачать Excel-шаблон</span>
+      </button>
 
     </main>
   )
