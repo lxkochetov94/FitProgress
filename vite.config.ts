@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/fitprogress-logo-unframed.png', 'apple-touch-icon.png', 'apple-touch-icon-fullbleed.png'],
+      includeAssets: ['brand/fitprogress-logo-soft.svg', 'brand/fitprogress-logo-unframed.png', 'apple-touch-icon.png', 'apple-touch-icon-fullbleed.png'],
       manifest: {
         name: 'FitProgress',
         short_name: 'FitProgress',
@@ -20,7 +20,7 @@ export default defineConfig({
         start_url: './',
         scope: './',
         icons: [
-          { src: 'brand/fitprogress-logo-unframed.png', sizes: '320x320', type: 'image/png', purpose: 'any' },
+          { src: 'brand/fitprogress-logo-soft.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'brand/fitprogress-logo-unframed.png', sizes: '320x320', type: 'image/png', purpose: 'maskable' }
         ]
       },
