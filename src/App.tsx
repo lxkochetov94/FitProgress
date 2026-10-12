@@ -1468,7 +1468,7 @@ function Home({ active, onLoadPlan, onRestore, onResume, onDiscard, onOpenLibrar
         <span className="home-import-chevron"><HomeGlyph name="chevron" /></span>
       </button>
       <input ref={fileRef} className="hidden" type="file" accept=".xlsx,.xls" onChange={chooseFile} />
-      <button className="home-import-card" onClick={() => restoreRef.current?.click()}>
+      <button className="home-restore-card" onClick={() => restoreRef.current?.click()}>
         <span className="home-import-copy"><b>Восстановить результаты тренировки</b><small>Импортировать сохранённый *_result.xlsx в историю и статистику без повторения тренировки</small></span>
       </button>
       <input ref={restoreRef} className="hidden" type="file" accept=".xlsx" onChange={async (event) => {
