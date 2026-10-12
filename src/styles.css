@@ -3025,3 +3025,67 @@ html, body {
   .home-quick-card { padding: 13px; min-height: 124px; }
   .home-quick-copy b { font-size: 16px; }
 }
+
+
+/* Light iOS-inspired typography and clean navigation proportions. */
+.home-import-card {
+  grid-template-columns: 56px minmax(0, 1fr);
+  min-height: 104px;
+  gap: 16px;
+  padding: 19px 22px;
+}
+.home-import-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 19px;
+}
+.home-import-icon svg { width: 29px; height: 29px; }
+.home-import-copy b {
+  font-size: clamp(19px, 5vw, 23px);
+  font-weight: 650;
+  line-height: 1.14;
+  letter-spacing: -.025em;
+}
+.home-quick-grid { gap: 12px; }
+.home-quick-card {
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 23px;
+}
+.home-quick-icon {
+  width: 43px;
+  height: 43px;
+  border-radius: 15px;
+}
+.home-quick-icon svg { width: 24px; height: 24px; }
+.home-quick-copy {
+  width: 100%;
+  align-self: stretch;
+}
+.home-quick-copy b {
+  font-size: clamp(15px, 3.8vw, 17px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.018em;
+  text-wrap: pretty;
+}
+.home-restore-card {
+  min-height: 58px;
+  padding: 16px 18px;
+  border-radius: 20px;
+}
+.home-restore-card .home-import-copy b {
+  font-size: clamp(15px, 3.8vw, 17px);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.018em;
+}
+@media (max-width: 360px) {
+  .home-quick-card { min-height: 108px; padding: 14px; }
+  .home-quick-copy b { font-size: 15px; }
+}
