@@ -57,6 +57,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   standing_db_curl: `${exerciseDb}biceps/dumbbell-standing-biceps-curl.gif`,
   db_hammer_curl: `${exerciseDb}biceps/dumbbell-hammer-curl.gif`,
   matrix_triceps_pressdown_v: `${exerciseDb}triceps/cable-triceps-pushdown-v-bar.gif`,
+  arnold_press: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Arnold-Press.gif',
   seated_db_shoulder_press: `${exerciseDb}delts/dumbbell-seated-shoulder-press.gif`,
   seated_db_lateral_raise: `${exerciseDb}delts/dumbbell-seated-lateral-raise.gif`,
   seated_row_generic: `${exerciseDb}upper-back/lever-seated-row.gif`,
