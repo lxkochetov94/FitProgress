@@ -116,6 +116,8 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 - Angle-specific shoulder-rehab variants can share the closest external-rotation movement-family illustration; the prescribed abduction angle in the workout remains authoritative.
 - `short_lever_cable_fly` uses a standing one-arm cable fly demo. Visual is movement-family guidance only: keep a short lever / bent elbow and restricted pain-free ROM according to the rehab prescription.
 
+| `arnold_press` | [Fitness Programmer — Arnold Press](https://fitnessprogramer.com/exercise/arnold-press/) | [Animated male anatomy GIF](https://fitnessprogramer.com/wp-content/uploads/2021/02/Arnold-Press.gif) — seated rotating dumbbell shoulder press |
+
 ## Rights and attribution
 
 The bundled files and external GIFs originate from third-party exercise-illustration sources. Copyright and other rights remain with their respective owners. The GitHub collections above are used as source indexes/mirrors and do not imply that FitProgress owns the artwork. This file preserves the source path for every mapped registry exercise.
