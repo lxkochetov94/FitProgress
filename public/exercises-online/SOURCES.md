@@ -48,7 +48,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `old_ez_curl` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`biceps/ez-barbell-curl.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/biceps/ez-barbell-curl.gif) |
 | `old_hammer_chest_press` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`pectorals/lever-chest-press.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/pectorals/lever-chest-press.gif) |
 | `reverse_grip_barbell_row` | [Fitness Programmer — Reverse Grip Barbell Row](https://fitnessprogramer.com/exercise/reverse-grip-barbell-row/) | [Animated GIF](https://fitnessprogramer.com/wp-content/uploads/2021/04/Reverse-Grip-Barbell-Row.gif) |
-| `barbell_rdl` | [Fitness Programmer — Romanian Deadlift](https://fitnessprogramer.com/exercise/romanian-deadlift/) | [Barbell Romanian Deadlift animated GIF](https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Romanian-Deadlift.gif) |
+| `barbell_rdl` | [FitFocus](https://www.ffocus.me/exercise/romanian-deadlift) | [Animated GIF](https://d3d2ynhodh9o1z.cloudfront.net/exercises/romanian-deadlift.gif) — hosted external animation; local 1080×1080 user GIF not yet uploaded to repository |
 | `old_overhead_cable_extension` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/cable-overhead-triceps-extension-rope-attachment.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/cable-overhead-triceps-extension-rope-attachment.gif) |
 | `overhead_cable_extension` | [Fitness Programmer — High Pulley Overhead Tricep Extension](https://fitnessprogramer.com/exercise/high-pulley-overhead-tricep-extension/) | [Animated GIF](https://fitnessprogramer.com/wp-content/uploads/2021/06/High-Pulley-Overhead-Tricep-Extension.gif) — overhead cable extension from high pulley |
 | `old_seated_row` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`upper-back/lever-seated-row.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/upper-back/lever-seated-row.gif) |
@@ -98,7 +98,7 @@ These illustrations are loaded from public GitHub/CDN sources and cached by the 
 | `matrix_triceps_extension` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`triceps/lever-triceps-extension.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/triceps/lever-triceps-extension.gif) |
 | `walking_lunges` | [ExerciseGymGifsDB](https://github.com/JahelCuadrado/ExerciseGymGifsDB) | [`glutes/dumbbell-lunge.gif`](https://github.com/JahelCuadrado/ExerciseGymGifsDB/blob/main/glutes/dumbbell-lunge.gif) |
 | `short_lever_cable_fly` | [Kovo — Cable Standing Single Arm Fly](https://www.kovofitness.com/exercises/cable-standing-single-arm-fly) | [Animated GIF](https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif) — standing unilateral cable fly; rehab-specific short lever must follow exercise instructions |
-| `wall_pushup` | [Fitness Programmer — Wall Push-up](https://fitnessprogramer.com/exercise/wall-push-up/) | [Animated original GIF](https://fitnessprogramer.com/wp-content/uploads/2021/04/Wall-Push-ups.gif) |
+| `wall_pushup` | [FitFocus](https://www.ffocus.me/exercise/push-up-wall) | [Animated GIF](https://d3d2ynhodh9o1z.cloudfront.net/exercises/push-up-wall.gif) — hosted external animation; local 1080×1080 user GIF not yet uploaded to repository |
 
 ## Technique notes
 
