@@ -102,7 +102,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
 
 export const BUILTIN_EXERCISE_IMAGES: Record<string, string> = {
   barbell_deadlift: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Deadlift.gif',
-  barbell_rdl: 'https://d3d2ynhodh9o1z.cloudfront.net/exercises/romanian-deadlift.gif',
+  barbell_rdl: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Romanian-Deadlift.gif',
   bulgarian_split_squat: `${base}bulgarian_split_squat.png`,
   cable_er_75_90: `${base}cable_er_75_90.png`,
   cable_internal_rotation: `${base}cable_internal_rotation.webp`,
