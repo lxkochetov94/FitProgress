@@ -94,7 +94,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   cable_er_30_45: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
   cable_er_45_60: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
   cable_er_60_75: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
-  one_arm_bayesian_curl: 'https://www.strengthlog.com/wp-content/uploads/2024/11/Bayesian-curls.gif',
+  one_arm_bayesian_curl: `${import.meta.env.BASE_URL}exercises/one-arm-bayesian-curl.gif`,
   matrix_triceps_extension: `${exerciseDb}triceps/lever-triceps-extension.gif`,
   walking_lunges: `${exerciseDb}glutes/dumbbell-lunge.gif`,
   short_lever_cable_fly: 'https://www.kovofitness.com/x-media/cdn/exercise-animations/cableStandingSingleArmFly.gif',
