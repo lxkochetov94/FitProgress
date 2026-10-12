@@ -3182,3 +3182,22 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .home-quick-card { transition: none; }
 }
+
+
+/* Optical alignment of quick-action glyphs inside their glass spheres. */
+.home-quick-card .home-quick-icon {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 0;
+}
+.home-quick-card .home-quick-icon svg {
+  display: block;
+  flex: none;
+  margin: 0;
+  transform-origin: center;
+}
+.home-quick-card:nth-child(1) .home-quick-icon svg { transform: translate(-.5px, 2px); }
+.home-quick-card:nth-child(2) .home-quick-icon svg { transform: translateY(1px); }
+.home-quick-card:nth-child(3) .home-quick-icon svg { transform: translateY(.5px); }
