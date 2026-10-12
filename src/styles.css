@@ -2971,3 +2971,57 @@ html, body {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+
+
+/* Compact home navigation: balanced 2-column tiles without unused vertical space. */
+.home-quick-grid { gap: 12px; }
+.home-quick-card {
+  min-height: 128px;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  grid-template-rows: 46px auto;
+  align-content: center;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 11px;
+  padding: 16px;
+  border-radius: 23px;
+}
+.home-quick-icon {
+  grid-column: 1;
+  grid-row: 1;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+}
+.home-quick-icon svg { width: 25px; height: 25px; }
+.home-quick-copy {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-self: start;
+}
+.home-quick-copy b {
+  font-size: clamp(16px, 4.3vw, 20px);
+  line-height: 1.13;
+  letter-spacing: -.027em;
+  text-wrap: balance;
+}
+.home-quick-chevron {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: center;
+}
+.home-restore-card {
+  min-height: 66px;
+  padding: 17px 20px;
+  border-radius: 21px;
+}
+.home-restore-card .home-import-copy b {
+  font-size: clamp(17px, 4.3vw, 20px);
+  line-height: 1.22;
+}
+@media (max-width: 360px) {
+  .home-quick-grid { gap: 10px; }
+  .home-quick-card { padding: 13px; min-height: 124px; }
+  .home-quick-copy b { font-size: 16px; }
+}
