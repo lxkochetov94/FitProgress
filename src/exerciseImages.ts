@@ -84,7 +84,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   abduction_isometric: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
   scaption: `${exerciseDb}delts/dumbbell-full-can-lateral-raise.gif`,
   cable_er_elbow_tucked: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
-  db_lateral_raise: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
+  // db_lateral_raise uses the bundled illustration below; avoid fragile third-party GIF URLs.
   db_sumo_squat: `${gymPlannerDb}leg_gifs/plie_dumbbell_squat.gif`,
   one_arm_cable_lateral_raise: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
   incline_db_press_legacy: `${exerciseDb}pectorals/dumbbell-incline-bench-press.gif`,
@@ -258,6 +258,9 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   const id = exerciseId || def?.id || ''
   const illustration = WORKOUT_IMAGE_ALIASES[id]
   if (illustration) return `${online}${illustration.includes('.') ? illustration : `${illustration}.webp`}`
+  // Prefer bundled images for all matching exercise IDs, including imported workbook entries.
+  const bundled = BUILTIN_EXERCISE_IMAGES[id]
+  if (bundled) return bundled
   const external = EXTERNAL_EXERCISE_IMAGES[id]
   if (external) return external
   if (!def) return undefined
