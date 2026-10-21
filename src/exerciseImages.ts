@@ -84,9 +84,9 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   abduction_isometric: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
   scaption: `${exerciseDb}delts/dumbbell-full-can-lateral-raise.gif`,
   cable_er_elbow_tucked: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
-  db_lateral_raise: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
+  db_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
   db_sumo_squat: `${gymPlannerDb}leg_gifs/plie_dumbbell_squat.gif`,
-  one_arm_cable_lateral_raise: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
+  one_arm_cable_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
   incline_db_press_legacy: `${exerciseDb}pectorals/dumbbell-incline-bench-press.gif`,
   wide_grip_pullup: `${exerciseDb}lats/wide-grip-pull-up.gif`,
   retro_new_cable_seated_row_unilateral: `${exerciseDb}upper-back/cable-seated-one-arm-alternate-row.gif`,
@@ -256,6 +256,11 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
 
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
   const id = exerciseId || def?.id || ''
+  // This legacy workout ID is actually a low-pulley, one-arm cable lateral raise.
+  // Keep its ID and logged sets intact; only correct the animated exercise media.
+  if (id === 'db_lateral_raise' || id === 'one_arm_cable_lateral_raise') {
+    return 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif'
+  }
   const illustration = WORKOUT_IMAGE_ALIASES[id]
   if (illustration) return `${online}${illustration.includes('.') ? illustration : `${illustration}.webp`}`
   // The original animated exercise media takes precedence over static placeholders.
