@@ -6,7 +6,7 @@ import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
 import { EXERCISE_LIBRARY, getDefinition, replacementCandidates } from './exerciseLibrary'
 import { downloadTemplate, exportFullRegistry, exportSession, importWorkout, restoreSessionExport } from './excel'
 import { archiveSession, initializeStorage, loadActiveSession, loadExerciseProfiles, loadHistory, saveActiveSession, saveActiveSessionDurable } from './storage'
-import { exerciseImageForDefinition } from './exerciseImages'
+import { exerciseImageForDefinition, generatedExerciseIllustration } from './exerciseImages'
 import { mergeDefinitionWithProfile, profileToDefinition, updateExerciseProfilesFromSession } from './exerciseProgress'
 import { SHOULDER_PROFILE } from './shoulderProfile'
 import type { ExerciseDefinition, WorkoutExercise, WorkoutPlan, WorkoutSession, WorkoutSet } from './types'
@@ -114,7 +114,14 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
     const className = compact
       ? `exercise-thumb${mediaClass}`
       : `exercise-image${mediaClass}`
-    return <img className={className} src={image} alt={exerciseDisplayName(exercise)} loading={compact ? 'lazy' : 'eager'} />
+    return <img className={className} src={image} alt={exerciseDisplayName(exercise)} loading={compact ? 'lazy' : 'eager'} onError={(event) => {
+      const fallback = generatedExerciseIllustration(def ?? {
+        id: exercise.exerciseId, name: exercise.name, category: exercise.category,
+        muscleGroup: exercise.muscleGroup, movementPattern: exercise.movementPattern,
+        equipment: exercise.equipment, icon: exercise.name.slice(0, 3).toUpperCase()
+      })
+      if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback
+    }} />
   }
   return (
     <div className={compact ? 'exercise-thumb exercise-thumb-placeholder' : 'exercise-visual'} aria-label="Изображение упражнения пока не добавлено">
