@@ -225,7 +225,7 @@ const poseSvg = (pose: string, accent: string) => {
 
 const illustrationCache = new Map<string, string>()
 
-export function generatedExerciseIllustration(def: ExerciseDefinition) {
+export export function generatedExerciseIllustration(def: ExerciseDefinition) {
   const cached = illustrationCache.get(def.id)
   if (cached) return cached
   const [accentA, accentB] = paletteFor(def.muscleGroup)
