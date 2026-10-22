@@ -104,7 +104,7 @@ function personalExerciseLibrary() {
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
-  const image = exerciseImageForDefinition(def, exercise.exerciseId) || exercise.image
+  const image = exerciseImageForDefinition(def, exercise.exerciseId) || (exercise.originalSnapshot || exercise.replacedAt ? undefined : exercise.image)
   if (image) {
     const lower = image.toLowerCase()
     const generated = lower.includes('/exercises-generated/')
@@ -415,7 +415,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
     const sets = session.plan.exercises.flatMap((e) => e.sets)
     const done = sets.filter((s) => s.completed)
     const volume = sessionWorkingVolumeKg(session)
-    return { totalSets: sets.length, doneSets: done.length, volume, replacements: session.plan.exercises.filter((e) => e.exerciseId !== e.originalExerciseId).length }
+    return { totalSets: sets.length, doneSets: done.length, volume, replacements: session.plan.exercises.filter((e) => Boolean(e.originalSnapshot || e.replacedAt || e.replacementReason || (e.originalExerciseId && e.exerciseId !== e.originalExerciseId))).length }
   }, [session])
 
   const mutateExercise = (index: number, fn: (exercise: WorkoutExercise) => WorkoutExercise) => {
@@ -711,6 +711,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const replaceExercise = (index: number, def: ExerciseDefinition, reason: WorkoutExercise['replacementReason']) => {
+    if (session.plan.exercises[index]?.sets.some((set) => set.completed)) {
+      window.alert('В этом упражнении уже есть засчитанные подходы. Чтобы не потерять их и не приписать другому упражнению, замена заблокирована. Сначала сохраните выполненные результаты отдельно.');
+      return
+    }
     mutateExercise(index, (exercise) => {
       const originalSnapshot = exercise.originalSnapshot ?? {
         exerciseId: exercise.exerciseId,
@@ -768,6 +772,10 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
   }
 
   const undoReplacement = (index: number) => {
+    if (session.plan.exercises[index]?.sets.some((set) => set.completed)) {
+      window.alert('Нельзя отменить замену с засчитанными подходами: это приведёт к искажению истории.');
+      return
+    }
     mutateExercise(index, (exercise) => {
       const snapshot = exercise.originalSnapshot
       const def = getDefinition(exercise.originalExerciseId)
@@ -885,7 +893,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                   {definition?.suitability === 'caution' && <span className="context-tag caution">Ограничение</span>}
                   {definition?.suitability === 'avoid' && <span className="context-tag avoid">Не использовать</span>}
                   {isNew && <span className="context-tag new">Новое</span>}
-                  {exercise.exerciseId !== exercise.originalExerciseId && <span className="context-tag replacement">Замена</span>}
+                  {(exercise.originalSnapshot || exercise.replacedAt || (exercise.originalExerciseId && exercise.exerciseId !== exercise.originalExerciseId)) && <span className="context-tag replacement">Замена</span>}
                 </div>
                 {exercise.instruction && <p className="instruction">{humanizeInstruction(exercise.instruction)}</p>}
                 {definition?.known && (definition.lastKnown || definition.bestKnown || definition.historyNote || definition.lastPain) && <div className={`history-card ${definition.suitability === 'avoid' ? 'avoid' : definition.suitability === 'caution' ? 'caution' : ''}`}>
@@ -903,7 +911,7 @@ function WorkoutView({ session, setSession, onExit }: { session: WorkoutSession;
                 </div>}
               </div>
 
-              {exercise.exerciseId !== exercise.originalExerciseId && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
+              {(exercise.originalSnapshot || exercise.replacedAt || (exercise.originalExerciseId && exercise.exerciseId !== exercise.originalExerciseId)) && <div className="replacement-banner"><span>↔ План: <b>{exercise.originalName}</b><br />Факт: <b>{exercise.name}</b>{exercise.replacementReason ? ` · ${exercise.replacementReason}` : ''}</span><button onClick={() => undoReplacement(exerciseIndex)}>Вернуть исходное</button></div>}
 
               <div className="expanded-actions">
                 <button className="secondary" onClick={() => setReplacementFor(exerciseIndex)}>↔ Заменить упражнение</button>
