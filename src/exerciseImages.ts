@@ -254,8 +254,16 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
   return uri
 }
 
+const WORKOUT_IMAGE_FIXES: Record<string, string> = {
+  matrix_shoulder_press: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Lever-Shoulder-Press.gif',
+  cable_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
+  cable_crunch: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Kneeling-Cable-Crunch.gif',
+  seated_db_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Seated-Lateral-Raise.gif'
+}
+
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
   const id = exerciseId || def?.id || ''
+  if (WORKOUT_IMAGE_FIXES[id]) return WORKOUT_IMAGE_FIXES[id]
   // This legacy workout ID is actually a low-pulley, one-arm cable lateral raise.
   // Keep its ID and logged sets intact; only correct the animated exercise media.
   if (id === 'db_lateral_raise' || id === 'one_arm_cable_lateral_raise') {
