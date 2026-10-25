@@ -263,6 +263,17 @@ const WORKOUT_IMAGE_FIXES: Record<string, string> = {
 
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
   const id = exerciseId || def?.id || ''
+  // Imported workbook IDs may differ from catalog IDs. Resolve those by the
+  // movement's actual name before rendering a generic three-letter placeholder.
+  const name = (def?.name ?? '').toLowerCase().replace(/[·•]/g, ' ').trim()
+  if (/matrix seated leg curl|matrix leg curl|сгибани[ея] ног.*сидя/.test(name))
+    return `${online}matrix_leg_curl.gif`
+  if (/dumbbell shrugs?|шраги с гантелями/.test(name))
+    return `${base}db_shrug.webp`
+  if (/lying dumbbell french press|lying dumbbell triceps extension|французский жим.*гантел/.test(name))
+    return `${exerciseDb}triceps/dumbbell-lying-triceps-extension.gif`
+  if (/reverse crunch on bench|обратные скручивания.*скам/.test(name))
+    return `${exerciseDb}abs/reverse-crunch.gif`
   if (WORKOUT_IMAGE_FIXES[id]) return WORKOUT_IMAGE_FIXES[id]
   // This legacy workout ID is actually a low-pulley, one-arm cable lateral raise.
   // Keep its ID and logged sets intact; only correct the animated exercise media.
