@@ -269,11 +269,12 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   if (/matrix seated leg curl|matrix leg curl|сгибани[ея] ног.*сидя/.test(name))
     return 'https://fitnessprogramer.com/wp-content/uploads/2021/08/Seated-Leg-Curl.gif'
   if (/dumbbell shrugs?|шраги с гантелями/.test(name))
-    return `${base}db_shrug.webp`
+    return 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-Shrug.gif'
   if (/lying dumbbell french press|lying dumbbell triceps extension|французский жим.*гантел/.test(name))
     return `${exerciseDb}triceps/dumbbell-lying-triceps-extension.gif`
   if (/reverse crunch on bench|обратные скручивания.*скам/.test(name))
     return `${exerciseDb}abs/reverse-crunch.gif`
+  if (id === 'db_shrug' || id === 'dumbbell_shrugs' || id === 'dumbbell_shrug') return 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-Shrug.gif'
   if (id === 'seated_leg_curl' || id === 'matrix_leg_curl' || id === 'matrix_seated_leg_curl') return 'https://fitnessprogramer.com/wp-content/uploads/2021/08/Seated-Leg-Curl.gif'
   if (WORKOUT_IMAGE_FIXES[id]) return WORKOUT_IMAGE_FIXES[id]
   // This legacy workout ID is actually a low-pulley, one-arm cable lateral raise.
