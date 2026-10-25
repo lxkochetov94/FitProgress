@@ -104,7 +104,12 @@ function personalExerciseLibrary() {
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
-  const image = exerciseImageForDefinition(def, exercise.exerciseId) || (exercise.originalSnapshot || exercise.replacedAt ? undefined : exercise.image)
+  const mediaDefinition = def ?? {
+    id: exercise.exerciseId, name: exercise.name, category: exercise.category,
+    muscleGroup: exercise.muscleGroup, movementPattern: exercise.movementPattern,
+    equipment: exercise.equipment, icon: exercise.name.slice(0, 3).toUpperCase()
+  }
+  const image = exerciseImageForDefinition(mediaDefinition, exercise.exerciseId) || (exercise.originalSnapshot || exercise.replacedAt ? undefined : exercise.image)
   if (image) {
     const lower = image.toLowerCase()
     const generated = lower.includes('/exercises-generated/')
