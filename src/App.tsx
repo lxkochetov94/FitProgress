@@ -106,7 +106,7 @@ function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExerci
   const def = getDefinition(exercise.exerciseId)
   // The active workout's name is authoritative: imported Excel exercises
   // can reuse a legacy ID while describing a different movement or machine.
-  const mediaDefinition = def ? { ...def, name: exercise.name } : {
+  const mediaDefinition = def ? { ...def, name: exercise.name, equipment: exercise.equipment, perSide: exercise.perSide ?? def.perSide } : {
     id: exercise.exerciseId, name: exercise.name, category: exercise.category,
     muscleGroup: exercise.muscleGroup, movementPattern: exercise.movementPattern,
     equipment: exercise.equipment, icon: exercise.name.slice(0, 3).toUpperCase()
