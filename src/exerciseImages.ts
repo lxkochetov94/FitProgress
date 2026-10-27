@@ -84,7 +84,7 @@ const EXTERNAL_EXERCISE_IMAGES: Record<string, string> = {
   abduction_isometric: `${exerciseDb}delts/cable-one-arm-lateral-raise.gif`,
   scaption: `${exerciseDb}delts/dumbbell-full-can-lateral-raise.gif`,
   cable_er_elbow_tucked: `${exerciseDb}delts/cable-standing-shoulder-external-rotation.gif`,
-  db_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
+  db_lateral_raise: `${exerciseDb}delts/dumbbell-lateral-raise.gif`,
   db_sumo_squat: `${gymPlannerDb}leg_gifs/plie_dumbbell_squat.gif`,
   one_arm_cable_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
   incline_db_press_legacy: `${exerciseDb}pectorals/dumbbell-incline-bench-press.gif`,
@@ -263,7 +263,8 @@ const VERIFIED_MEDIA = {
   seatedDumbbellLateralRaise: `${curatedMedia}seated-dumbbell-lateral-raise.gif`,
   standingDumbbellCalfRaise: `${curatedMedia}standing-dumbbell-calf-raise.gif`,
   reverseCrunchFloor: `${curatedMedia}reverse-crunch-floor.gif`,
-  seatedDumbbellShoulderPress: `${curatedMedia}seated-dumbbell-shoulder-press.gif`
+  seatedDumbbellShoulderPress: `${curatedMedia}seated-dumbbell-shoulder-press.gif`,
+  singleArmDumbbellLateralRaise: `${curatedMedia}single-arm-dumbbell-lateral-raise.gif`
 } as const
 
 const WORKOUT_IMAGE_FIXES: Record<string, string> = {
@@ -287,6 +288,19 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   // Imported workbook IDs may differ from catalog IDs. Resolve those by the
   // movement's actual name before rendering a generic three-letter placeholder.
   const name = (def?.name ?? '').toLowerCase().replace(/[·•]/g, ' ').trim()
+  const equipment = (def?.equipment ?? '').toLowerCase()
+  const isDumbbell = /гантел|dumbbell/.test(equipment)
+  const isCable = /кроссовер|блок|cable|трос/.test(equipment)
+  // Movement + actual implement must override ambiguous legacy workbook IDs.
+  // db_lateral_raise is a dumbbell exercise; one_arm_cable_lateral_raise is cable.
+  if (/махи гантелями в стороны|мах[ио]в? гантелями в стороны|dumbbell (single.arm )?lateral raise/.test(name) && !/сидя|seated/.test(name) && !isCable) {
+    if (def?.perSide === 'arm' || id === 'db_lateral_raise' || /single.arm|one.arm|на каждую руку/.test(name))
+      return VERIFIED_MEDIA.singleArmDumbbellLateralRaise
+    return `${exerciseDb}delts/dumbbell-lateral-raise.gif`
+  }
+  if (id === 'db_lateral_raise' && isDumbbell)
+    return VERIFIED_MEDIA.singleArmDumbbellLateralRaise
+
   // Prefer exercise-specific media by the imported name, even for previously unseen IDs.
   // This also handles replacements made during an active workout.
   if (/армейск.*жим.*гантел.*сидя|жим гантел.*сидя|seated dumbbell (shoulder|military|overhead) press|dumbbell seated shoulder press|seated dumbbell press/.test(name))
@@ -312,9 +326,10 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   if (WORKOUT_IMAGE_FIXES[id]) return WORKOUT_IMAGE_FIXES[id]
   // This legacy workout ID is actually a low-pulley, one-arm cable lateral raise.
   // Keep its ID and logged sets intact; only correct the animated exercise media.
-  if (id === 'db_lateral_raise' || id === 'one_arm_cable_lateral_raise') {
+  if (id === 'one_arm_cable_lateral_raise' || (id === 'db_lateral_raise' && isCable)) {
     return 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif'
   }
+  if (id === 'db_lateral_raise') return VERIFIED_MEDIA.singleArmDumbbellLateralRaise
   const illustration = WORKOUT_IMAGE_ALIASES[id]
   if (illustration) return `${online}${illustration.includes('.') ? illustration : `${illustration}.webp`}`
   // The original animated exercise media takes precedence over static placeholders.
