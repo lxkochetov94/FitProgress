@@ -254,11 +254,25 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
   return uri
 }
 
+// Exact animation URLs from the matching FitnessProgramer exercise pages.
+const VERIFIED_MEDIA = {
+  matrixShoulderPress: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Shoulder-Press.gif',
+  seatedDumbbellLateralRaise: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Seated-Dumbbell-Lateral-Raise.gif',
+  standingDumbbellCalfRaise: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Calf-Raise.gif',
+  reverseCrunchFloor: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Crunch-1.gif'
+} as const
+
 const WORKOUT_IMAGE_FIXES: Record<string, string> = {
-  matrix_shoulder_press: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Lever-Shoulder-Press.gif',
+  matrix_shoulder_press: VERIFIED_MEDIA.matrixShoulderPress,
+  machine_shoulder_press: VERIFIED_MEDIA.matrixShoulderPress,
+  seated_db_lateral_raise: VERIFIED_MEDIA.seatedDumbbellLateralRaise,
+  seated_dumbbell_lateral_raise: VERIFIED_MEDIA.seatedDumbbellLateralRaise,
+  dumbbell_standing_calf_raise: VERIFIED_MEDIA.standingDumbbellCalfRaise,
+  standing_db_calf_raise: VERIFIED_MEDIA.standingDumbbellCalfRaise,
+  reverse_crunch_on_floor: VERIFIED_MEDIA.reverseCrunchFloor,
+  reverse_crunch_floor: VERIFIED_MEDIA.reverseCrunchFloor,
   cable_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/09/Leaning-Cable-Lateral-Raise.gif',
-  cable_crunch: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Kneeling-Cable-Crunch.gif',
-  seated_db_lateral_raise: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Seated-Lateral-Raise.gif'
+  cable_crunch: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Kneeling-Cable-Crunch.gif'
 }
 
 export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?: string) {
@@ -266,6 +280,15 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   // Imported workbook IDs may differ from catalog IDs. Resolve those by the
   // movement's actual name before rendering a generic three-letter placeholder.
   const name = (def?.name ?? '').toLowerCase().replace(/[·•]/g, ' ').trim()
+  // Prefer exercise-specific media by the imported name, even for previously unseen IDs.
+  if (/matrix shoulder press|lever shoulder press|жим плеч.*matrix/.test(name))
+    return VERIFIED_MEDIA.matrixShoulderPress
+  if (/seated dumbbell lateral raise|dumbbell lateral raise.*сидя|махи гантел.*сидя/.test(name))
+    return VERIFIED_MEDIA.seatedDumbbellLateralRaise
+  if (/dumbbell standing calf raise|standing dumbbell calf raise|подъ[её]м.*носк.*гантел|икроножн.*гантел/.test(name))
+    return VERIFIED_MEDIA.standingDumbbellCalfRaise
+  if (/reverse crunch on floor|reverse crunch.*floor|обратн.*скручиван.*пол/.test(name))
+    return VERIFIED_MEDIA.reverseCrunchFloor
   if (/matrix seated leg curl|matrix leg curl|сгибани[ея] ног.*сидя/.test(name))
     return 'https://fitnessprogramer.com/wp-content/uploads/2021/08/Seated-Leg-Curl.gif'
   if (/dumbbell shrugs?|шраги с гантелями/.test(name))
