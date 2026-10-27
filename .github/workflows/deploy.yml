@@ -58,6 +58,7 @@ jobs:
           download_gif standing-dumbbell-calf-raise.gif https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Calf-Raise.gif
           download_gif reverse-crunch-floor.gif https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Crunch-1.gif
           download_gif seated-dumbbell-shoulder-press.gif https://raw.githubusercontent.com/JahelCuadrado/ExerciseGymGifsDB/main/delts/dumbbell-seated-shoulder-press.gif
+          download_gif single-arm-dumbbell-lateral-raise.gif https://fitnessprogramer.com/wp-content/uploads/2022/06/Dumbbell-Single-Arm-Lateral-Raise.gif
 
       - name: Build
         run: npm run build
