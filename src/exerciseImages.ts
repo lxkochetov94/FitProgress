@@ -255,11 +255,14 @@ export function generatedExerciseIllustration(def: ExerciseDefinition) {
 }
 
 // Exact animation URLs from the matching FitnessProgramer exercise pages.
+// Bundled by the Pages build from validated animated exercise sources.
+// Never hotlink these four in the app: the image host rejects some iPhone sessions.
+const curatedMedia = `${import.meta.env.BASE_URL}exercises-curated/`
 const VERIFIED_MEDIA = {
-  matrixShoulderPress: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Shoulder-Press.gif',
-  seatedDumbbellLateralRaise: 'https://fitnessprogramer.com/wp-content/uploads/2021/04/Seated-Dumbbell-Lateral-Raise.gif',
-  standingDumbbellCalfRaise: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Calf-Raise.gif',
-  reverseCrunchFloor: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Crunch-1.gif'
+  matrixShoulderPress: `${curatedMedia}matrix-shoulder-press.gif`,
+  seatedDumbbellLateralRaise: `${curatedMedia}seated-dumbbell-lateral-raise.gif`,
+  standingDumbbellCalfRaise: `${curatedMedia}standing-dumbbell-calf-raise.gif`,
+  reverseCrunchFloor: `${curatedMedia}reverse-crunch-floor.gif`
 } as const
 
 const WORKOUT_IMAGE_FIXES: Record<string, string> = {
