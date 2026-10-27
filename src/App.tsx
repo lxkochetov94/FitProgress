@@ -104,7 +104,9 @@ function personalExerciseLibrary() {
 
 function ExerciseVisual({ exercise, compact = false }: { exercise: WorkoutExercise; compact?: boolean }) {
   const def = getDefinition(exercise.exerciseId)
-  const mediaDefinition = def ?? {
+  // The active workout's name is authoritative: imported Excel exercises
+  // can reuse a legacy ID while describing a different movement or machine.
+  const mediaDefinition = def ? { ...def, name: exercise.name } : {
     id: exercise.exerciseId, name: exercise.name, category: exercise.category,
     muscleGroup: exercise.muscleGroup, movementPattern: exercise.movementPattern,
     equipment: exercise.equipment, icon: exercise.name.slice(0, 3).toUpperCase()
