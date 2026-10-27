@@ -262,11 +262,15 @@ const VERIFIED_MEDIA = {
   matrixShoulderPress: `${curatedMedia}matrix-shoulder-press.gif`,
   seatedDumbbellLateralRaise: `${curatedMedia}seated-dumbbell-lateral-raise.gif`,
   standingDumbbellCalfRaise: `${curatedMedia}standing-dumbbell-calf-raise.gif`,
-  reverseCrunchFloor: `${curatedMedia}reverse-crunch-floor.gif`
+  reverseCrunchFloor: `${curatedMedia}reverse-crunch-floor.gif`,
+  seatedDumbbellShoulderPress: `${curatedMedia}seated-dumbbell-shoulder-press.gif`
 } as const
 
 const WORKOUT_IMAGE_FIXES: Record<string, string> = {
   matrix_shoulder_press: VERIFIED_MEDIA.matrixShoulderPress,
+  seated_db_shoulder_press: VERIFIED_MEDIA.seatedDumbbellShoulderPress,
+  seated_dumbbell_shoulder_press: VERIFIED_MEDIA.seatedDumbbellShoulderPress,
+  seated_dumbbell_military_press: VERIFIED_MEDIA.seatedDumbbellShoulderPress,
   machine_shoulder_press: VERIFIED_MEDIA.matrixShoulderPress,
   seated_db_lateral_raise: VERIFIED_MEDIA.seatedDumbbellLateralRaise,
   seated_dumbbell_lateral_raise: VERIFIED_MEDIA.seatedDumbbellLateralRaise,
@@ -284,6 +288,9 @@ export function exerciseImageForDefinition(def?: ExerciseDefinition, exerciseId?
   // movement's actual name before rendering a generic three-letter placeholder.
   const name = (def?.name ?? '').toLowerCase().replace(/[·•]/g, ' ').trim()
   // Prefer exercise-specific media by the imported name, even for previously unseen IDs.
+  // This also handles replacements made during an active workout.
+  if (/армейск.*жим.*гантел.*сидя|жим гантел.*сидя|seated dumbbell (shoulder|military|overhead) press|dumbbell seated shoulder press|seated dumbbell press/.test(name))
+    return VERIFIED_MEDIA.seatedDumbbellShoulderPress
   if (/matrix shoulder press|lever shoulder press|жим плеч.*matrix/.test(name))
     return VERIFIED_MEDIA.matrixShoulderPress
   if (/seated dumbbell lateral raise|dumbbell lateral raise.*сидя|махи гантел.*сидя/.test(name))
