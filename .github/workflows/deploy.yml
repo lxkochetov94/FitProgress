@@ -31,6 +31,33 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Download and validate anatomical exercise GIFs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/exercises-curated
+          download_gif() {
+            local output="$1"
+            local source="$2"
+            echo "Fetching $output"
+            curl --fail --location --show-error --silent --retry 3 --retry-all-errors --max-time 35 \
+              --user-agent 'Mozilla/5.0 (compatible; FitProgress/1.0)' \
+              --referer 'https://fitnessprogramer.com/' \
+              "$source" -o "public/exercises-curated/$output"
+            FILE="public/exercises-curated/$output" python3 - <<'PY'
+          import os, pathlib
+          path = pathlib.Path(os.environ['FILE'])
+          raw = path.read_bytes()
+          if len(raw) < 12000 or raw[:6] not in (b'GIF87a', b'GIF89a'):
+              raise SystemExit(f"Invalid image: {path}, bytes={len(raw)}, signature={raw[:12]!r}")
+          print(f"Valid GIF: {path}, {len(raw)} bytes")
+          PY
+          }
+          download_gif matrix-shoulder-press.gif https://fitnessprogramer.com/wp-content/uploads/2021/04/Lever-Shoulder-Press.gif
+          download_gif seated-dumbbell-lateral-raise.gif https://fitnessprogramer.com/wp-content/uploads/2021/04/Seated-Dumbbell-Lateral-Raise.gif
+          download_gif standing-dumbbell-calf-raise.gif https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Calf-Raise.gif
+          download_gif reverse-crunch-floor.gif https://fitnessprogramer.com/wp-content/uploads/2021/02/Reverse-Crunch-1.gif
+
       - name: Build
         run: npm run build
 
